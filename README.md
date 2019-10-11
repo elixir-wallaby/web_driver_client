@@ -1,11 +1,6 @@
 # WebDriverClient
 
-WIP WebDriver client for implementing the JSON wire protocol.
-
-Links:
-* https://w3c.github.io/webdriver/
-* https://github.com/SeleniumHQ/selenium/wiki/JsonWireProtocol
-
+WIP [WebDriver] client for Elixir.
 
 ## Installation
 
@@ -23,3 +18,5 @@ end
 Documentation can be generated with [ExDoc](https://github.com/elixir-lang/ex_doc)
 and published on [HexDocs](https://hexdocs.pm). Once published, the docs can
 be found at [https://hexdocs.pm/web_driver_client](https://hexdocs.pm/web_driver_client).
+
+[WebDriver]: https://w3c.github.io/webdriver/
