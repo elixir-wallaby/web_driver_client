@@ -7,6 +7,32 @@ cache:
     - _build
     - deps
 
+services:
+  - docker
+
+addons:
+  chrome: stable
+
+before_install:
+  # ChromeDriver
+  - export CHROMEDRIVER_VERSION=`curl -s http://chromedriver.storage.googleapis.com/LATEST_RELEASE`
+  - curl -L -O "http://chromedriver.storage.googleapis.com/${CHROMEDRIVER_VERSION}/chromedriver_linux64.zip"
+  - unzip chromedriver_linux64.zip
+  - sudo chmod +x chromedriver
+  - sudo mv chromedriver /usr/local/bin
+  - nohup chromedriver &
+  - sleep 10 &
+  - cat nohup.out
+  # PhantomJS
+  - phantomjs --wd 2>&1 > phantomjs.log &
+  # Selenium - ChromeDriver
+  - docker run -d -p 4444:4444 --shm-size=2g selenium/standalone-chrome:3.141.59-vanadium
+  - docker run -d -p 4447:4444 --shm-size=2g selenium/standalone-chrome:2.53.1
+  # Selenium - Firefox
+  - docker run -d -p 4445:4444 --shm-size=2g selenium/standalone-firefox:3.141.59-vanadium
+  - docker run -d -p 4446:4444 --shm-size=2g selenium/standalone-firefox:2.53.1
+
+
 before_script:
   - mix local.rebar --force
   - mix local.hex --force
@@ -21,3 +47,13 @@ script:
   - mix dialyzer --format short
   # Check for unused dependencies
   - mix deps.unlock --unused && git diff --exit-code
+  - mix test --only integration_test_driver:chromedriver
+  - mix test --only integration_test_driver:phantomjs
+  # Selenium 3, firefox
+  - SELENIUM_BASE_URL="http://localhost:4445/wd/hub" mix test --only integration_test_driver_browser:selenium-firefox
+  # Selenium 2, firefox
+  - SELENIUM_BASE_URL="http://localhost:4446/wd/hub" mix test --only integration_test_driver_browser:selenium-firefox
+  # Selenium 3, chrome
+  - mix test --only integration_test_driver_browser:selenium-chrome
+  # Selenium 2, chrome
+  - SELENIUM_BASE_URL="http://localhost:4447/wd/hub" mix test --only integration_test_driver_browser:selenium-chrome
