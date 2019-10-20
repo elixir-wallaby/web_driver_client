@@ -51,6 +51,29 @@ defmodule WebDriverClientTest do
              WebDriverClient.start_session(payload, config: config)
   end
 
+  test "fetch_sessions/1 returns {:ok, [%Session{}]} on a valid response", %{
+    bypass: bypass,
+    config: config
+  } do
+    response_body = build_fetch_sessions_response()
+
+    session_id =
+      response_body
+      |> Map.fetch!("value")
+      |> List.first()
+      |> Map.fetch!("id")
+
+    Bypass.expect_once(bypass, "GET", "/sessions", fn conn ->
+      json = Jason.encode!(response_body)
+
+      conn
+      |> put_resp_content_type("application/json")
+      |> send_resp(200, json)
+    end)
+
+    assert {:ok, [%Session{id: ^session_id} | _]} = WebDriverClient.fetch_sessions(config: config)
+  end
+
   test "fetch_sessions/1 returns {:error, %UnexpectedResponseFormatError{}} with an unexpected response",
        %{bypass: bypass, config: config} do
     response_body = "{}"
@@ -150,6 +173,44 @@ defmodule WebDriverClientTest do
         },
         "sessionId" => "882326fd74ae485962d435e265c51fbd"
       }
+    }
+  end
+
+  defp build_fetch_sessions_response do
+    %{
+      "sessionId" => "",
+      "status" => 0,
+      "value" => [
+        %{
+          "capabilities" => %{
+            "acceptInsecureCerts" => false,
+            "browserName" => "chrome",
+            "browserVersion" => "77.0.3865.120",
+            "chrome" => %{
+              "chromedriverVersion" =>
+                "77.0.3865.40 (f484704e052e0b556f8030b65b953dce96503217-refs/branch-heads/3865@{#442})",
+              "userDataDir" =>
+                "/var/folders/mn/dxbldtrx3jv0q_hnnz8kfmf00000gn/T/.com.google.Chrome.Iw15gJ"
+            },
+            "goog:chromeOptions" => %{
+              "debuggerAddress" => "localhost:63322"
+            },
+            "networkConnectionEnabled" => false,
+            "pageLoadStrategy" => "normal",
+            "platformName" => "mac os x",
+            "proxy" => %{},
+            "setWindowRect" => true,
+            "strictFileInteractability" => false,
+            "timeouts" => %{
+              "implicit" => 0,
+              "pageLoad" => 300_000,
+              "script" => 30_000
+            },
+            "unhandledPromptBehavior" => "dismiss and notify"
+          },
+          "id" => "9e8adbbf4187003d9e0d9b2934a9c5d0"
+        }
+      ]
     }
   end
 
