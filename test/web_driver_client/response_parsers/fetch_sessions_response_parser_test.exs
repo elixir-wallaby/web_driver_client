@@ -3,8 +3,9 @@ defmodule WebDriverClient.ResponseParsers.FetchSessionsResponseParserTest do
 
   alias WebDriverClient.ResponseParsers.FetchSessionsResponseParser
   alias WebDriverClient.Session
+  alias WebDriverClient.TestData
 
-  test "parse/1 returns {:ok, [Session.t()]} on expected response" do
+  test "parse/2 returns {:ok, [Session.t()]} on expected response" do
     response_body = %{
       "sessionId" => "",
       "status" => 0,
@@ -47,14 +48,19 @@ defmodule WebDriverClient.ResponseParsers.FetchSessionsResponseParserTest do
       |> List.first()
       |> Map.fetch!("id")
 
-    assert {:ok, [%Session{id: ^session_id}]} = FetchSessionsResponseParser.parse(response_body)
+    [config] = TestData.config() |> Enum.take(1)
+
+    assert {:ok, [%Session{id: ^session_id, config: ^config}]} =
+             FetchSessionsResponseParser.parse(response_body, config)
   end
 
-  test "parse/1 returns :error on unexpected_response" do
-    assert :error = FetchSessionsResponseParser.parse("foo")
+  test "parse/2 returns :error on unexpected_response" do
+    [config] = TestData.config() |> Enum.take(1)
+
+    assert :error = FetchSessionsResponseParser.parse("foo", config)
   end
 
-  test "parse/1 returns :error when one of the values is invalid" do
+  test "parse/2 returns :error when one of the values is invalid" do
     response_body = %{
       "sessionId" => "",
       "status" => 0,
@@ -92,6 +98,8 @@ defmodule WebDriverClient.ResponseParsers.FetchSessionsResponseParserTest do
       ]
     }
 
-    assert :error = FetchSessionsResponseParser.parse(response_body)
+    [config] = TestData.config() |> Enum.take(1)
+
+    assert :error = FetchSessionsResponseParser.parse(response_body, config)
   end
 end

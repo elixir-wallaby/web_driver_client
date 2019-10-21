@@ -7,6 +7,7 @@ defmodule WebDriverClientTest do
   alias WebDriverClient.Config
   alias WebDriverClient.HTTPClientError
   alias WebDriverClient.Session
+  alias WebDriverClient.TestData
   alias WebDriverClient.UnexpectedResponseFormatError
   alias WebDriverClient.UnexpectedStatusCodeError
 
@@ -30,7 +31,7 @@ defmodule WebDriverClientTest do
       |> send_resp(200, Jason.encode!(response_body))
     end)
 
-    assert {:ok, %Session{id: ^session_id}} =
+    assert {:ok, %Session{id: ^session_id, config: ^config}} =
              WebDriverClient.start_session(payload, config: config)
   end
 
@@ -71,7 +72,8 @@ defmodule WebDriverClientTest do
       |> send_resp(200, json)
     end)
 
-    assert {:ok, [%Session{id: ^session_id} | _]} = WebDriverClient.fetch_sessions(config: config)
+    assert {:ok, [%Session{id: ^session_id, config: ^config} | _]} =
+             WebDriverClient.fetch_sessions(config: config)
   end
 
   test "fetch_sessions/1 returns {:error, %UnexpectedResponseFormatError{}} with an unexpected response",
@@ -138,14 +140,18 @@ defmodule WebDriverClientTest do
              WebDriverClient.fetch_sessions(config: config)
   end
 
-  test "end_session/2 returns :ok on success", %{bypass: bypass, config: config} do
-    session_id = "session_1"
+  test "end_session/1 with a %Session{} uses the config on the session", %{
+    bypass: bypass,
+    config: config
+  } do
+    [%Session{id: session_id} = session] =
+      TestData.session(config: constant(config)) |> Enum.take(1)
 
     Bypass.expect_once(bypass, "DELETE", "/session/#{session_id}", fn conn ->
       send_resp(conn, 200, "")
     end)
 
-    assert :ok = WebDriverClient.end_session(session_id, config: config)
+    assert :ok = WebDriverClient.end_session(session)
   end
 
   defp build_session_response do

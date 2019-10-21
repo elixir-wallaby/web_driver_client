@@ -3,14 +3,15 @@ defmodule WebDriverClient.ResponseParsers.FetchSessionsResponseParser do
 
   import WebDriverClient.Guards
 
+  alias WebDriverClient.Config
   alias WebDriverClient.Session
 
-  @spec parse(term) :: {:ok, [Session.t()]} | :error
-  def parse(%{"value" => value}) when is_list(value) do
+  @spec parse(term, Config.t()) :: {:ok, [Session.t()]} | :error
+  def parse(%{"value" => value}, %Config{} = config) when is_list(value) do
     value
     |> Enum.reduce_while([], fn session_response, acc ->
       session_response
-      |> parse_session()
+      |> parse_session(config)
       |> case do
         {:ok, session} ->
           {:cont, [session | acc]}
@@ -28,12 +29,12 @@ defmodule WebDriverClient.ResponseParsers.FetchSessionsResponseParser do
     end
   end
 
-  def parse(_), do: :error
+  def parse(_, %Config{}), do: :error
 
-  @spec parse_session(any) :: {:ok, Session.t()} | :error
-  defp parse_session(%{"id" => id}) when is_session_id(id) do
-    {:ok, %Session{id: id}}
+  @spec parse_session(term, Config.t()) :: {:ok, Session.t()} | :error
+  defp parse_session(%{"id" => id}, %Config{} = config) when is_session_id(id) do
+    {:ok, %Session{id: id, config: config}}
   end
 
-  defp parse_session(_), do: :error
+  defp parse_session(_, %Config{}), do: :error
 end

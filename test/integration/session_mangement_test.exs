@@ -19,15 +19,15 @@ defmodule WebDriverClient.Integration.SessionManagementTest do
 
       payload = Scenarios.get_start_session_payload(scenario)
 
-      {:ok, %Session{id: session_id}} =
+      {:ok, %Session{} = session} =
         WebDriverClient.start_session(
           payload,
           config: config
         )
 
-      assert {:ok, [%Session{id: ^session_id}]} = WebDriverClient.fetch_sessions(config: config)
+      assert {:ok, [^session]} = WebDriverClient.fetch_sessions(config: config)
 
-      assert :ok = WebDriverClient.end_session(session_id, config: config)
+      assert :ok = WebDriverClient.end_session(session)
 
       if match?(%Scenario{driver: :chromedriver}, scenario) do
         # Sleep here to prevent chromedriver segmentation fault
@@ -43,8 +43,8 @@ defmodule WebDriverClient.Integration.SessionManagementTest do
 
     {:ok, sessions} = WebDriverClient.fetch_sessions(config: config)
 
-    Enum.each(sessions, fn %Session{id: session_id} ->
-      :ok = WebDriverClient.end_session(session_id, config: config)
+    Enum.each(sessions, fn session ->
+      :ok = WebDriverClient.end_session(session)
     end)
   end
 end

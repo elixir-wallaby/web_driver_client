@@ -3,16 +3,18 @@ defmodule WebDriverClient.ResponseParsers.SessionParser do
 
   import WebDriverClient.Guards
 
+  alias WebDriverClient.Config
   alias WebDriverClient.Session
 
-  @spec parse(term) :: {:ok, Session.t()} | :error
-  def parse(%{"value" => %{"sessionId" => session_id}}) when is_session_id(session_id) do
-    {:ok, %Session{id: session_id}}
+  @spec parse(term, Config.t()) :: {:ok, Session.t()} | :error
+  def parse(%{"value" => %{"sessionId" => session_id}}, %Config{} = config)
+      when is_session_id(session_id) do
+    {:ok, Session.build(session_id, config)}
   end
 
-  def parse(%{"sessionId" => session_id}) when is_session_id(session_id) do
-    {:ok, %Session{id: session_id}}
+  def parse(%{"sessionId" => session_id}, %Config{} = config) when is_session_id(session_id) do
+    {:ok, Session.build(session_id, config)}
   end
 
-  def parse(_), do: :error
+  def parse(_, %Config{}), do: :error
 end

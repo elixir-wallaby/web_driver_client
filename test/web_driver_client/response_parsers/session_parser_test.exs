@@ -3,6 +3,7 @@ defmodule WebDriverClient.ResponseParsers.SessionParserTest do
 
   alias WebDriverClient.ResponseParsers.SessionParser
   alias WebDriverClient.Session
+  alias WebDriverClient.TestData
 
   test "parse/1 returns {:ok, Session.t()} with older desiredCapabilities based response (from ChromeDriver)" do
     response_body = %{
@@ -32,8 +33,10 @@ defmodule WebDriverClient.ResponseParsers.SessionParserTest do
     }
 
     session_id = get_in(response_body, ["value", "sessionId"])
+    [config] = TestData.config() |> Enum.take(1)
 
-    assert {:ok, %Session{id: ^session_id}} = SessionParser.parse(response_body)
+    assert {:ok, %Session{id: ^session_id, config: ^config}} =
+             SessionParser.parse(response_body, config)
   end
 
   test "parse/1 returns {:ok, Session.t()} with newer capabilities based response (from ChromeDriver)" do
@@ -78,11 +81,15 @@ defmodule WebDriverClient.ResponseParsers.SessionParserTest do
     }
 
     session_id = Map.get(response_body, "sessionId")
+    [config] = TestData.config() |> Enum.take(1)
 
-    assert {:ok, %Session{id: ^session_id}} = SessionParser.parse(response_body)
+    assert {:ok, %Session{id: ^session_id, config: ^config}} =
+             SessionParser.parse(response_body, config)
   end
 
   test "parse/1 returns :error on unexpected_response" do
-    assert :error = SessionParser.parse("foo")
+    [config] = TestData.config() |> Enum.take(1)
+
+    assert :error = SessionParser.parse("foo", config)
   end
 end

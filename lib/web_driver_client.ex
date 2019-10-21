@@ -27,13 +27,11 @@ defmodule WebDriverClient do
              | UnexpectedResponseFormatError.t()
              | UnexpectedStatusCodeError.t()}
   def start_session(payload, opts) when is_list(opts) and is_map(payload) do
-    client =
-      opts
-      |> Keyword.fetch!(:config)
-      |> TeslaClientBuilder.build()
+    config = Keyword.fetch!(opts, :config)
+    client = TeslaClientBuilder.build(config)
 
     with {:ok, %Env{body: body}} <- Tesla.post(client, "/session", payload) do
-      case SessionParser.parse(body) do
+      case SessionParser.parse(body, config) do
         {:ok, session} ->
           {:ok, session}
 
@@ -53,13 +51,11 @@ defmodule WebDriverClient do
              | UnexpectedResponseFormatError.t()
              | UnexpectedStatusCodeError.t()}
   def fetch_sessions(opts) when is_list(opts) do
-    client =
-      opts
-      |> Keyword.fetch!(:config)
-      |> TeslaClientBuilder.build()
+    config = Keyword.fetch!(opts, :config)
+    client = TeslaClientBuilder.build(config)
 
     with {:ok, %Env{body: body}} <- Tesla.get(client, "/sessions") do
-      case FetchSessionsResponseParser.parse(body) do
+      case FetchSessionsResponseParser.parse(body, config) do
         {:ok, sessions} ->
           {:ok, sessions}
 
@@ -72,14 +68,14 @@ defmodule WebDriverClient do
   @doc """
   Ends a session
   """
-  @spec end_session(Session.id(), [config_opt]) ::
+  @spec end_session(Session.t()) ::
           :ok | {:error, HTTPClientError.t() | UnexpectedStatusCodeError.t()}
-  def end_session(session_id, opts) when is_session_id(session_id) and is_list(opts) do
-    config = Keyword.fetch!(opts, :config)
 
+  def end_session(%Session{id: id, config: %Config{} = config})
+      when is_session_id(id) do
     config
     |> TeslaClientBuilder.build()
-    |> Tesla.delete("/session/#{session_id}")
+    |> Tesla.delete("/session/#{id}")
     |> case do
       {:ok, %Env{}} ->
         :ok
