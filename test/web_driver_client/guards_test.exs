@@ -15,4 +15,14 @@ defmodule WebDriverClient.GuardsTest do
       end
     end
   end
+
+  property "is_url/1 only returns true on binaries" do
+    check all term <- term() do
+      if is_binary(term) do
+        assert Guards.is_url(term)
+      else
+        refute Guards.is_url(term)
+      end
+    end
+  end
 end

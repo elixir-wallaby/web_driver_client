@@ -96,7 +96,12 @@ defmodule WebDriverClient.IntegrationTesting.Scenarios do
       }) do
     %{
       desiredCapabilities: %{
-        "browserName" => "firefox"
+        "browserName" => "firefox",
+        "moz:firefoxOptions" => %{
+          "args" => [
+            "-headless"
+          ]
+        }
       }
     }
   end

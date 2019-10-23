@@ -154,6 +154,67 @@ defmodule WebDriverClientTest do
     assert :ok = WebDriverClient.end_session(session)
   end
 
+  test "navigate_to/1 with valid data calls the correct url and returns the response", %{
+    config: config,
+    bypass: bypass
+  } do
+    [%Session{id: session_id} = session] =
+      TestData.session(config: constant(config)) |> Enum.take(1)
+
+    browser_url = "http://foo.bar.example"
+
+    Bypass.expect_once(bypass, "POST", "/session/#{session_id}/url", fn conn ->
+      conn = parse_params(conn)
+
+      assert conn.params == %{"url" => browser_url}
+
+      response_body = Jason.encode!(%{"value" => nil})
+
+      conn
+      |> put_resp_content_type("application/json")
+      |> send_resp(200, response_body)
+    end)
+
+    assert :ok = WebDriverClient.navigate_to(session, browser_url)
+  end
+
+  test "fetch_current_url/1 with valid data calls the correct url and returns the response", %{
+    config: config,
+    bypass: bypass
+  } do
+    [%Session{id: session_id} = session] =
+      TestData.session(config: constant(config)) |> Enum.take(1)
+
+    browser_url = "http://foo.bar.example"
+
+    Bypass.expect_once(bypass, "GET", "/session/#{session_id}/url", fn conn ->
+      response_body =
+        %{"sessionId" => "foo", "status" => 1, "value" => browser_url}
+        |> Jason.encode!()
+
+      conn
+      |> put_resp_content_type("application/json")
+      |> send_resp(200, response_body)
+    end)
+
+    assert {:ok, ^browser_url} = WebDriverClient.fetch_current_url(session)
+  end
+
+  test "fetch_current_url/1 with unexpected data returns error", %{config: config, bypass: bypass} do
+    [%Session{id: session_id} = session] =
+      TestData.session(config: constant(config)) |> Enum.take(1)
+
+    Bypass.expect_once(bypass, "GET", "/session/#{session_id}/url", fn conn ->
+      response_body = Jason.encode!(%{})
+
+      conn
+      |> put_resp_content_type("application/json")
+      |> send_resp(200, response_body)
+    end)
+
+    assert {:error, %UnexpectedResponseFormatError{}} = WebDriverClient.fetch_current_url(session)
+  end
+
   defp build_session_response do
     %{
       "value" => %{
