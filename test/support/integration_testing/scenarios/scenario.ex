@@ -4,12 +4,14 @@ defmodule WebDriverClient.IntegrationTesting.Scenarios.Scenario do
   @type t :: %__MODULE__{
           driver: atom,
           browser: atom,
-          session_configuration_name: atom
+          session_configuration_name: atom,
+          protocol: atom
         }
 
   defstruct [
     :driver,
     :browser,
-    :session_configuration_name
+    :session_configuration_name,
+    :protocol
   ]
 end

@@ -8,47 +8,56 @@ defmodule WebDriverClient.IntegrationTesting.Scenarios do
     %Scenario{
       driver: :chromedriver,
       browser: :chrome,
-      session_configuration_name: :json_headless
+      session_configuration_name: :json_headless,
+      protocol: :jwp
     },
     %Scenario{
       driver: :chromedriver,
       browser: :chrome,
-      session_configuration_name: :w3c_headless
+      session_configuration_name: :w3c_headless,
+      protocol: :w3c
     },
     %Scenario{
       driver: :phantomjs,
       browser: :phantomjs,
-      session_configuration_name: :json
+      session_configuration_name: :json,
+      protocol: :jwp
     },
     %Scenario{
       driver: :selenium_3,
       browser: :firefox,
-      session_configuration_name: :json_firefox
+      session_configuration_name: :json_firefox,
+      protocol: :jwp
     },
     %Scenario{
       driver: :selenium_3,
       browser: :firefox,
-      session_configuration_name: :w3c_firefox
+      session_configuration_name: :w3c_firefox,
+      protocol: :w3c
     },
     %Scenario{
       driver: :selenium_3,
       browser: :chrome,
-      session_configuration_name: :json_chrome
+      session_configuration_name: :json_chrome,
+      protocol: :jwp
     },
     %Scenario{
       driver: :selenium_3,
       browser: :chrome,
-      session_configuration_name: :w3c_chrome
+      session_configuration_name: :w3c_chrome,
+      protocol: :w3c
     },
     %Scenario{
       driver: :selenium_2,
       browser: :chrome,
-      session_configuration_name: :json_chrome
+      session_configuration_name: :json_chrome,
+      protocol: :jwp
     },
     %Scenario{
       driver: :selenium_2,
       browser: :firefox,
-      session_configuration_name: :json_firefox
+      session_configuration_name: :json_firefox,
+      protocol: :jwp
     }
   ]
 
@@ -56,8 +65,8 @@ defmodule WebDriverClient.IntegrationTesting.Scenarios do
   def all, do: @scenarios
 
   @spec get_config(Scenario.t()) :: Config.t()
-  def get_config(%Scenario{driver: driver}) do
-    Config.build(base_url: get_base_url(driver))
+  def get_config(%Scenario{driver: driver, protocol: protocol}) do
+    Config.build(base_url: get_base_url(driver), protocol: protocol)
   end
 
   @spec get_start_session_payload(Scenario.t()) :: map()

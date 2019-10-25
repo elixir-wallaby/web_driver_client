@@ -8,14 +8,17 @@ defmodule WebDriverClient do
   alias Tesla.Env
   alias WebDriverClient.Config
   alias WebDriverClient.HTTPClientError
+  alias WebDriverClient.JSONWireProtocolClient
   alias WebDriverClient.ResponseParsers.FetchSessionsResponseParser
   alias WebDriverClient.ResponseParsers.GenericResponseParser
   alias WebDriverClient.ResponseParsers.SessionParser
   alias WebDriverClient.Responses.GenericResponse
   alias WebDriverClient.Session
+  alias WebDriverClient.Size
   alias WebDriverClient.TeslaClientBuilder
   alias WebDriverClient.UnexpectedResponseFormatError
   alias WebDriverClient.UnexpectedStatusCodeError
+  alias WebDriverClient.W3CWireProtocolClient
 
   @type config_opt :: {:config, Config.t()}
   @type url :: String.t()
@@ -127,5 +130,43 @@ defmodule WebDriverClient do
           {:error, UnexpectedResponseFormatError.exception(response_body: body)}
       end
     end
+  end
+
+  @doc """
+  Returns the web browsers current url
+  """
+  @spec fetch_window_size(Session.t()) ::
+          {:ok, Size.t()} | {:error, HTTPClientError.t() | UnexpectedStatusCodeError.t()}
+  def fetch_window_size(%Session{config: %Config{protocol: :jwp}} = session) do
+    JSONWireProtocolClient.fetch_window_size(session)
+  end
+
+  def fetch_window_size(%Session{config: %Config{protocol: :w3c}} = session) do
+    case W3CWireProtocolClient.fetch_window_rect(session) do
+      {:ok, %W3CWireProtocolClient.Rect{width: width, height: height}} ->
+        {:ok, %Size{width: width, height: height}}
+
+      {:error, error} ->
+        {:error, error}
+    end
+  end
+
+  @type size_opt :: {:width, pos_integer} | {:height, pos_integer}
+
+  @doc """
+  Sets the size of the window
+  """
+  @spec set_window_size(Session.t(), [size_opt]) ::
+          :ok | {:error, HTTPClientError.t() | UnexpectedStatusCodeError.t()}
+  def set_window_size(session, opts \\ [])
+
+  def set_window_size(%Session{config: %Config{protocol: :jwp}} = session, opts)
+      when is_list(opts) do
+    JSONWireProtocolClient.set_window_size(session, opts)
+  end
+
+  def set_window_size(%Session{config: %Config{protocol: :w3c}} = session, opts)
+      when is_list(opts) do
+    W3CWireProtocolClient.set_window_rect(session, opts)
   end
 end

@@ -100,10 +100,9 @@ defmodule WebDriverClientTest do
                   json_content_type(),
                   string(:alphanumeric)
                 ]) do
-      test_id = generate_test_id()
-      config = prepend_test_id_to_base_url(config, test_id)
+      {config, prefix} = prefix_base_url_for_multiple_runs(config)
 
-      Bypass.expect_once(bypass, "GET", "/#{test_id}/sessions", fn conn ->
+      Bypass.expect_once(bypass, "GET", "/#{prefix}/sessions", fn conn ->
         conn
         |> put_resp_content_type(content_type)
         |> send_resp(200, response_body)
@@ -284,21 +283,5 @@ defmodule WebDriverClientTest do
   @spec json_content_type :: StreamData.t(String.t())
   defp json_content_type do
     constant("application/json")
-  end
-
-  @typep test_id :: String.t()
-
-  @spec prepend_test_id_to_base_url(Config.t(), test_id) :: String.t()
-  defp prepend_test_id_to_base_url(%Config{base_url: base_url} = config, test_id)
-       when is_binary(test_id) do
-    base_url = Path.join(base_url, test_id)
-    %Config{config | base_url: base_url}
-  end
-
-  @spec generate_test_id :: test_id
-  defp generate_test_id do
-    string(:alphanumeric, length: 40)
-    |> Enum.take(1)
-    |> List.first()
   end
 end
