@@ -8,27 +8,47 @@ defmodule WebDriverClient.IntegrationTesting.Scenarios do
     %Scenario{
       driver: :chromedriver,
       browser: :chrome,
-      session_configuration_name: :desired_capabilities_headless
+      session_configuration_name: :json_headless
     },
     %Scenario{
       driver: :chromedriver,
       browser: :chrome,
-      session_configuration_name: :capabilities_headless
+      session_configuration_name: :w3c_headless
     },
     %Scenario{
       driver: :phantomjs,
       browser: :phantomjs,
-      session_configuration_name: :desired_capabilities
+      session_configuration_name: :json
     },
     %Scenario{
-      driver: :selenium,
+      driver: :selenium_3,
       browser: :firefox,
-      session_configuration_name: :desired_capabilities_firefox
+      session_configuration_name: :json_firefox
     },
     %Scenario{
-      driver: :selenium,
+      driver: :selenium_3,
+      browser: :firefox,
+      session_configuration_name: :w3c_firefox
+    },
+    %Scenario{
+      driver: :selenium_3,
       browser: :chrome,
-      session_configuration_name: :desired_capabilities_chrome
+      session_configuration_name: :json_chrome
+    },
+    %Scenario{
+      driver: :selenium_3,
+      browser: :chrome,
+      session_configuration_name: :w3c_chrome
+    },
+    %Scenario{
+      driver: :selenium_2,
+      browser: :chrome,
+      session_configuration_name: :json_chrome
+    },
+    %Scenario{
+      driver: :selenium_2,
+      browser: :firefox,
+      session_configuration_name: :json_firefox
     }
   ]
 
@@ -43,7 +63,7 @@ defmodule WebDriverClient.IntegrationTesting.Scenarios do
   @spec get_start_session_payload(Scenario.t()) :: map()
   def get_start_session_payload(%Scenario{
         driver: :chromedriver,
-        session_configuration_name: :desired_capabilities_headless
+        session_configuration_name: :json_headless
       }) do
     %{
       desiredCapabilities: %{
@@ -62,7 +82,7 @@ defmodule WebDriverClient.IntegrationTesting.Scenarios do
 
   def get_start_session_payload(%Scenario{
         driver: :chromedriver,
-        session_configuration_name: :capabilities_headless
+        session_configuration_name: :w3c_headless
       }) do
     %{
       capabilities: %{
@@ -83,7 +103,7 @@ defmodule WebDriverClient.IntegrationTesting.Scenarios do
 
   def get_start_session_payload(%Scenario{
         driver: :phantomjs,
-        session_configuration_name: :desired_capabilities
+        session_configuration_name: :json
       }) do
     %{
       desiredCapabilities: %{}
@@ -91,9 +111,10 @@ defmodule WebDriverClient.IntegrationTesting.Scenarios do
   end
 
   def get_start_session_payload(%Scenario{
-        driver: :selenium,
-        session_configuration_name: :desired_capabilities_firefox
-      }) do
+        driver: driver,
+        session_configuration_name: :json_firefox
+      })
+      when driver in [:selenium_2, :selenium_3] do
     %{
       desiredCapabilities: %{
         "browserName" => "firefox",
@@ -107,12 +128,52 @@ defmodule WebDriverClient.IntegrationTesting.Scenarios do
   end
 
   def get_start_session_payload(%Scenario{
-        driver: :selenium,
-        session_configuration_name: :desired_capabilities_chrome
+        driver: :selenium_3,
+        session_configuration_name: :w3c_firefox
       }) do
+    %{
+      capabilities: %{
+        alwaysMatch: %{
+          "moz:firefoxOptions" => %{
+            "args" => [
+              "-headless"
+            ]
+          }
+        }
+      }
+    }
+  end
+
+  def get_start_session_payload(%Scenario{
+        driver: driver,
+        session_configuration_name: :json_chrome
+      })
+      when driver in [:selenium_2, :selenium_3] do
     %{
       desiredCapabilities: %{
         "browserName" => "chrome"
+      }
+    }
+  end
+
+  def get_start_session_payload(%Scenario{
+        driver: :selenium_3,
+        session_configuration_name: :w3c_chrome
+      }) do
+    %{
+      capabilities: %{
+        alwaysMatch: %{
+          "browserName" => "chrome",
+          "goog:chromeOptions" => %{
+            "args" => [
+              "--no-sandbox",
+              "window-size=1280,800",
+              "--disable-gpu",
+              "--headless",
+              "--fullscreen"
+            ]
+          }
+        }
       }
     }
   end
@@ -131,5 +192,6 @@ defmodule WebDriverClient.IntegrationTesting.Scenarios do
 
   defp get_default_base_url(:chromedriver), do: "http://localhost:9515"
   defp get_default_base_url(:phantomjs), do: "http://localhost:8910"
-  defp get_default_base_url(:selenium), do: "http://localhost:4444/wd/hub"
+  defp get_default_base_url(:selenium_3), do: "http://localhost:4444/wd/hub"
+  defp get_default_base_url(:selenium_2), do: "http://localhost:4444/wd/hub"
 end

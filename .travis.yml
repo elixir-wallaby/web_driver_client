@@ -29,10 +29,10 @@ before_install:
   # See https://github.com/qoomon/docker-host
   - docker run --name 'dockerhost' --cap-add=NET_ADMIN --cap-add=NET_RAW --restart on-failure -d qoomon/docker-host
   # Selenium - ChromeDriver
-  - docker run -d -p 4444:4444 --shm-size=2g --link 'dockerhost' selenium/standalone-chrome:3.141.59-vanadium
+  - docker run -d -p 4444:4444 --shm-size=2g --link 'dockerhost' selenium/standalone-chrome:3
   - docker run -d -p 4447:4444 --shm-size=2g --link 'dockerhost' selenium/standalone-chrome:2.53.1
   # Selenium - Firefox
-  - docker run -d -p 4445:4444 --shm-size=2g --link 'dockerhost' selenium/standalone-firefox:3.141.59-vanadium
+  - docker run -d -p 4445:4444 --shm-size=2g --link 'dockerhost' selenium/standalone-firefox:3
   - docker run -d -p 4446:4444 --shm-size=2g --link 'dockerhost' selenium/standalone-firefox:2.53.1
 
 
@@ -54,10 +54,10 @@ script:
   - mix test --only integration_test_driver:phantomjs
   # Selenium 3, firefox
   # TEST_SERVER_HOSTNAME idea came from here: https://stackoverflow.com/a/43541732/614775
-  - TEST_SERVER_HOSTNAME="dockerhost" SELENIUM_BASE_URL="http://localhost:4445/wd/hub" mix test --only integration_test_driver_browser:selenium-firefox
+  - TEST_SERVER_HOSTNAME="dockerhost" SELENIUM_3_BASE_URL="http://localhost:4445/wd/hub" mix test --only integration_test_driver_browser:selenium_3-firefox
   # Selenium 2, firefox
-  - TEST_SERVER_HOSTNAME="dockerhost" SELENIUM_BASE_URL="http://localhost:4446/wd/hub" mix test --only integration_test_driver_browser:selenium-firefox
+  - TEST_SERVER_HOSTNAME="dockerhost" SELENIUM_2_BASE_URL="http://localhost:4446/wd/hub" mix test --only integration_test_driver_browser:selenium_2-firefox
   # Selenium 3, chrome
-  - TEST_SERVER_HOSTNAME="dockerhost" mix test --only integration_test_driver_browser:selenium-chrome
+  - TEST_SERVER_HOSTNAME="dockerhost" SELENIUM_3_BASE_URL="http://localhost:4444/wd/hub" mix test --only integration_test_driver_browser:selenium_3-chrome
   # Selenium 2, chrome
-  - TEST_SERVER_HOSTNAME="dockerhost" SELENIUM_BASE_URL="http://localhost:4447/wd/hub" mix test --only integration_test_driver_browser:selenium-chrome
+  - TEST_SERVER_HOSTNAME="dockerhost" SELENIUM_2_BASE_URL="http://localhost:4447/wd/hub" mix test --only integration_test_driver_browser:selenium_2-chrome
