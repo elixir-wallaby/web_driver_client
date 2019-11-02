@@ -144,8 +144,7 @@ defmodule WebDriverClientTest do
     bypass: bypass,
     config: config
   } do
-    [%Session{id: session_id} = session] =
-      TestData.session(config: constant(config)) |> Enum.take(1)
+    %Session{id: session_id} = session = TestData.session(config: constant(config)) |> pick()
 
     Bypass.expect_once(bypass, "DELETE", "/session/#{session_id}", fn conn ->
       send_resp(conn, 200, "")
@@ -158,8 +157,7 @@ defmodule WebDriverClientTest do
     config: config,
     bypass: bypass
   } do
-    [%Session{id: session_id} = session] =
-      TestData.session(config: constant(config)) |> Enum.take(1)
+    %Session{id: session_id} = session = TestData.session(config: constant(config)) |> pick()
 
     browser_url = "http://foo.bar.example"
 
@@ -182,8 +180,7 @@ defmodule WebDriverClientTest do
     config: config,
     bypass: bypass
   } do
-    [%Session{id: session_id} = session] =
-      TestData.session(config: constant(config)) |> Enum.take(1)
+    %Session{id: session_id} = session = TestData.session(config: constant(config)) |> pick()
 
     browser_url = "http://foo.bar.example"
 
@@ -201,8 +198,7 @@ defmodule WebDriverClientTest do
   end
 
   test "fetch_current_url/1 with unexpected data returns error", %{config: config, bypass: bypass} do
-    [%Session{id: session_id} = session] =
-      TestData.session(config: constant(config)) |> Enum.take(1)
+    %Session{id: session_id} = session = TestData.session(config: constant(config)) |> pick()
 
     Bypass.expect_once(bypass, "GET", "/session/#{session_id}/url", fn conn ->
       response_body = Jason.encode!(%{})

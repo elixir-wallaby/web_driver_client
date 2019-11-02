@@ -48,14 +48,14 @@ defmodule WebDriverClient.ResponseParsers.FetchSessionsResponseParserTest do
       |> List.first()
       |> Map.fetch!("id")
 
-    [config] = TestData.config() |> Enum.take(1)
+    config = TestData.config() |> ExUnitProperties.pick()
 
     assert {:ok, [%Session{id: ^session_id, config: ^config}]} =
              FetchSessionsResponseParser.parse(response_body, config)
   end
 
   test "parse/2 returns :error on unexpected_response" do
-    [config] = TestData.config() |> Enum.take(1)
+    config = TestData.config() |> ExUnitProperties.pick()
 
     assert :error = FetchSessionsResponseParser.parse("foo", config)
   end
@@ -98,7 +98,7 @@ defmodule WebDriverClient.ResponseParsers.FetchSessionsResponseParserTest do
       ]
     }
 
-    [config] = TestData.config() |> Enum.take(1)
+    config = TestData.config() |> ExUnitProperties.pick()
 
     assert :error = FetchSessionsResponseParser.parse(response_body, config)
   end

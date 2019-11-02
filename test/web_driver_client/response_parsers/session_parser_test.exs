@@ -33,7 +33,7 @@ defmodule WebDriverClient.ResponseParsers.SessionParserTest do
     }
 
     session_id = get_in(response_body, ["value", "sessionId"])
-    [config] = TestData.config() |> Enum.take(1)
+    config = TestData.config() |> ExUnitProperties.pick()
 
     assert {:ok, %Session{id: ^session_id, config: ^config}} =
              SessionParser.parse(response_body, config)
@@ -81,14 +81,14 @@ defmodule WebDriverClient.ResponseParsers.SessionParserTest do
     }
 
     session_id = Map.get(response_body, "sessionId")
-    [config] = TestData.config() |> Enum.take(1)
+    config = TestData.config() |> ExUnitProperties.pick()
 
     assert {:ok, %Session{id: ^session_id, config: ^config}} =
              SessionParser.parse(response_body, config)
   end
 
   test "parse/1 returns :error on unexpected_response" do
-    [config] = TestData.config() |> Enum.take(1)
+    config = TestData.config() |> ExUnitProperties.pick()
 
     assert :error = SessionParser.parse("foo", config)
   end
