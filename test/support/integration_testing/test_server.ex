@@ -59,6 +59,6 @@ defmodule WebDriverClient.IntegrationTesting.TestServer do
   end
 
   defp get_test_server_hostname do
-    System.get_env("TEST_SERVER_HOSTNAME", "localhost")
+    System.get_env("TEST_SERVER_HOSTNAME") || "localhost"
   end
 end
