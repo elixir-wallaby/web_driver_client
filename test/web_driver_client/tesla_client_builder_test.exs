@@ -2,6 +2,7 @@ defmodule WebDriverClient.TeslaClientBuilderTest do
   use WebDriverClient.APIClientCase, async: true
   use ExUnitProperties
 
+  import ExUnit.CaptureLog
   import Plug.Conn
 
   alias Tesla.Env
@@ -98,6 +99,32 @@ defmodule WebDriverClient.TeslaClientBuilderTest do
           assert {:ok, %Env{body: ^response_body, status: ^status_code}} = Tesla.get(client, path)
       end
     end
+  end
+
+  test "logs requests when debug is true", %{bypass: bypass, config: config} do
+    client =
+      config
+      |> struct!(debug?: true)
+      |> TeslaClientBuilder.build()
+
+    Bypass.down(bypass)
+
+    refute capture_log(fn ->
+             Tesla.get(client, "/")
+           end) == ""
+  end
+
+  test "does not log requests when debug is false", %{bypass: bypass, config: config} do
+    client =
+      config
+      |> struct!(debug?: false)
+      |> TeslaClientBuilder.build()
+
+    Bypass.down(bypass)
+
+    assert capture_log(fn ->
+             Tesla.get(client, "/")
+           end) == ""
   end
 
   @spec set_up_bypass_from_state(TestState.t(), Bypass.t(), String.t()) :: :ok

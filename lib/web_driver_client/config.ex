@@ -3,16 +3,17 @@ defmodule WebDriverClient.Config do
   Configuration for the webdriver connection
   """
 
-  defstruct [:base_url, :protocol]
+  defstruct [:base_url, :protocol, :debug?]
 
   @type protocol :: :jwp | :w3c
 
   @type t :: %__MODULE__{
           base_url: String.t(),
-          protocol: protocol
+          protocol: protocol,
+          debug?: boolean
         }
 
-  @type build_opt :: {:base_url, String.t()} | {:protocol, protocol}
+  @type build_opt :: {:base_url, String.t()} | {:protocol, protocol} | {:debug, boolean}
 
   @default_protocol :w3c
 
@@ -23,6 +24,7 @@ defmodule WebDriverClient.Config do
   def build(opts) when is_list(opts) do
     base_url = Keyword.fetch!(opts, :base_url)
     protocol = Keyword.get(opts, :protocol, @default_protocol)
-    %__MODULE__{base_url: base_url, protocol: protocol}
+    debug = Keyword.get(opts, :debug, false)
+    %__MODULE__{base_url: base_url, protocol: protocol, debug?: debug}
   end
 end

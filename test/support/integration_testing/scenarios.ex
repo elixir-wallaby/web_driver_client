@@ -66,7 +66,7 @@ defmodule WebDriverClient.IntegrationTesting.Scenarios do
 
   @spec get_config(Scenario.t()) :: Config.t()
   def get_config(%Scenario{driver: driver, protocol: protocol}) do
-    Config.build(base_url: get_base_url(driver), protocol: protocol)
+    Config.build(base_url: get_base_url(driver), protocol: protocol, debug: true)
   end
 
   @spec get_start_session_payload(Scenario.t()) :: map()
