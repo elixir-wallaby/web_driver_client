@@ -3,6 +3,7 @@ defmodule WebDriverClient.W3CWireProtocolClientTest do
   use ExUnitProperties
 
   import Plug.Conn
+  import WebDriverClient.ErrorScenarios
 
   alias WebDriverClient.Session
   alias WebDriverClient.TestData
@@ -68,6 +69,22 @@ defmodule WebDriverClient.W3CWireProtocolClientTest do
              W3CWireProtocolClient.fetch_window_rect(session)
   end
 
+  test "fetch_window_rect/2 returns appropriate errors on various server responses", %{
+    bypass: bypass,
+    config: config
+  } do
+    scenario_server = set_up_error_scenario_tests(bypass)
+
+    for error_scenario <- error_scenarios() do
+      session = build_session_for_scenario(scenario_server, bypass, config, error_scenario)
+
+      assert_expected_response(
+        W3CWireProtocolClient.fetch_window_rect(session),
+        error_scenario
+      )
+    end
+  end
+
   property "set_window_rect/2 sends the appropriate HTTP request", %{
     config: config,
     bypass: bypass
@@ -123,6 +140,22 @@ defmodule WebDriverClient.W3CWireProtocolClientTest do
       )
 
       assert :ok = W3CWireProtocolClient.set_window_rect(session)
+    end
+  end
+
+  test "set_window_rect/2 returns appropriate errors on various server responses", %{
+    bypass: bypass,
+    config: config
+  } do
+    scenario_server = set_up_error_scenario_tests(bypass)
+
+    for error_scenario <- error_scenarios() do
+      session = build_session_for_scenario(scenario_server, bypass, config, error_scenario)
+
+      assert_expected_response(
+        W3CWireProtocolClient.set_window_rect(session),
+        error_scenario
+      )
     end
   end
 

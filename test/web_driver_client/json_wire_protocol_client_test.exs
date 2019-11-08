@@ -3,6 +3,7 @@ defmodule WebDriverClient.JSONWireProtocolClientTest do
   use ExUnitProperties
 
   import Plug.Conn
+  import WebDriverClient.ErrorScenarios
 
   alias WebDriverClient.JSONWireProtocolClient
   alias WebDriverClient.Session
@@ -64,6 +65,22 @@ defmodule WebDriverClient.JSONWireProtocolClientTest do
              JSONWireProtocolClient.fetch_window_size(session)
   end
 
+  test "fetch_window_size/2 returns appropriate errors on various server responses", %{
+    bypass: bypass,
+    config: config
+  } do
+    scenario_server = set_up_error_scenario_tests(bypass)
+
+    for error_scenario <- error_scenarios() do
+      session = build_session_for_scenario(scenario_server, bypass, config, error_scenario)
+
+      assert_expected_response(
+        JSONWireProtocolClient.fetch_window_size(session),
+        error_scenario
+      )
+    end
+  end
+
   property "set_window_size/2 sends the appropriate HTTP request", %{
     config: config,
     bypass: bypass
@@ -116,6 +133,22 @@ defmodule WebDriverClient.JSONWireProtocolClientTest do
     )
 
     assert :ok = JSONWireProtocolClient.set_window_size(session)
+  end
+
+  test "set_window_size/2 returns appropriate errors on various server responses", %{
+    bypass: bypass,
+    config: config
+  } do
+    scenario_server = set_up_error_scenario_tests(bypass)
+
+    for error_scenario <- error_scenarios() do
+      session = build_session_for_scenario(scenario_server, bypass, config, error_scenario)
+
+      assert_expected_response(
+        JSONWireProtocolClient.set_window_size(session),
+        error_scenario
+      )
+    end
   end
 
   defp window_size_response do
