@@ -29,4 +29,35 @@ defmodule WebDriverClient.ConfigTest do
   test "build/1 defaults debug to false" do
     assert %Config{debug?: false} = Config.build(@required_opts)
   end
+
+  test "put_protocol/2 allows updating the protocol to w3c" do
+    protocol = :w3c
+
+    config =
+      @required_opts
+      |> Config.build()
+      |> Config.put_protocol(protocol)
+
+    assert %Config{protocol: ^protocol} = config
+  end
+
+  test "put_protocol/2 allows updating the protocol to jwp" do
+    protocol = :w3c
+
+    config =
+      @required_opts
+      |> Config.build()
+      |> Config.put_protocol(protocol)
+
+    assert %Config{protocol: ^protocol} = config
+  end
+
+  test "put_protocol/2 disallows updating protocol to unknown protocol" do
+    protocol = :invalid
+    config = Config.build(@required_opts)
+
+    assert_raise FunctionClauseError, fn ->
+      Config.put_protocol(config, protocol)
+    end
+  end
 end
