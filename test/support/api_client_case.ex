@@ -19,12 +19,21 @@ defmodule WebDriverClient.APIClientCase do
     "http://localhost:#{port}" |> URI.merge(path) |> to_string()
   end
 
-  defp set_config_from_bypass(%{bypass: %Bypass{} = bypass}) do
-    [config: config_from_bypass(bypass)]
+  defp set_config_from_bypass(%{bypass: %Bypass{} = bypass} = context) do
+    [config: config_from_bypass(bypass, context)]
   end
 
-  defp config_from_bypass(%Bypass{} = bypass) do
+  defp config_from_bypass(%Bypass{} = bypass, context) do
     Config.build(base_url: bypass_url(bypass))
+    |> maybe_update_protocol(context)
+  end
+
+  defp maybe_update_protocol(%Config{} = config, %{protocol: protocol}) do
+    Config.put_protocol(config, protocol)
+  end
+
+  defp maybe_update_protocol(%Config{} = config, _) do
+    config
   end
 
   defp start_bypass(%{bypass: true}) do

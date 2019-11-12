@@ -13,6 +13,7 @@ defmodule WebDriverClient.JSONWireProtocolClientTest do
 
   @moduletag :bypass
   @moduletag :capture_log
+  @moduletag protocol: :jwp
 
   property "fetch_window_size/1 returns {:ok, %Size{}} on valid response", %{
     bypass: bypass,

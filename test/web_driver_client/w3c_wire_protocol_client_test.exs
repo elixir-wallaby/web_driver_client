@@ -13,6 +13,7 @@ defmodule WebDriverClient.W3CWireProtocolClientTest do
 
   @moduletag :bypass
   @moduletag :capture_log
+  @moduletag protocol: :w3c
 
   property "fetch_window_rect/1 returns {:ok, %Rect} on valid response", %{
     bypass: bypass,
