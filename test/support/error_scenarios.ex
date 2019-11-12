@@ -85,6 +85,14 @@ defmodule WebDriverClient.ErrorScenarios do
     scenario_server_pid
   end
 
+  def assert_expected_response(response, %ErrorScenario{} = scenario) do
+    do_assert_expected_response(response, scenario)
+  rescue
+    exception ->
+      stacktrace = System.stacktrace()
+      reraise enhance_exception(exception, scenario, stacktrace), stacktrace
+  end
+
   defp reset_bypass(bypass) do
     Bypass.up(bypass)
   end
@@ -109,14 +117,6 @@ defmodule WebDriverClient.ErrorScenarios do
 
   defp update_config_for_scenario(%Config{} = config, %ErrorScenario{}) do
     config
-  end
-
-  def assert_expected_response(response, %ErrorScenario{} = scenario) do
-    do_assert_expected_response(response, scenario)
-  rescue
-    exception ->
-      stacktrace = System.stacktrace()
-      reraise enhance_exception(exception, scenario, stacktrace), stacktrace
   end
 
   defp enhance_exception(
