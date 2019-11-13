@@ -10,6 +10,7 @@ defmodule WebDriverClient.W3CWireProtocolClientTest do
   alias WebDriverClient.UnexpectedResponseFormatError
   alias WebDriverClient.W3CWireProtocolClient
   alias WebDriverClient.W3CWireProtocolClient.Rect
+  alias WebDriverClient.W3CWireProtocolClient.TestResponses
 
   @moduletag :bypass
   @moduletag :capture_log
@@ -19,7 +20,7 @@ defmodule WebDriverClient.W3CWireProtocolClientTest do
     bypass: bypass,
     config: config
   } do
-    check all parsed_response <- window_rect_response() do
+    check all resp <- TestResponses.fetch_window_rect_response() do
       {config, prefix} = prefix_base_url_for_multiple_runs(config)
 
       %Session{id: session_id} = session = TestData.session(config: constant(config)) |> pick()
@@ -29,14 +30,13 @@ defmodule WebDriverClient.W3CWireProtocolClientTest do
         "GET",
         "/#{prefix}/session/#{session_id}/window/rect",
         fn conn ->
-          resp = Jason.encode!(parsed_response)
-
           conn
           |> put_resp_content_type("application/json")
           |> send_resp(200, resp)
         end
       )
 
+      parsed_response = Jason.decode!(resp)
       x = get_in(parsed_response, ["value", "x"])
       y = get_in(parsed_response, ["value", "y"])
       width = get_in(parsed_response, ["value", "width"])
@@ -122,7 +122,7 @@ defmodule WebDriverClient.W3CWireProtocolClientTest do
     bypass: bypass,
     config: config
   } do
-    check all parsed_response <- window_rect_response() do
+    check all resp <- TestResponses.set_window_rect_response() do
       {config, prefix} = prefix_base_url_for_multiple_runs(config)
 
       %Session{id: session_id} = session = TestData.session(config: constant(config)) |> pick()
@@ -132,8 +132,6 @@ defmodule WebDriverClient.W3CWireProtocolClientTest do
         "POST",
         "/#{prefix}/session/#{session_id}/window/rect",
         fn conn ->
-          resp = Jason.encode!(parsed_response)
-
           conn
           |> put_resp_content_type("application/json")
           |> send_resp(200, resp)
@@ -158,17 +156,5 @@ defmodule WebDriverClient.W3CWireProtocolClientTest do
         error_scenario
       )
     end
-  end
-
-  defp window_rect_response do
-    fixed_map(%{
-      "value" =>
-        fixed_map(%{
-          "x" => integer(),
-          "y" => integer(),
-          "width" => integer(0..1000),
-          "height" => integer(0..1000)
-        })
-    })
   end
 end

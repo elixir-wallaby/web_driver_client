@@ -7,10 +7,13 @@ defmodule WebDriverClientTest do
 
   alias WebDriverClient.Config
   alias WebDriverClient.HTTPClientError
+  alias WebDriverClient.JSONWireProtocolClient.TestResponses, as: JWPTestResponses
   alias WebDriverClient.Session
+  alias WebDriverClient.Size
   alias WebDriverClient.TestData
   alias WebDriverClient.UnexpectedResponseFormatError
   alias WebDriverClient.UnexpectedStatusCodeError
+  alias WebDriverClient.W3CWireProtocolClient.TestResponses, as: W3CTestResponses
 
   @moduletag :bypass
   @moduletag :capture_log
@@ -213,21 +216,29 @@ defmodule WebDriverClientTest do
     assert {:error, %UnexpectedResponseFormatError{}} = WebDriverClient.fetch_current_url(session)
   end
 
-  for protocol <- @protocols do
-    @tag protocol: protocol
-    test "set_window_size/1 with #{protocol} session returns appropriate errors on various server responses",
-         %{config: config, bypass: bypass} do
-      scenario_server = set_up_error_scenario_tests(bypass)
+  @tag protocol: :jwp
+  test "fetch_window_size/1 with JWP session returns {:ok, %Size{}} on success", %{
+    config: config,
+    bypass: bypass
+  } do
+    session = TestData.session(config: constant(config)) |> pick()
+    resp = JWPTestResponses.fetch_window_size_response() |> pick()
+    stub_bypass_response(bypass, resp)
 
-      for error_scenario <- basic_error_scenarios() do
-        session = build_session_for_scenario(scenario_server, bypass, config, error_scenario)
+    assert {:ok, %Size{}} = WebDriverClient.fetch_window_size(session)
+  end
 
-        assert_expected_response(
-          WebDriverClient.set_window_size(session),
-          error_scenario
-        )
-      end
-    end
+  @tag protocol: :w3c
+  test "fetch_window_size/1 with w3c session returns {:ok, %Size{}} on success", %{
+    config: config,
+    bypass: bypass
+  } do
+    session = TestData.session(config: constant(config)) |> pick()
+    resp = W3CTestResponses.fetch_window_rect_response() |> pick()
+
+    stub_bypass_response(bypass, resp)
+
+    assert {:ok, %Size{}} = WebDriverClient.fetch_window_size(session)
   end
 
   for protocol <- @protocols do
@@ -241,6 +252,49 @@ defmodule WebDriverClientTest do
 
         assert_expected_response(
           WebDriverClient.fetch_window_size(session),
+          error_scenario
+        )
+      end
+    end
+  end
+
+  @tag protocol: :jwp
+  test "set_window_size/2 with JWP session returns :ok on valid response", %{
+    config: config,
+    bypass: bypass
+  } do
+    session = TestData.session(config: constant(config)) |> pick()
+    resp = JWPTestResponses.set_window_size_response() |> pick()
+
+    stub_bypass_response(bypass, resp)
+
+    assert :ok = WebDriverClient.set_window_size(session)
+  end
+
+  @tag protocol: :w3c
+  test "set_window_size/2 with w3c session returns :ok on valid response", %{
+    config: config,
+    bypass: bypass
+  } do
+    session = TestData.session(config: constant(config)) |> pick()
+    resp = W3CTestResponses.set_window_rect_response() |> pick()
+
+    stub_bypass_response(bypass, resp)
+
+    assert :ok = WebDriverClient.set_window_size(session)
+  end
+
+  for protocol <- @protocols do
+    @tag protocol: protocol
+    test "set_window_size/1 with #{protocol} session returns appropriate errors on various server responses",
+         %{config: config, bypass: bypass} do
+      scenario_server = set_up_error_scenario_tests(bypass)
+
+      for error_scenario <- basic_error_scenarios() do
+        session = build_session_for_scenario(scenario_server, bypass, config, error_scenario)
+
+        assert_expected_response(
+          WebDriverClient.set_window_size(session),
           error_scenario
         )
       end
@@ -320,5 +374,13 @@ defmodule WebDriverClientTest do
   @spec json_content_type :: StreamData.t(String.t())
   defp json_content_type do
     constant("application/json")
+  end
+
+  defp stub_bypass_response(bypass, response) do
+    Bypass.stub(bypass, :any, :any, fn conn ->
+      conn
+      |> put_resp_content_type("application/json")
+      |> send_resp(200, response)
+    end)
   end
 end

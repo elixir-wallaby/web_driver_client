@@ -6,6 +6,7 @@ defmodule WebDriverClient.JSONWireProtocolClientTest do
   import WebDriverClient.ErrorScenarios
 
   alias WebDriverClient.JSONWireProtocolClient
+  alias WebDriverClient.JSONWireProtocolClient.TestResponses
   alias WebDriverClient.Session
   alias WebDriverClient.Size
   alias WebDriverClient.TestData
@@ -19,7 +20,7 @@ defmodule WebDriverClient.JSONWireProtocolClientTest do
     bypass: bypass,
     config: config
   } do
-    check all parsed_response <- window_size_response() do
+    check all resp <- TestResponses.fetch_window_size_response() do
       {config, prefix} = prefix_base_url_for_multiple_runs(config)
 
       %Session{id: session_id} = session = TestData.session(config: constant(config)) |> pick()
@@ -29,14 +30,13 @@ defmodule WebDriverClient.JSONWireProtocolClientTest do
         "GET",
         "/#{prefix}/session/#{session_id}/window/current/size",
         fn conn ->
-          resp = Jason.encode!(parsed_response)
-
           conn
           |> put_resp_content_type("application/json")
           |> send_resp(200, resp)
         end
       )
 
+      parsed_response = Jason.decode!(resp)
       width = get_in(parsed_response, ["value", "width"])
       height = get_in(parsed_response, ["value", "height"])
 
@@ -116,17 +116,14 @@ defmodule WebDriverClient.JSONWireProtocolClientTest do
     bypass: bypass,
     config: config
   } do
-    parsed_response = %{"value" => nil}
-
     %Session{id: session_id} = session = TestData.session(config: constant(config)) |> pick()
+    resp = TestResponses.set_window_size_response() |> pick()
 
     Bypass.expect_once(
       bypass,
       "POST",
       "/session/#{session_id}/window/current/size",
       fn conn ->
-        resp = Jason.encode!(parsed_response)
-
         conn
         |> put_resp_content_type("application/json")
         |> send_resp(200, resp)
@@ -150,15 +147,5 @@ defmodule WebDriverClient.JSONWireProtocolClientTest do
         error_scenario
       )
     end
-  end
-
-  defp window_size_response do
-    fixed_map(%{
-      "value" =>
-        fixed_map(%{
-          "width" => integer(0..1000),
-          "height" => integer(0..1000)
-        })
-    })
   end
 end
