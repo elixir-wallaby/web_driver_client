@@ -3,6 +3,7 @@ defmodule WebDriverClientTest do
   use ExUnitProperties
 
   import Plug.Conn
+  import WebDriverClient.ErrorScenarios
 
   alias WebDriverClient.Config
   alias WebDriverClient.HTTPClientError
@@ -13,6 +14,8 @@ defmodule WebDriverClientTest do
 
   @moduletag :bypass
   @moduletag :capture_log
+
+  @protocols [:jwp, :w3c]
 
   test "start_session/1 returns {:ok, Session.t()} with a valid response", %{
     config: config,
@@ -208,6 +211,40 @@ defmodule WebDriverClientTest do
     end)
 
     assert {:error, %UnexpectedResponseFormatError{}} = WebDriverClient.fetch_current_url(session)
+  end
+
+  for protocol <- @protocols do
+    @tag protocol: protocol
+    test "set_window_size/1 with #{protocol} session returns appropriate errors on various server responses",
+         %{config: config, bypass: bypass} do
+      scenario_server = set_up_error_scenario_tests(bypass)
+
+      for error_scenario <- basic_error_scenarios() do
+        session = build_session_for_scenario(scenario_server, bypass, config, error_scenario)
+
+        assert_expected_response(
+          WebDriverClient.set_window_size(session),
+          error_scenario
+        )
+      end
+    end
+  end
+
+  for protocol <- @protocols do
+    @tag protocol: protocol
+    test "fetch_window_size/1 with #{protocol} session returns appropriate errors on various server responses",
+         %{config: config, bypass: bypass} do
+      scenario_server = set_up_error_scenario_tests(bypass)
+
+      for error_scenario <- basic_error_scenarios() do
+        session = build_session_for_scenario(scenario_server, bypass, config, error_scenario)
+
+        assert_expected_response(
+          WebDriverClient.fetch_window_size(session),
+          error_scenario
+        )
+      end
+    end
   end
 
   defp build_session_response do

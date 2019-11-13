@@ -21,6 +21,18 @@ defmodule WebDriverClient.ErrorScenarios do
 
   @json_content_type "application/json"
 
+  def basic_error_scenarios do
+    [
+      %ErrorScenario{communication_error: :server_down},
+      %ErrorScenario{status_code: 500, response_body: {:other, "Internal error"}},
+      %ErrorScenario{
+        status_code: 200,
+        content_type: @json_content_type,
+        response_body: {:other, "foo"}
+      }
+    ]
+  end
+
   def error_scenarios do
     communication_error_scenarios = [
       %ErrorScenario{communication_error: :server_down},
