@@ -48,7 +48,7 @@ before_script:
   - travis_wait mix dialyzer --plt
 
 script:
-  - mix test
+  - mix coveralls.travis
   - mix format --check-formatted
   - mix credo --strict
   - mix dialyzer --format short

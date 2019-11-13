@@ -1,4 +1,5 @@
 # WebDriverClient
+[![Coverage Status](https://coveralls.io/repos/github/aaronrenner/web_driver_client/badge.svg?branch=master)](https://coveralls.io/github/aaronrenner/web_driver_client?branch=master)
 
 WIP [WebDriver] client for Elixir.
 

@@ -7,6 +7,13 @@ defmodule WebDriverClient.MixProject do
       version: "0.1.0",
       elixir: "~> 1.6",
       elixirc_paths: elixirc_paths(Mix.env()),
+      test_coverage: [tool: ExCoveralls],
+      preferred_cli_env: [
+        coveralls: :test,
+        "coveralls.detail": :test,
+        "coveralls.travis": :test,
+        "coveralls.html": :test
+      ],
       start_permanent: Mix.env() == :prod,
       deps: deps(),
       dialyzer: dialyzer()
@@ -28,6 +35,7 @@ defmodule WebDriverClient.MixProject do
       {:bypass, "~> 1.0", only: :test},
       {:hackney, "~> 1.6", only: [:dev, :test]},
       {:stream_data, "~> 0.1", only: [:dev, :test]},
+      {:excoveralls, "~> 0.10", only: :test},
       {:credo, "~> 1.1.0", only: [:dev, :test], runtime: false},
       {:dialyxir, "~> 1.0.0-rc.7", only: [:dev], runtime: false},
       {:ex_doc, "~> 0.20", only: :docs}
