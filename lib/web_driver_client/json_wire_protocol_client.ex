@@ -67,6 +67,17 @@ defmodule WebDriverClient.JSONWireProtocolClient do
     end
   end
 
+  @spec fetch_log_types(Session.t()) :: {:ok, [String.t()]} | {:error, basic_reason()}
+  def fetch_log_types(%Session{id: id, config: %Config{} = config}) do
+    client = TeslaClientBuilder.build(config)
+    url = "/session/#{id}/log/types"
+
+    with {:ok, %Env{body: body}} <- Tesla.get(client, url),
+         {:ok, log_types} <- parse_value(body) do
+      {:ok, log_types}
+    end
+  end
+
   @spec parse_size(term) :: {:ok, Size.t()} | {:error, UnexpectedResponseFormatError.t()}
   defp parse_size(%{"value" => %{"width" => width, "height" => height}}) do
     {:ok, %Size{width: width, height: height}}
@@ -82,6 +93,15 @@ defmodule WebDriverClient.JSONWireProtocolClient do
   end
 
   defp parse_url(body) do
+    {:error, UnexpectedResponseFormatError.exception(response_body: body)}
+  end
+
+  @spec parse_value(term) :: {:ok, term} | {:error, UnexpectedResponseFormatError.t()}
+  defp parse_value(%{"value" => value}) do
+    {:ok, value}
+  end
+
+  defp parse_value(body) do
     {:error, UnexpectedResponseFormatError.exception(response_body: body)}
   end
 end

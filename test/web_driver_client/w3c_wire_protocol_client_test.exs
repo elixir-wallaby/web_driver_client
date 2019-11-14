@@ -223,4 +223,70 @@ defmodule WebDriverClient.W3CWireProtocolClientTest do
       )
     end
   end
+
+  property "fetch_log_types/1 returns {:ok, log_types} on valid response", %{
+    bypass: bypass,
+    config: config
+  } do
+    check all resp <- TestResponses.fetch_log_types_response() do
+      {config, prefix} = prefix_base_url_for_multiple_runs(config)
+
+      %Session{id: session_id} = session = TestData.session(config: constant(config)) |> pick()
+
+      Bypass.expect_once(
+        bypass,
+        "GET",
+        "/#{prefix}/session/#{session_id}/log/types",
+        fn conn ->
+          conn
+          |> put_resp_content_type("application/json")
+          |> send_resp(200, resp)
+        end
+      )
+
+      parsed_response = Jason.decode!(resp)
+      log_types = get_in(parsed_response, ["value"])
+
+      assert {:ok, ^log_types} = W3CWireProtocolClient.fetch_log_types(session)
+    end
+  end
+
+  test "fetch_log_types/2 returns {:error, %UnexpectedResponseFormatErrror on invalid response",
+       %{bypass: bypass, config: config} do
+    {config, prefix} = prefix_base_url_for_multiple_runs(config)
+
+    %Session{id: session_id} = session = TestData.session(config: constant(config)) |> pick()
+
+    parsed_response = %{}
+
+    Bypass.expect_once(
+      bypass,
+      "GET",
+      "/#{prefix}/session/#{session_id}/log/types",
+      fn conn ->
+        conn
+        |> put_resp_content_type("application/json")
+        |> send_resp(200, Jason.encode!(parsed_response))
+      end
+    )
+
+    assert {:error, %UnexpectedResponseFormatError{response_body: ^parsed_response}} =
+             W3CWireProtocolClient.fetch_log_types(session)
+  end
+
+  test "fetch_log_types/1 returns appropriate errors on various server responses", %{
+    bypass: bypass,
+    config: config
+  } do
+    scenario_server = set_up_error_scenario_tests(bypass)
+
+    for error_scenario <- error_scenarios() do
+      session = build_session_for_scenario(scenario_server, bypass, config, error_scenario)
+
+      assert_expected_response(
+        W3CWireProtocolClient.fetch_log_types(session),
+        error_scenario
+      )
+    end
+  end
 end

@@ -309,6 +309,51 @@ defmodule WebDriverClientTest do
     end
   end
 
+  @tag protocol: :jwp
+  test "fetch_log_types/1 with JWP session returns {:ok, types} on valid response", %{
+    config: config,
+    bypass: bypass
+  } do
+    session = TestData.session(config: constant(config)) |> pick()
+    resp = JWPTestResponses.fetch_log_types_response() |> pick()
+
+    stub_bypass_response(bypass, resp)
+
+    assert {:ok, log_types} = WebDriverClient.fetch_log_types(session)
+    assert Enum.all?(log_types, &is_binary/1)
+  end
+
+  @tag protocol: :w3c
+  test "fetch_log_types/1 with w3c session returns :ok on valid response", %{
+    config: config,
+    bypass: bypass
+  } do
+    session = TestData.session(config: constant(config)) |> pick()
+    resp = W3CTestResponses.fetch_log_types_response() |> pick()
+
+    stub_bypass_response(bypass, resp)
+
+    assert {:ok, log_types} = WebDriverClient.fetch_log_types(session)
+    assert Enum.all?(log_types, &is_binary/1)
+  end
+
+  for protocol <- @protocols do
+    @tag protocol: protocol
+    test "fetch_log_types/1 with #{protocol} session returns appropriate errors on various server responses",
+         %{config: config, bypass: bypass} do
+      scenario_server = set_up_error_scenario_tests(bypass)
+
+      for error_scenario <- basic_error_scenarios() do
+        session = build_session_for_scenario(scenario_server, bypass, config, error_scenario)
+
+        assert_expected_response(
+          WebDriverClient.fetch_log_types(session),
+          error_scenario
+        )
+      end
+    end
+  end
+
   defp build_session_response do
     %{
       "value" => %{

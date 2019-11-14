@@ -57,6 +57,17 @@ defmodule WebDriverClient.W3CWireProtocolClient do
     end
   end
 
+  @spec fetch_log_types(Session.t()) :: {:ok, [String.t()]} | {:error, basic_reason()}
+  def fetch_log_types(%Session{id: id, config: %Config{} = config}) do
+    client = TeslaClientBuilder.build(config)
+    url = "/session/#{id}/log/types"
+
+    with {:ok, %Env{body: body}} <- Tesla.get(client, url),
+         {:ok, log_types} <- parse_value(body) do
+      {:ok, log_types}
+    end
+  end
+
   @spec parse_rect(term) :: {:ok, Rect.t()} | {:error, UnexpectedResponseFormatError.t()}
   defp parse_rect(%{"value" => %{"width" => width, "height" => height, "x" => x, "y" => y}}) do
     {:ok, %Rect{width: width, height: height, x: x, y: y}}
@@ -72,7 +83,7 @@ defmodule WebDriverClient.W3CWireProtocolClient do
   end
 
   defp parse_value(body) do
-    {:error, UnexpectedResponseFormatError.exception(body: body)}
+    {:error, UnexpectedResponseFormatError.exception(response_body: body)}
   end
 
   @spec parse_url(term) :: {:ok, url} | {:error, UnexpectedResponseFormatError.t()}

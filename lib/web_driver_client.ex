@@ -148,4 +148,16 @@ defmodule WebDriverClient do
       when is_list(opts) do
     W3CWireProtocolClient.set_window_rect(session, opts)
   end
+
+  @doc """
+  Fetches the log types from the server
+  """
+  @spec fetch_log_types(Session.t()) :: {:ok, [String.t()]} | {:error, basic_reason()}
+  def fetch_log_types(%Session{config: %Config{protocol: :jwp}} = session) do
+    JSONWireProtocolClient.fetch_log_types(session)
+  end
+
+  def fetch_log_types(%Session{config: %Config{protocol: :w3c}} = session) do
+    W3CWireProtocolClient.fetch_log_types(session)
+  end
 end

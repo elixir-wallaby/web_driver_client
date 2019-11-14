@@ -14,6 +14,12 @@ defmodule WebDriverClient.W3CWireProtocolClient.TestResponses do
     fixed_map(%{"value" => url()}) |> map(&Jason.encode!/1)
   end
 
+  def fetch_log_types_response do
+    %{"value" => list_of(string(:alphanumeric), max_length: 10)}
+    |> fixed_map()
+    |> map(&Jason.encode!/1)
+  end
+
   defp window_rect_response do
     fixed_map(%{
       "value" =>
