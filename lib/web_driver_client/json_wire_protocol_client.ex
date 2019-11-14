@@ -14,12 +14,12 @@ defmodule WebDriverClient.JSONWireProtocolClient do
 
   @type url :: String.t()
 
-  @spec fetch_current_url(Session.t()) ::
-          {:ok, url}
-          | {:error,
-             HTTPClientError.t()
-             | UnexpectedStatusCodeError.t()
-             | UnexpectedResponseFormatError.t()}
+  @type basic_reason ::
+          HTTPClientError.t()
+          | UnexpectedResponseFormatError.t()
+          | UnexpectedStatusCodeError.t()
+
+  @spec fetch_current_url(Session.t()) :: {:ok, url} | {:error, basic_reason}
   def fetch_current_url(%Session{id: id, config: %Config{} = config}) when is_session_id(id) do
     client = TeslaClientBuilder.build(config)
 
@@ -31,8 +31,7 @@ defmodule WebDriverClient.JSONWireProtocolClient do
     end
   end
 
-  @spec fetch_window_size(Session.t()) ::
-          {:ok, Size.t()} | {:error, HTTPClientError.t() | UnexpectedStatusCodeError.t()}
+  @spec fetch_window_size(Session.t()) :: {:ok, Size.t()} | {:error, basic_reason}
   def fetch_window_size(%Session{id: id, config: %Config{} = config})
       when is_session_id(id) do
     client = TeslaClientBuilder.build(config)
@@ -48,8 +47,7 @@ defmodule WebDriverClient.JSONWireProtocolClient do
 
   @type size_opt :: {:width, pos_integer} | {:height, pos_integer}
 
-  @spec set_window_size(Session.t(), [size_opt]) ::
-          :ok | {:error, HTTPClientError.t() | UnexpectedStatusCodeError.t()}
+  @spec set_window_size(Session.t(), [size_opt]) :: :ok | {:error, basic_reason}
   def set_window_size(%Session{id: id, config: %Config{} = config}, opts \\ [])
       when is_list(opts) do
     window_handle = "current"

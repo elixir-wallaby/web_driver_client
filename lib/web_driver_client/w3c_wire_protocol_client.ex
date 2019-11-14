@@ -14,12 +14,12 @@ defmodule WebDriverClient.W3CWireProtocolClient do
 
   @type url :: String.t()
 
-  @spec fetch_current_url(Session.t()) ::
-          {:ok, url}
-          | {:error,
-             UnexpectedResponseFormatError.t()
-             | HTTPClientError.t()
-             | UnexpectedStatusCodeError.t()}
+  @type basic_reason ::
+          HTTPClientError.t()
+          | UnexpectedResponseFormatError.t()
+          | UnexpectedStatusCodeError.t()
+
+  @spec fetch_current_url(Session.t()) :: {:ok, url} | {:error, basic_reason}
   def fetch_current_url(%Session{id: id, config: %Config{} = config}) when is_session_id(id) do
     client = TeslaClientBuilder.build(config)
     url = "/session/#{id}/url"
@@ -30,12 +30,7 @@ defmodule WebDriverClient.W3CWireProtocolClient do
     end
   end
 
-  @spec fetch_window_rect(Session.t()) ::
-          {:ok, Rect.t()}
-          | {:error,
-             UnexpectedResponseFormatError.t()
-             | HTTPClientError.t()
-             | UnexpectedStatusCodeError.t()}
+  @spec fetch_window_rect(Session.t()) :: {:ok, Rect.t()} | {:error, basic_reason}
   def fetch_window_rect(%Session{id: id, config: %Config{} = config})
       when is_session_id(id) do
     client = TeslaClientBuilder.build(config)
@@ -49,8 +44,7 @@ defmodule WebDriverClient.W3CWireProtocolClient do
 
   @type rect_opt :: {:width, pos_integer} | {:height, pos_integer} | {:x, integer} | {:y, integer}
 
-  @spec set_window_rect(Session.t(), [rect_opt]) ::
-          :ok | {:error, HTTPClientError.t() | UnexpectedStatusCodeError.t()}
+  @spec set_window_rect(Session.t(), [rect_opt]) :: :ok | {:error, basic_reason}
   def set_window_rect(%Session{id: id, config: %Config{} = config}, opts \\ [])
       when is_list(opts) do
     client = TeslaClientBuilder.build(config)

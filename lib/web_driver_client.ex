@@ -20,16 +20,15 @@ defmodule WebDriverClient do
 
   @type config_opt :: {:config, Config.t()}
   @type url :: String.t()
+  @type basic_reason ::
+          HTTPClientError.t()
+          | UnexpectedResponseFormatError.t()
+          | UnexpectedStatusCodeError.t()
 
   @doc """
   Starts a new session
   """
-  @spec start_session(map(), [config_opt]) ::
-          {:ok, Session.t()}
-          | {:error,
-             HTTPClientError.t()
-             | UnexpectedResponseFormatError.t()
-             | UnexpectedStatusCodeError.t()}
+  @spec start_session(map(), [config_opt]) :: {:ok, Session.t()} | {:error, basic_reason}
   def start_session(payload, opts) when is_list(opts) and is_map(payload) do
     config = Keyword.fetch!(opts, :config)
     client = TeslaClientBuilder.build(config)
@@ -48,12 +47,7 @@ defmodule WebDriverClient do
   @doc """
   Returns the list of sessions
   """
-  @spec fetch_sessions([config_opt]) ::
-          {:ok, [Session.t()]}
-          | {:error,
-             HTTPClientError.t()
-             | UnexpectedResponseFormatError.t()
-             | UnexpectedStatusCodeError.t()}
+  @spec fetch_sessions([config_opt]) :: {:ok, [Session.t()]} | {:error, basic_reason}
   def fetch_sessions(opts) when is_list(opts) do
     config = Keyword.fetch!(opts, :config)
     client = TeslaClientBuilder.build(config)
@@ -72,9 +66,7 @@ defmodule WebDriverClient do
   @doc """
   Ends a session
   """
-  @spec end_session(Session.t()) ::
-          :ok | {:error, HTTPClientError.t() | UnexpectedStatusCodeError.t()}
-
+  @spec end_session(Session.t()) :: :ok | {:error, basic_reason}
   def end_session(%Session{id: id, config: %Config{} = config})
       when is_session_id(id) do
     config
@@ -92,8 +84,7 @@ defmodule WebDriverClient do
   @doc """
   Navigates the browser to the given url
   """
-  @spec navigate_to(Session.t(), url) ::
-          :ok | {:error, HTTPClientError.t() | UnexpectedStatusCodeError.t()}
+  @spec navigate_to(Session.t(), url) :: :ok | {:error, basic_reason}
   def navigate_to(%Session{id: id, config: %Config{} = config}, url)
       when is_session_id(id) and is_url(url) do
     request_body = %{"url" => url}
@@ -113,8 +104,7 @@ defmodule WebDriverClient do
   @doc """
   Returns the web browsers current url
   """
-  @spec fetch_current_url(Session.t()) ::
-          {:ok, url} | {:error, HTTPClientError.t() | UnexpectedStatusCodeError.t()}
+  @spec fetch_current_url(Session.t()) :: {:ok, url} | {:error, basic_reason}
   def fetch_current_url(%Session{config: %Config{protocol: :jwp}} = session) do
     JSONWireProtocolClient.fetch_current_url(session)
   end
@@ -124,10 +114,9 @@ defmodule WebDriverClient do
   end
 
   @doc """
-  Returns the web browsers current url
+  Returns the size of the current window
   """
-  @spec fetch_window_size(Session.t()) ::
-          {:ok, Size.t()} | {:error, HTTPClientError.t() | UnexpectedStatusCodeError.t()}
+  @spec fetch_window_size(Session.t()) :: {:ok, Size.t()} | {:error, basic_reason}
   def fetch_window_size(%Session{config: %Config{protocol: :jwp}} = session) do
     JSONWireProtocolClient.fetch_window_size(session)
   end
@@ -147,8 +136,7 @@ defmodule WebDriverClient do
   @doc """
   Sets the size of the window
   """
-  @spec set_window_size(Session.t(), [size_opt]) ::
-          :ok | {:error, HTTPClientError.t() | UnexpectedStatusCodeError.t()}
+  @spec set_window_size(Session.t(), [size_opt]) :: :ok | {:error, basic_reason}
   def set_window_size(session, opts \\ [])
 
   def set_window_size(%Session{config: %Config{protocol: :jwp}} = session, opts)
