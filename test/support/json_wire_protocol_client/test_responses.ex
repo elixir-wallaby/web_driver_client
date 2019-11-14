@@ -10,6 +10,10 @@ defmodule WebDriverClient.JSONWireProtocolClient.TestResponses do
     blank_value_response() |> map(&Jason.encode!/1)
   end
 
+  def fetch_current_url_response do
+    fixed_map(%{"value" => url()}) |> map(&Jason.encode!/1)
+  end
+
   defp blank_value_response do
     constant(%{"value" => nil})
   end
@@ -22,5 +26,9 @@ defmodule WebDriverClient.JSONWireProtocolClient.TestResponses do
           "height" => integer(0..1000)
         })
     })
+  end
+
+  defp url do
+    constant("http://example.com")
   end
 end

@@ -12,6 +12,25 @@ defmodule WebDriverClient.JSONWireProtocolClient do
   alias WebDriverClient.UnexpectedResponseFormatError
   alias WebDriverClient.UnexpectedStatusCodeError
 
+  @type url :: String.t()
+
+  @spec fetch_current_url(Session.t()) ::
+          {:ok, url}
+          | {:error,
+             HTTPClientError.t()
+             | UnexpectedStatusCodeError.t()
+             | UnexpectedResponseFormatError.t()}
+  def fetch_current_url(%Session{id: id, config: %Config{} = config}) when is_session_id(id) do
+    client = TeslaClientBuilder.build(config)
+
+    url = "/session/#{id}/url"
+
+    with {:ok, %Env{body: body}} <- Tesla.get(client, url),
+         {:ok, url} <- parse_url(body) do
+      {:ok, url}
+    end
+  end
+
   @spec fetch_window_size(Session.t()) ::
           {:ok, Size.t()} | {:error, HTTPClientError.t() | UnexpectedStatusCodeError.t()}
   def fetch_window_size(%Session{id: id, config: %Config{} = config})
@@ -56,6 +75,15 @@ defmodule WebDriverClient.JSONWireProtocolClient do
   end
 
   defp parse_size(body) do
+    {:error, UnexpectedResponseFormatError.exception(response_body: body)}
+  end
+
+  @spec parse_url(term) :: {:ok, url} | {:error, UnexpectedResponseFormatError.t()}
+  defp parse_url(%{"value" => url}) do
+    {:ok, url}
+  end
+
+  defp parse_url(body) do
     {:error, UnexpectedResponseFormatError.exception(response_body: body)}
   end
 end

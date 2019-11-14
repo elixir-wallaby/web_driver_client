@@ -12,6 +12,24 @@ defmodule WebDriverClient.W3CWireProtocolClient do
   alias WebDriverClient.UnexpectedStatusCodeError
   alias WebDriverClient.W3CWireProtocolClient.Rect
 
+  @type url :: String.t()
+
+  @spec fetch_current_url(Session.t()) ::
+          {:ok, url}
+          | {:error,
+             UnexpectedResponseFormatError.t()
+             | HTTPClientError.t()
+             | UnexpectedStatusCodeError.t()}
+  def fetch_current_url(%Session{id: id, config: %Config{} = config}) when is_session_id(id) do
+    client = TeslaClientBuilder.build(config)
+    url = "/session/#{id}/url"
+
+    with {:ok, %Env{body: body}} <- Tesla.get(client, url),
+         {:ok, url} <- parse_url(body) do
+      {:ok, url}
+    end
+  end
+
   @spec fetch_window_rect(Session.t()) ::
           {:ok, Rect.t()}
           | {:error,
@@ -61,5 +79,14 @@ defmodule WebDriverClient.W3CWireProtocolClient do
 
   defp parse_value(body) do
     {:error, UnexpectedResponseFormatError.exception(body: body)}
+  end
+
+  @spec parse_url(term) :: {:ok, url} | {:error, UnexpectedResponseFormatError.t()}
+  defp parse_url(%{"value" => url}) do
+    {:ok, url}
+  end
+
+  defp parse_url(body) do
+    {:error, UnexpectedResponseFormatError.exception(response_body: body)}
   end
 end

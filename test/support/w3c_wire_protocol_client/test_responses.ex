@@ -10,6 +10,10 @@ defmodule WebDriverClient.W3CWireProtocolClient.TestResponses do
     window_rect_response() |> map(&Jason.encode!/1)
   end
 
+  def fetch_current_url_response do
+    fixed_map(%{"value" => url()}) |> map(&Jason.encode!/1)
+  end
+
   defp window_rect_response do
     fixed_map(%{
       "value" =>
@@ -20,5 +24,9 @@ defmodule WebDriverClient.W3CWireProtocolClient.TestResponses do
           "height" => integer(0..1000)
         })
     })
+  end
+
+  defp url do
+    constant("http://foo.com")
   end
 end

@@ -10,9 +10,7 @@ defmodule WebDriverClient do
   alias WebDriverClient.HTTPClientError
   alias WebDriverClient.JSONWireProtocolClient
   alias WebDriverClient.ResponseParsers.FetchSessionsResponseParser
-  alias WebDriverClient.ResponseParsers.GenericResponseParser
   alias WebDriverClient.ResponseParsers.SessionParser
-  alias WebDriverClient.Responses.GenericResponse
   alias WebDriverClient.Session
   alias WebDriverClient.Size
   alias WebDriverClient.TeslaClientBuilder
@@ -117,19 +115,12 @@ defmodule WebDriverClient do
   """
   @spec fetch_current_url(Session.t()) ::
           {:ok, url} | {:error, HTTPClientError.t() | UnexpectedStatusCodeError.t()}
-  def fetch_current_url(%Session{id: id, config: %Config{} = config})
-      when is_session_id(id) do
-    client = TeslaClientBuilder.build(config)
+  def fetch_current_url(%Session{config: %Config{protocol: :jwp}} = session) do
+    JSONWireProtocolClient.fetch_current_url(session)
+  end
 
-    with {:ok, %Env{body: body}} <- Tesla.get(client, "/session/#{id}/url") do
-      case GenericResponseParser.parse(body) do
-        {:ok, %GenericResponse{value: value}} when is_url(value) ->
-          {:ok, value}
-
-        :error ->
-          {:error, UnexpectedResponseFormatError.exception(response_body: body)}
-      end
-    end
+  def fetch_current_url(%Session{config: %Config{protocol: :w3c}} = session) do
+    W3CWireProtocolClient.fetch_current_url(session)
   end
 
   @doc """

@@ -181,39 +181,47 @@ defmodule WebDriverClientTest do
     assert :ok = WebDriverClient.navigate_to(session, browser_url)
   end
 
-  test "fetch_current_url/1 with valid data calls the correct url and returns the response", %{
+  @tag protocol: :w3c
+  test "fetch_current_url/1 with w3c session returns {:ok, url} on success", %{
     config: config,
     bypass: bypass
   } do
-    %Session{id: session_id} = session = TestData.session(config: constant(config)) |> pick()
+    session = TestData.session(config: constant(config)) |> pick()
+    resp = W3CTestResponses.fetch_current_url_response() |> pick()
+    stub_bypass_response(bypass, resp)
 
-    browser_url = "http://foo.bar.example"
-
-    Bypass.expect_once(bypass, "GET", "/session/#{session_id}/url", fn conn ->
-      response_body =
-        %{"sessionId" => "foo", "status" => 1, "value" => browser_url}
-        |> Jason.encode!()
-
-      conn
-      |> put_resp_content_type("application/json")
-      |> send_resp(200, response_body)
-    end)
-
-    assert {:ok, ^browser_url} = WebDriverClient.fetch_current_url(session)
+    assert {:ok, url} = WebDriverClient.fetch_current_url(session)
+    assert is_binary(url)
   end
 
-  test "fetch_current_url/1 with unexpected data returns error", %{config: config, bypass: bypass} do
-    %Session{id: session_id} = session = TestData.session(config: constant(config)) |> pick()
+  @tag protocol: :jwp
+  test "fetch_current_url/1 with JWP session returns {:ok, url} on success", %{
+    config: config,
+    bypass: bypass
+  } do
+    session = TestData.session(config: constant(config)) |> pick()
+    resp = JWPTestResponses.fetch_current_url_response() |> pick()
+    stub_bypass_response(bypass, resp)
 
-    Bypass.expect_once(bypass, "GET", "/session/#{session_id}/url", fn conn ->
-      response_body = Jason.encode!(%{})
+    assert {:ok, url} = WebDriverClient.fetch_current_url(session)
+    assert is_binary(url)
+  end
 
-      conn
-      |> put_resp_content_type("application/json")
-      |> send_resp(200, response_body)
-    end)
+  for protocol <- @protocols do
+    @tag protocol: protocol
+    test "fetch_current_url/1 with #{protocol} session returns appropriate errors on various server responses",
+         %{config: config, bypass: bypass} do
+      scenario_server = set_up_error_scenario_tests(bypass)
 
-    assert {:error, %UnexpectedResponseFormatError{}} = WebDriverClient.fetch_current_url(session)
+      for error_scenario <- basic_error_scenarios() do
+        session = build_session_for_scenario(scenario_server, bypass, config, error_scenario)
+
+        assert_expected_response(
+          WebDriverClient.fetch_current_url(session),
+          error_scenario
+        )
+      end
+    end
   end
 
   @tag protocol: :jwp
