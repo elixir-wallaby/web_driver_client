@@ -1,5 +1,7 @@
 defmodule WebDriverClient.W3CWireProtocolClient.Rect do
-  @moduledoc false
+  @moduledoc """
+  A window's rectangle
+  """
 
   defstruct [:x, :y, :width, :height]
 

@@ -84,6 +84,7 @@ defmodule WebDriverClient do
   @doc """
   Navigates the browser to the given url
   """
+  @doc subject: :navigation
   @spec navigate_to(Session.t(), url) :: :ok | {:error, basic_reason}
   def navigate_to(%Session{id: id, config: %Config{} = config}, url)
       when is_session_id(id) and is_url(url) do
@@ -104,6 +105,7 @@ defmodule WebDriverClient do
   @doc """
   Returns the web browsers current url
   """
+  @doc subject: :navigation
   @spec fetch_current_url(Session.t()) :: {:ok, url} | {:error, basic_reason}
   def fetch_current_url(%Session{config: %Config{protocol: :jwp}} = session) do
     JSONWireProtocolClient.fetch_current_url(session)
@@ -152,6 +154,7 @@ defmodule WebDriverClient do
   @doc """
   Fetches the log types from the server
   """
+  @doc subject: :logging
   @spec fetch_log_types(Session.t()) :: {:ok, [String.t()]} | {:error, basic_reason()}
   def fetch_log_types(%Session{config: %Config{protocol: :jwp}} = session) do
     JSONWireProtocolClient.fetch_log_types(session)

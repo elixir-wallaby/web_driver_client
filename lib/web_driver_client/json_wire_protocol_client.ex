@@ -1,5 +1,13 @@
 defmodule WebDriverClient.JSONWireProtocolClient do
-  @moduledoc false
+  @moduledoc """
+  Low-level client for JSON wire protocol (JWP).
+
+  Use `WebDriverClient` if you'd like to support both JWP
+  and W3C protocols without changing code. This module is only
+  intended for use if you need JWP specific functionality.
+
+  Specification: https://github.com/SeleniumHQ/selenium/wiki/JsonWireProtocol
+  """
 
   import WebDriverClient.Guards
 
@@ -19,6 +27,12 @@ defmodule WebDriverClient.JSONWireProtocolClient do
           | UnexpectedResponseFormatError.t()
           | UnexpectedStatusCodeError.t()
 
+  @doc """
+  Fetches the url of the current page.
+
+  Specification: https://github.com/SeleniumHQ/selenium/wiki/JsonWireProtocol#sessionsessionidurl
+  """
+  @doc subject: :navigation
   @spec fetch_current_url(Session.t()) :: {:ok, url} | {:error, basic_reason}
   def fetch_current_url(%Session{id: id, config: %Config{} = config}) when is_session_id(id) do
     client = TeslaClientBuilder.build(config)
@@ -67,6 +81,12 @@ defmodule WebDriverClient.JSONWireProtocolClient do
     end
   end
 
+  @doc """
+  Fetches the available log types.
+
+  Specification: https://github.com/SeleniumHQ/selenium/wiki/JsonWireProtocol#sessionsessionidlogtypes
+  """
+  @doc subject: :logging
   @spec fetch_log_types(Session.t()) :: {:ok, [String.t()]} | {:error, basic_reason()}
   def fetch_log_types(%Session{id: id, config: %Config{} = config}) do
     client = TeslaClientBuilder.build(config)

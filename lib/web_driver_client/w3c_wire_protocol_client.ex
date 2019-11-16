@@ -1,5 +1,13 @@
 defmodule WebDriverClient.W3CWireProtocolClient do
-  @moduledoc false
+  @moduledoc """
+  Low-level client for W3C wire protocol.
+
+  Use `WebDriverClient` if you'd like to support both JWP
+  and W3C protocols without changing code. This module is only
+  intended for use if you need W3C specific functionality.
+
+  Specification: https://w3c.github.io/webdriver/
+  """
 
   import WebDriverClient.Guards
 
@@ -19,6 +27,12 @@ defmodule WebDriverClient.W3CWireProtocolClient do
           | UnexpectedResponseFormatError.t()
           | UnexpectedStatusCodeError.t()
 
+  @doc """
+  Fetches the current url of the top-level browsing context.
+
+  Specification: https://w3c.github.io/webdriver/#get-current-url
+  """
+  @doc subject: :navigation
   @spec fetch_current_url(Session.t()) :: {:ok, url} | {:error, basic_reason}
   def fetch_current_url(%Session{id: id, config: %Config{} = config}) when is_session_id(id) do
     client = TeslaClientBuilder.build(config)
@@ -57,6 +71,7 @@ defmodule WebDriverClient.W3CWireProtocolClient do
     end
   end
 
+  @doc subject: :logging
   @spec fetch_log_types(Session.t()) :: {:ok, [String.t()]} | {:error, basic_reason()}
   def fetch_log_types(%Session{id: id, config: %Config{} = config}) do
     client = TeslaClientBuilder.build(config)

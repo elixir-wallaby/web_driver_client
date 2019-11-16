@@ -13,9 +13,11 @@ defmodule WebDriverClient.MixProject do
         "coveralls.detail": :test,
         "coveralls.travis": :test,
         "coveralls.html": :test,
-        "coveralls.json": :test
+        "coveralls.json": :test,
+        docs: :docs
       ],
       start_permanent: Mix.env() == :prod,
+      docs: docs(),
       deps: deps(),
       dialyzer: dialyzer()
     ]
@@ -50,6 +52,33 @@ defmodule WebDriverClient.MixProject do
     [
       ignore_warnings: ".dialyzer_ignore.exs",
       list_unused_filters: true
+    ]
+  end
+
+  defp docs do
+    [
+      groups_for_modules: [
+        "Main API": [
+          WebDriverClient,
+          WebDriverClient.Config,
+          WebDriverClient.Session,
+          WebDriverClient.Size,
+          WebDriverClient.HTTPClientError,
+          WebDriverClient.UnexpectedResponseFormatError,
+          WebDriverClient.UnexpectedStatusCodeError
+        ],
+        "Low-level JWP API": [
+          WebDriverClient.JSONWireProtocolClient
+        ],
+        "Low-level W3C API": [
+          WebDriverClient.W3CWireProtocolClient,
+          WebDriverClient.W3CWireProtocolClient.Rect
+        ]
+      ],
+      groups_for_functions: [
+        Navigation: &(&1[:subject] == :navigation),
+        Logging: &(&1[:subject] == :logging)
+      ]
     ]
   end
 end
