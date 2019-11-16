@@ -16,6 +16,10 @@ defmodule WebDriverClient.IntegrationTesting.TestServer do
     "http://#{get_test_server_hostname()}:#{port_number}"
   end
 
+  def get_test_page_url(:logging) do
+    Path.join(get_base_url(), "logging.html")
+  end
+
   @impl true
   def init([]) do
     :inets.start()

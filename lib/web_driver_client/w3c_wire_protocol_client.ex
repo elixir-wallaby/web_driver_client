@@ -18,6 +18,7 @@ defmodule WebDriverClient.W3CWireProtocolClient do
   alias WebDriverClient.TeslaClientBuilder
   alias WebDriverClient.UnexpectedResponseFormatError
   alias WebDriverClient.UnexpectedStatusCodeError
+  alias WebDriverClient.W3CWireProtocolClient.LogEntry
   alias WebDriverClient.W3CWireProtocolClient.Rect
 
   @type url :: String.t()
@@ -71,8 +72,10 @@ defmodule WebDriverClient.W3CWireProtocolClient do
     end
   end
 
+  @type log_type :: String.t()
+
   @doc subject: :logging
-  @spec fetch_log_types(Session.t()) :: {:ok, [String.t()]} | {:error, basic_reason()}
+  @spec fetch_log_types(Session.t()) :: {:ok, [log_type]} | {:error, basic_reason()}
   def fetch_log_types(%Session{id: id, config: %Config{} = config}) do
     client = TeslaClientBuilder.build(config)
     url = "/session/#{id}/log/types"
@@ -80,6 +83,59 @@ defmodule WebDriverClient.W3CWireProtocolClient do
     with {:ok, %Env{body: body}} <- Tesla.get(client, url),
          {:ok, log_types} <- parse_value(body) do
       {:ok, log_types}
+    end
+  end
+
+  @doc """
+  Fetches the log for a given type.
+
+  This function is not part of the official spec and is
+  not supported by all servers.
+  """
+  @doc subject: :logging
+  @spec fetch_logs(Session.t(), log_type) :: {:ok, [LogEntry.t()]} | {:error, basic_reason()}
+  def fetch_logs(%Session{id: id, config: %Config{} = config}, log_type) do
+    client = TeslaClientBuilder.build(config)
+    url = "/session/#{id}/log"
+    request_body = %{type: log_type}
+
+    with {:ok, %Env{body: body}} <- Tesla.post(client, url, request_body),
+         {:ok, logs} <- parse_log_entries(body) do
+      {:ok, logs}
+    end
+  end
+
+  @spec parse_log_entries(term) ::
+          {:ok, [LogEntry.t()]} | {:error, UnexpectedResponseFormatError.t()}
+  defp parse_log_entries(response) do
+    with %{"value" => values} when is_list(values) <- response,
+         log_entries when is_list(log_entries) <- do_parse_log_entries(values) do
+      {:ok, log_entries}
+    else
+      _ ->
+        {:error, UnexpectedResponseFormatError.exception(response_body: response)}
+    end
+  end
+
+  defp do_parse_log_entries(log_entries) do
+    log_entries
+    |> Enum.reduce_while([], fn
+      %{"level" => level, "message" => message, "timestamp" => timestamp}, acc
+      when is_binary(level) and is_binary(message) and is_integer(timestamp) ->
+        log_entry = %LogEntry{
+          level: level,
+          message: message,
+          timestamp: DateTime.from_unix!(timestamp, :millisecond)
+        }
+
+        {:cont, [log_entry | acc]}
+
+      _, _ ->
+        {:halt, :error}
+    end)
+    |> case do
+      :error -> :error
+      log_entries -> Enum.reverse(log_entries)
     end
   end
 

@@ -8,6 +8,7 @@ defmodule WebDriverClientTest do
   alias WebDriverClient.Config
   alias WebDriverClient.HTTPClientError
   alias WebDriverClient.JSONWireProtocolClient.TestResponses, as: JWPTestResponses
+  alias WebDriverClient.LogEntry
   alias WebDriverClient.Session
   alias WebDriverClient.Size
   alias WebDriverClient.TestData
@@ -348,6 +349,51 @@ defmodule WebDriverClientTest do
 
         assert_expected_response(
           WebDriverClient.fetch_log_types(session),
+          error_scenario
+        )
+      end
+    end
+  end
+
+  @tag protocol: :jwp
+  test "fetch_logs/2 with JWP session returns {:ok, log_entries} on valid response", %{
+    config: config,
+    bypass: bypass
+  } do
+    session = TestData.session(config: constant(config)) |> pick()
+    resp = JWPTestResponses.fetch_logs_response() |> pick()
+
+    stub_bypass_response(bypass, resp)
+
+    assert {:ok, log_entries} = WebDriverClient.fetch_logs(session, "log_type")
+    assert Enum.all?(log_entries, &match?(%LogEntry{}, &1))
+  end
+
+  @tag protocol: :w3c
+  test "fetch_logs/2 with w3c session returns {:ok, [LogEntry.t()]} on valid response", %{
+    config: config,
+    bypass: bypass
+  } do
+    session = TestData.session(config: constant(config)) |> pick()
+    resp = W3CTestResponses.fetch_logs_response() |> pick()
+
+    stub_bypass_response(bypass, resp)
+
+    assert {:ok, log_entries} = WebDriverClient.fetch_logs(session, "log_type")
+    assert Enum.all?(log_entries, &match?(%LogEntry{}, &1))
+  end
+
+  for protocol <- @protocols do
+    @tag protocol: protocol
+    test "fetch_logs/2 with #{protocol} session returns appropriate errors on various server responses",
+         %{config: config, bypass: bypass} do
+      scenario_server = set_up_error_scenario_tests(bypass)
+
+      for error_scenario <- basic_error_scenarios() do
+        session = build_session_for_scenario(scenario_server, bypass, config, error_scenario)
+
+        assert_expected_response(
+          WebDriverClient.fetch_logs(session, "log_type"),
           error_scenario
         )
       end

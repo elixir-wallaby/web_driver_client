@@ -9,6 +9,7 @@ defmodule WebDriverClient do
   alias WebDriverClient.Config
   alias WebDriverClient.HTTPClientError
   alias WebDriverClient.JSONWireProtocolClient
+  alias WebDriverClient.LogEntry
   alias WebDriverClient.ResponseParsers.FetchSessionsResponseParser
   alias WebDriverClient.ResponseParsers.SessionParser
   alias WebDriverClient.Session
@@ -151,16 +152,55 @@ defmodule WebDriverClient do
     W3CWireProtocolClient.set_window_rect(session, opts)
   end
 
+  @type log_type :: String.t()
+
   @doc """
   Fetches the log types from the server
   """
   @doc subject: :logging
-  @spec fetch_log_types(Session.t()) :: {:ok, [String.t()]} | {:error, basic_reason()}
+  @spec fetch_log_types(Session.t()) :: {:ok, [log_type]} | {:error, basic_reason()}
   def fetch_log_types(%Session{config: %Config{protocol: :jwp}} = session) do
     JSONWireProtocolClient.fetch_log_types(session)
   end
 
   def fetch_log_types(%Session{config: %Config{protocol: :w3c}} = session) do
     W3CWireProtocolClient.fetch_log_types(session)
+  end
+
+  @doc """
+  Fetches log entries for the requested log type.
+  """
+  @doc subject: :logging
+  @spec fetch_logs(Session.t(), log_type) :: {:ok, [LogEntry.t()]} | {:error, basic_reason()}
+  def fetch_logs(session, log_type)
+
+  def fetch_logs(%Session{config: %Config{protocol: :jwp}} = session, log_type)
+      when is_binary(log_type) do
+    with {:ok, log_entries} <- JSONWireProtocolClient.fetch_logs(session, log_type) do
+      log_entries = Enum.map(log_entries, &to_log_entry/1)
+      {:ok, log_entries}
+    end
+  end
+
+  def fetch_logs(%Session{config: %Config{protocol: :w3c}} = session, log_type)
+      when is_binary(log_type) do
+    with {:ok, log_entries} <- W3CWireProtocolClient.fetch_logs(session, log_type) do
+      log_entries = Enum.map(log_entries, &to_log_entry/1)
+      {:ok, log_entries}
+    end
+  end
+
+  @spec to_log_entry(JSONWireProtocolClient.LogEntry.t()) :: LogEntry.t()
+  defp to_log_entry(%JSONWireProtocolClient.LogEntry{} = log_entry) do
+    log_entry
+    |> Map.from_struct()
+    |> (&struct!(LogEntry, &1)).()
+  end
+
+  @spec to_log_entry(W3CWireProtocolClient.LogEntry.t()) :: LogEntry.t()
+  defp to_log_entry(%W3CWireProtocolClient.LogEntry{} = log_entry) do
+    log_entry
+    |> Map.from_struct()
+    |> (&struct!(LogEntry, &1)).()
   end
 end
