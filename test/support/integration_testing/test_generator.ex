@@ -17,10 +17,13 @@ defmodule WebDriverClient.IntegrationTesting.TestGenerator do
           session_configuration_name: configuration_name
         } = scenario
 
+        describe_name =
+          unquote(__MODULE__).__scenario_description__(scenario, unquote(__CALLER__.line))
+
         integration_test_driver_configuration_name = "#{driver}-#{configuration_name}"
         integration_test_driver_browser = "#{driver}-#{browser}"
 
-        describe inspect(scenario) do
+        describe describe_name do
           @describetag scenario: scenario
           @describetag integration_test_driver: to_string(driver)
           @describetag integration_test_driver_browser: integration_test_driver_browser
@@ -31,5 +34,17 @@ defmodule WebDriverClient.IntegrationTesting.TestGenerator do
         end
       end)
     end
+  end
+
+  @doc false
+  def __scenario_description__(scenario, line_number) do
+    %Scenario{
+      browser: browser,
+      driver: driver,
+      protocol: protocol,
+      session_configuration_name: session_configuration_name
+    } = scenario
+
+    "Scenario(#{browser}/#{driver}/#{protocol}/#{session_configuration_name}/line=#{line_number})"
   end
 end
