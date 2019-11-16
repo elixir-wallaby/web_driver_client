@@ -1,0 +1,238 @@
+name: Continuous Integration
+
+on: push
+
+env:
+  CACHE_VERSION: 1
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      MIX_ENV: "test"
+    strategy:
+      fail-fast: false
+      matrix:
+        elixir: ["1.9.4", "1.8.2", "1.7.4", "1.6.6"]
+        include:
+          - elixir: "1.9.4"
+            otp: "22.1.7"
+          - elixir: "1.8.2"
+            otp: "22.1.7"
+          - elixir: "1.7.4"
+            otp: "22.1.7"
+          - elixir: "1.6.6"
+            otp: "21.3.8.9"
+    steps:
+      - uses: actions/checkout@v1
+      - uses: actions/setup-elixir@v1.0.0
+        with:
+          otp-version: ${{ matrix.otp }}
+          elixir-version: ${{ matrix.elixir }}
+      - name: Cache deps
+        uses: actions/cache@v1
+        with:
+          path: deps
+          key: ${{ env.CACHE_VERSION }}-deps-build-${{ env.MIX_ENV }}-${{ matrix.otp }}-${{ matrix.elixir }}-${{ hashFiles('mix.lock') }}
+      - name: Cache _build
+        uses: actions/cache@v1
+        with:
+          path: _build/${{ env.MIX_ENV }}
+          key: ${{ env.CACHE_VERSION }}-_build-${{ env.MIX_ENV }}-${{ matrix.otp }}-${{ matrix.elixir }}-
+      - name: Install Dependencies
+        run: mix deps.get
+      - name: Compile app
+        run: mix compile --force --warnings-as-errors
+      - run: mix test
+      - run: mix format --check-formatted
+      - run: mix credo --strict
+      - name: Check for unused dependencies
+        run: mix deps.unlock --unused && git diff --exit-code
+
+  dialyzer:
+    runs-on: ubuntu-latest
+    env:
+      MIX_ENV: "dev"
+    strategy:
+      fail-fast: false
+      matrix:
+        elixir: ["1.9.4", "1.8.2", "1.7.4", "1.6.6"]
+        include:
+          - elixir: "1.9.4"
+            otp: "22.1.7"
+          - elixir: "1.8.2"
+            otp: "22.1.7"
+          - elixir: "1.7.4"
+            otp: "22.1.7"
+          - elixir: "1.6.6"
+            otp: "21.3.8.9"
+    steps:
+      - uses: actions/checkout@v1
+      - uses: actions/setup-elixir@v1.0.0
+        with:
+          otp-version: ${{ matrix.otp }}
+          elixir-version: ${{ matrix.elixir }}
+      - uses: actions/cache@v1
+        with:
+          path: deps
+          key: ${{ env.CACHE_VERSION }}-deps-build-${{ env.MIX_ENV }}-${{ matrix.otp }}-${{ matrix.elixir }}-${{ hashFiles('mix.lock') }}
+      - uses: actions/cache@v1
+        with:
+          path: _build/${{ env.MIX_ENV }}
+          key: ${{ env.CACHE_VERSION }}-_build-${{ env.MIX_ENV }}-${{ matrix.otp }}-${{ matrix.elixir }}-dialyzer
+          restore-keys: |
+            ${{ env.CACHE_VERSION }}-_build-${{ env.MIX_ENV }}-${{ matrix.otp }}-${{ matrix.elixir }}-
+      - name: Install Dependencies
+        run: mix deps.get
+      - name: Compile app
+        run: mix compile --force --warnings-as-errors
+      - name: Build PLT
+        run: mix dialyzer --plt
+      - name: Dialyzer
+        run: mix dialyzer --format short
+
+  integration_tests:
+    runs-on: ubuntu-latest
+    env:
+      MIX_ENV: "test"
+    strategy:
+      fail-fast: false
+      matrix:
+        elixir:
+          - "1.9.4"
+          - "1.8.2"
+          - "1.7.4"
+          - "1.6.6"
+        include:
+          - elixir: "1.9.4"
+            otp: "22.1.7"
+          - elixir: "1.8.2"
+            otp: "22.1.7"
+          - elixir: "1.7.4"
+            otp: "22.1.7"
+          - elixir: "1.6.6"
+            otp: "21.3.8.9"
+
+    steps:
+      - uses: actions/checkout@v1
+      - uses: actions/setup-elixir@v1.0.0
+        with:
+          otp-version: ${{ matrix.otp }}
+          elixir-version: ${{ matrix.elixir }}
+      - run: mkdir -p logs
+      - name: Download and run phantomjs
+        run: |
+          wget https://bitbucket.org/ariya/phantomjs/downloads/phantomjs-2.1.1-linux-x86_64.tar.bz2
+          tar -xvjf phantomjs-2.1.1-linux-x86_64.tar.bz2
+      - name: Run PhantomJS
+        run: ./phantomjs-2.1.1-linux-x86_64/bin/phantomjs --wd | tee -a logs/phantomjs.log &
+      - name: Download and install Google Chrome
+        run: |
+          wget -q -O - https://dl.google.com/linux/linux_signing_key.pub | sudo apt-key add -
+          echo "deb https://dl.google.com/linux/chrome/deb/ stable main" | sudo tee -a /etc/apt/sources.list.d/google-chrome.list > /dev/null
+          sudo apt-get update -qqy
+          sudo apt-get -qqy install google-chrome-stable
+          google-chrome-stable --version
+
+      - name: Install chromedriver
+        run: |
+          export CHROMEDRIVER_VERSION=`curl -s http://chromedriver.storage.googleapis.com/LATEST_RELEASE`
+          curl -L -O "http://chromedriver.storage.googleapis.com/${CHROMEDRIVER_VERSION}/chromedriver_linux64.zip"
+          unzip chromedriver_linux64.zip
+          sudo chmod +x chromedriver
+          sudo mv chromedriver /usr/local/bin
+
+      - name: Run chromedriver
+        run: chromedriver | tee -a logs/chromedriver.log &
+      - uses: actions/cache@v1
+        with:
+          path: deps
+          key: ${{ env.CACHE_VERSION }}-deps-build-${{ env.MIX_ENV }}-${{ matrix.otp }}-${{ matrix.elixir }}-${{ hashFiles('mix.lock') }}
+      - uses: actions/cache@v1
+        with:
+          path: _build/${{ env.MIX_ENV }}
+          key: ${{ env.CACHE_VERSION }}-_build-${{ env.MIX_ENV }}-${{ matrix.otp }}-${{ matrix.elixir }}-
+      - name: Install Dependencies
+        run: mix deps.get
+      - name: Compile app
+        run: mix compile --force --warnings-as-errors
+      - run: mix test --only integration_test_driver:chromedriver
+      - run: mix test --only integration_test_driver:phantomjs
+      - uses: actions/upload-artifact@v1
+        with:
+          name: PhantomJS and Chromedriver Logs
+          path: logs/
+
+  integration_tests-selenium:
+    runs-on: ubuntu-latest
+
+    env:
+      MIX_ENV: "test"
+    strategy:
+      fail-fast: false
+      matrix:
+        scenario:
+          - selenium_3-chrome
+          - selenium_2-chrome
+          - selenium_3-firefox
+          - selenium_2-firefox
+        elixir:
+          - "1.9.4"
+          # - "1.8.2"
+          # - "1.7.4"
+          - "1.6.6"
+        include:
+          - elixir: "1.9.4"
+            otp: "22.1.7"
+          - elixir: "1.8.2"
+            otp: "22.1.7"
+          - elixir: "1.7.4"
+            otp: "22.1.7"
+          - elixir: "1.6.6"
+            otp: "21.3.8.9"
+          - scenario: selenium_3-chrome
+            image: selenium/standalone-chrome:3
+          - scenario: selenium_3-firefox
+            image: selenium/standalone-firefox:3
+          - scenario: selenium_2-chrome
+            image: selenium/standalone-chrome:2.53.1
+          - scenario: selenium_2-firefox
+            image: selenium/standalone-firefox:2.53.1
+
+    services:
+      # Allow accessing localhost ports from docker containers.
+      # See https://github.com/qoomon/docker-host
+      dockerhost:
+        image: qoomon/docker-host
+        options: >-
+          --cap-add=NET_ADMIN
+          --cap-add=NET_RAW
+          --restart on-failure
+      selenium:
+        image: ${{ matrix.image }}
+        ports:
+          - "4444:4444"
+        options: >-
+           --shm-size=2g
+
+    steps:
+      - uses: actions/checkout@v1
+      - uses: actions/setup-elixir@v1.0.0
+        with:
+          otp-version: ${{ matrix.otp }}
+          elixir-version: ${{ matrix.elixir }}
+      - uses: actions/cache@v1
+        with:
+          path: deps
+          key: ${{ env.CACHE_VERSION }}-deps-build-${{ env.MIX_ENV }}-${{ matrix.otp }}-${{ matrix.elixir }}-${{ hashFiles('mix.lock') }}
+      - uses: actions/cache@v1
+        with:
+          path: _build/${{ env.MIX_ENV }}
+          key: ${{ env.CACHE_VERSION }}-_build-${{ env.MIX_ENV }}-${{ matrix.otp }}-${{ matrix.elixir }}-
+      - name: Install Dependencies
+        run: mix deps.get
+      - name: Compile app
+        run: mix compile --force --warnings-as-errors
+      - run: mix test --only integration_test_driver_browser:${{ matrix.scenario }}
+        env:
+          TEST_SERVER_HOSTNAME: dockerhost

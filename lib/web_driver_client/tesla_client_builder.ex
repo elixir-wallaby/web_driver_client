@@ -5,7 +5,7 @@ defmodule WebDriverClient.TeslaClientBuilder do
 
   @spec build(Config.t()) :: Client.t()
   def build(%Config{base_url: base_url, debug?: debug?}) do
-    adapter = Tesla.Adapter.Hackney
+    adapter = {Tesla.Adapter.Hackney, [recv_timeout: 30_000]}
 
     middleware =
       [
