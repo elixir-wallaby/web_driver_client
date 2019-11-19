@@ -12,7 +12,8 @@ defmodule WebDriverClient.MixProject do
         coveralls: :test,
         "coveralls.detail": :test,
         "coveralls.travis": :test,
-        "coveralls.html": :test
+        "coveralls.html": :test,
+        "coveralls.json": :test
       ],
       start_permanent: Mix.env() == :prod,
       deps: deps(),
