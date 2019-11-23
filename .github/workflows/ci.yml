@@ -16,7 +16,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        elixir: ["1.9.4", "1.8.2", "1.7.4"]
+        elixir: ["1.9.4", "1.8.2", "1.7.4", "1.6.6"]
         include:
           - elixir: "1.9.4"
             otp: "22.1.7"
@@ -24,6 +24,8 @@ jobs:
             otp: "22.1.7"
           - elixir: "1.7.4"
             otp: "22.1.7"
+          - elixir: "1.6.6"
+            otp: "20.3.8.24"
     steps:
       - uses: actions/checkout@v1
       - uses: actions/setup-elixir@v1.0.0
@@ -59,7 +61,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        elixir: ["1.9.4", "1.8.2", "1.7.4"]
+        elixir: ["1.9.4", "1.8.2", "1.7.4", "1.6.6"]
         include:
           - elixir: "1.9.4"
             otp: "22.1.7"
@@ -67,6 +69,8 @@ jobs:
             otp: "22.1.7"
           - elixir: "1.7.4"
             otp: "22.1.7"
+          - elixir: "1.6.6"
+            otp: "20.3.8.24"
     steps:
       - uses: actions/checkout@v1
       - uses: actions/setup-elixir@v1.0.0
@@ -103,6 +107,7 @@ jobs:
           - "1.9.4"
           - "1.8.2"
           - "1.7.4"
+          - "1.6.6"
         include:
           - elixir: "1.9.4"
             otp: "22.1.7"
@@ -110,6 +115,8 @@ jobs:
             otp: "22.1.7"
           - elixir: "1.7.4"
             otp: "22.1.7"
+          - elixir: "1.6.6"
+            otp: "20.3.8.24"
     services:
       # Allow accessing localhost ports from docker containers.
       # See https://github.com/qoomon/docker-host

@@ -9,6 +9,7 @@ defmodule WebDriverClient.W3CWireProtocolClient do
   Specification: https://w3c.github.io/webdriver/
   """
 
+  import WebDriverClient.CompatibilityMacros
   import WebDriverClient.Guards
 
   alias Tesla.Env
@@ -33,7 +34,7 @@ defmodule WebDriverClient.W3CWireProtocolClient do
 
   Specification: https://w3c.github.io/webdriver/#get-current-url
   """
-  @doc subject: :navigation
+  doc_metadata subject: :navigation
   @spec fetch_current_url(Session.t()) :: {:ok, url} | {:error, basic_reason}
   def fetch_current_url(%Session{id: id, config: %Config{} = config}) when is_session_id(id) do
     client = TeslaClientBuilder.build(config)
@@ -74,7 +75,7 @@ defmodule WebDriverClient.W3CWireProtocolClient do
 
   @type log_type :: String.t()
 
-  @doc subject: :logging
+  doc_metadata subject: :logging
   @spec fetch_log_types(Session.t()) :: {:ok, [log_type]} | {:error, basic_reason()}
   def fetch_log_types(%Session{id: id, config: %Config{} = config}) do
     client = TeslaClientBuilder.build(config)
@@ -92,7 +93,7 @@ defmodule WebDriverClient.W3CWireProtocolClient do
   This function is not part of the official spec and is
   not supported by all servers.
   """
-  @doc subject: :logging
+  doc_metadata subject: :logging
   @spec fetch_logs(Session.t(), log_type) :: {:ok, [LogEntry.t()]} | {:error, basic_reason()}
   def fetch_logs(%Session{id: id, config: %Config{} = config}, log_type) do
     client = TeslaClientBuilder.build(config)

@@ -1,5 +1,6 @@
 {
   "skip_files": [
-    "test/support"
+    "test/support",
+    "lib/web_driver_client/compatibility_macros.ex"
   ]
 }

@@ -9,6 +9,7 @@ defmodule WebDriverClient.JSONWireProtocolClient do
   Specification: https://github.com/SeleniumHQ/selenium/wiki/JsonWireProtocol
   """
 
+  import WebDriverClient.CompatibilityMacros
   import WebDriverClient.Guards
 
   alias Tesla.Env
@@ -33,7 +34,7 @@ defmodule WebDriverClient.JSONWireProtocolClient do
 
   Specification: https://github.com/SeleniumHQ/selenium/wiki/JsonWireProtocol#sessionsessionidurl
   """
-  @doc subject: :navigation
+  doc_metadata subject: :navigation
   @spec fetch_current_url(Session.t()) :: {:ok, url} | {:error, basic_reason}
   def fetch_current_url(%Session{id: id, config: %Config{} = config}) when is_session_id(id) do
     client = TeslaClientBuilder.build(config)
@@ -89,7 +90,7 @@ defmodule WebDriverClient.JSONWireProtocolClient do
 
   Specification: https://github.com/SeleniumHQ/selenium/wiki/JsonWireProtocol#sessionsessionidlogtypes
   """
-  @doc subject: :logging
+  doc_metadata subject: :logging
   @spec fetch_log_types(Session.t()) :: {:ok, [log_type]} | {:error, basic_reason()}
   def fetch_log_types(%Session{id: id, config: %Config{} = config}) do
     client = TeslaClientBuilder.build(config)
@@ -106,7 +107,7 @@ defmodule WebDriverClient.JSONWireProtocolClient do
 
   Specification: https://github.com/SeleniumHQ/selenium/wiki/JsonWireProtocol#sessionsessionidlog
   """
-  @doc subject: :logging
+  doc_metadata subject: :logging
   @spec fetch_logs(Session.t(), log_type) :: {:ok, [LogEntry.t()]} | {:error, basic_reason()}
   def fetch_logs(%Session{id: id, config: %Config{} = config}, log_type) do
     client = TeslaClientBuilder.build(config)

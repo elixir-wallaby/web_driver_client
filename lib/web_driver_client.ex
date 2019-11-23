@@ -3,6 +3,7 @@ defmodule WebDriverClient do
   Webdriver API client.
   """
 
+  import WebDriverClient.CompatibilityMacros
   import WebDriverClient.Guards
 
   alias Tesla.Env
@@ -85,7 +86,7 @@ defmodule WebDriverClient do
   @doc """
   Navigates the browser to the given url
   """
-  @doc subject: :navigation
+  doc_metadata subject: :navigation
   @spec navigate_to(Session.t(), url) :: :ok | {:error, basic_reason}
   def navigate_to(%Session{id: id, config: %Config{} = config}, url)
       when is_session_id(id) and is_url(url) do
@@ -106,7 +107,7 @@ defmodule WebDriverClient do
   @doc """
   Returns the web browsers current url
   """
-  @doc subject: :navigation
+  doc_metadata subject: :navigation
   @spec fetch_current_url(Session.t()) :: {:ok, url} | {:error, basic_reason}
   def fetch_current_url(%Session{config: %Config{protocol: :jwp}} = session) do
     JSONWireProtocolClient.fetch_current_url(session)
@@ -157,7 +158,7 @@ defmodule WebDriverClient do
   @doc """
   Fetches the log types from the server
   """
-  @doc subject: :logging
+  doc_metadata subject: :logging
   @spec fetch_log_types(Session.t()) :: {:ok, [log_type]} | {:error, basic_reason()}
   def fetch_log_types(%Session{config: %Config{protocol: :jwp}} = session) do
     JSONWireProtocolClient.fetch_log_types(session)
@@ -170,7 +171,7 @@ defmodule WebDriverClient do
   @doc """
   Fetches log entries for the requested log type.
   """
-  @doc subject: :logging
+  doc_metadata subject: :logging
   @spec fetch_logs(Session.t(), log_type) :: {:ok, [LogEntry.t()]} | {:error, basic_reason()}
   def fetch_logs(session, log_type)
 
