@@ -21,6 +21,7 @@ defmodule WebDriverClient.W3CWireProtocolClient do
   alias WebDriverClient.UnexpectedStatusCodeError
   alias WebDriverClient.W3CWireProtocolClient.LogEntry
   alias WebDriverClient.W3CWireProtocolClient.Rect
+  alias WebDriverClient.W3CWireProtocolClient.ResponseParser
 
   @type url :: String.t()
 
@@ -41,7 +42,7 @@ defmodule WebDriverClient.W3CWireProtocolClient do
     url = "/session/#{id}/url"
 
     with {:ok, %Env{body: body}} <- Tesla.get(client, url),
-         {:ok, url} <- parse_url(body) do
+         {:ok, url} <- ResponseParser.parse_url(body) do
       {:ok, url}
     end
   end
@@ -53,7 +54,7 @@ defmodule WebDriverClient.W3CWireProtocolClient do
     url = "/session/#{id}/window/rect"
 
     with {:ok, %Env{body: body}} <- Tesla.get(client, url),
-         {:ok, rect} <- parse_rect(body) do
+         {:ok, rect} <- ResponseParser.parse_rect(body) do
       {:ok, rect}
     end
   end
@@ -68,7 +69,7 @@ defmodule WebDriverClient.W3CWireProtocolClient do
     request_body = opts |> Keyword.take([:height, :width, :x, :y]) |> Map.new()
 
     with {:ok, %Env{body: body}} <- Tesla.post(client, url, request_body),
-         {:ok, _} <- parse_value(body) do
+         {:ok, _} <- ResponseParser.parse_value(body) do
       :ok
     end
   end
@@ -82,7 +83,7 @@ defmodule WebDriverClient.W3CWireProtocolClient do
     url = "/session/#{id}/log/types"
 
     with {:ok, %Env{body: body}} <- Tesla.get(client, url),
-         {:ok, log_types} <- parse_value(body) do
+         {:ok, log_types} <- ResponseParser.parse_value(body) do
       {:ok, log_types}
     end
   end
@@ -101,69 +102,8 @@ defmodule WebDriverClient.W3CWireProtocolClient do
     request_body = %{type: log_type}
 
     with {:ok, %Env{body: body}} <- Tesla.post(client, url, request_body),
-         {:ok, logs} <- parse_log_entries(body) do
+         {:ok, logs} <- ResponseParser.parse_log_entries(body) do
       {:ok, logs}
     end
-  end
-
-  @spec parse_log_entries(term) ::
-          {:ok, [LogEntry.t()]} | {:error, UnexpectedResponseFormatError.t()}
-  defp parse_log_entries(response) do
-    with %{"value" => values} when is_list(values) <- response,
-         log_entries when is_list(log_entries) <- do_parse_log_entries(values) do
-      {:ok, log_entries}
-    else
-      _ ->
-        {:error, UnexpectedResponseFormatError.exception(response_body: response)}
-    end
-  end
-
-  defp do_parse_log_entries(log_entries) do
-    log_entries
-    |> Enum.reduce_while([], fn
-      %{"level" => level, "message" => message, "timestamp" => timestamp}, acc
-      when is_binary(level) and is_binary(message) and is_integer(timestamp) ->
-        log_entry = %LogEntry{
-          level: level,
-          message: message,
-          timestamp: DateTime.from_unix!(timestamp, :millisecond)
-        }
-
-        {:cont, [log_entry | acc]}
-
-      _, _ ->
-        {:halt, :error}
-    end)
-    |> case do
-      :error -> :error
-      log_entries -> Enum.reverse(log_entries)
-    end
-  end
-
-  @spec parse_rect(term) :: {:ok, Rect.t()} | {:error, UnexpectedResponseFormatError.t()}
-  defp parse_rect(%{"value" => %{"width" => width, "height" => height, "x" => x, "y" => y}}) do
-    {:ok, %Rect{width: width, height: height, x: x, y: y}}
-  end
-
-  defp parse_rect(body) do
-    {:error, UnexpectedResponseFormatError.exception(response_body: body)}
-  end
-
-  @spec parse_value(term) :: {:ok, term} | {:error, UnexpectedResponseFormatError.t()}
-  defp parse_value(%{"value" => value}) do
-    {:ok, value}
-  end
-
-  defp parse_value(body) do
-    {:error, UnexpectedResponseFormatError.exception(response_body: body)}
-  end
-
-  @spec parse_url(term) :: {:ok, url} | {:error, UnexpectedResponseFormatError.t()}
-  defp parse_url(%{"value" => url}) do
-    {:ok, url}
-  end
-
-  defp parse_url(body) do
-    {:error, UnexpectedResponseFormatError.exception(response_body: body)}
   end
 end
