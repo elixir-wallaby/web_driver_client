@@ -3,7 +3,7 @@ defmodule WebDriverClient.Integration.WindowTest do
 
   alias WebDriverClient.IntegrationTesting.Scenarios
   alias WebDriverClient.IntegrationTesting.TestGenerator
-  alias WebDriverClient.IntegrationTesting.TestServer
+  alias WebDriverClient.IntegrationTesting.TestPages.IndexPage
   alias WebDriverClient.Session
   alias WebDriverClient.Size
 
@@ -21,7 +21,7 @@ defmodule WebDriverClient.Integration.WindowTest do
 
       ensure_session_is_closed(session)
 
-      url = TestServer.get_base_url()
+      url = IndexPage.url()
 
       :ok = WebDriverClient.navigate_to(session, url)
 

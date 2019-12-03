@@ -1,4 +1,4 @@
-defmodule WebDriverClient.IntegrationTesting.TestServer do
+defmodule WebDriverClient.IntegrationTesting.TestPages.Server do
   @moduledoc false
   use GenServer
 
@@ -16,10 +16,6 @@ defmodule WebDriverClient.IntegrationTesting.TestServer do
     "http://#{get_test_server_hostname()}:#{port_number}"
   end
 
-  def get_test_page_url(:logging) do
-    Path.join(get_base_url(), "logging.html")
-  end
-
   @impl true
   def init([]) do
     :inets.start()
@@ -27,7 +23,7 @@ defmodule WebDriverClient.IntegrationTesting.TestServer do
     config = [
       port: 0,
       server_root: String.to_charlist(Path.absname("./", __DIR__)),
-      document_root: String.to_charlist(Path.absname("./test_server/pages", __DIR__)),
+      document_root: String.to_charlist(Path.absname("./server/pages", __DIR__)),
       server_name: 'web_driver_client_test',
       directory_index: ['index.html']
     ]

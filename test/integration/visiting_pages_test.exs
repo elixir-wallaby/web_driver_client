@@ -3,7 +3,7 @@ defmodule WebDriverClient.Integration.VisitingPagesTest do
 
   alias WebDriverClient.IntegrationTesting.Scenarios
   alias WebDriverClient.IntegrationTesting.TestGenerator
-  alias WebDriverClient.IntegrationTesting.TestServer
+  alias WebDriverClient.IntegrationTesting.TestPages.IndexPage
   alias WebDriverClient.Session
 
   require WebDriverClient.IntegrationTesting.TestGenerator
@@ -20,7 +20,7 @@ defmodule WebDriverClient.Integration.VisitingPagesTest do
 
       ensure_session_is_closed(session)
 
-      url = TestServer.get_base_url()
+      url = IndexPage.url()
 
       :ok = WebDriverClient.navigate_to(session, url)
 
