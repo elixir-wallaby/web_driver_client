@@ -2,11 +2,14 @@ defmodule WebDriverClient.W3CWireProtocolClient.ResponseParserTest do
   use ExUnit.Case, async: true
   use ExUnitProperties
 
+  alias WebDriverClient.Element
   alias WebDriverClient.UnexpectedResponseFormatError
   alias WebDriverClient.W3CWireProtocolClient.LogEntry
   alias WebDriverClient.W3CWireProtocolClient.Rect
   alias WebDriverClient.W3CWireProtocolClient.ResponseParser
   alias WebDriverClient.W3CWireProtocolClient.TestResponses
+
+  @web_element_identifier "element-6066-11e4-a52e-4f735466cecf"
 
   property "parse_value/1 returns {:ok, url} when result is a string" do
     check all value <-
@@ -124,6 +127,45 @@ defmodule WebDriverClient.W3CWireProtocolClient.ResponseParserTest do
                 ]) do
       assert {:error, %UnexpectedResponseFormatError{response_body: ^response}} =
                ResponseParser.parse_log_entries(response)
+    end
+  end
+
+  property "parse_elements/1 returns {:ok [%Element{}]} when all log entries are valid" do
+    check all unparsed_elements <- list_of(TestResponses.element(), max_length: 10) do
+      response = %{"value" => unparsed_elements}
+
+      expected_elements =
+        Enum.map(unparsed_elements, fn %{
+                                         @web_element_identifier => element_id
+                                       } ->
+          %Element{
+            id: element_id
+          }
+        end)
+
+      assert {:ok, ^expected_elements} = ResponseParser.parse_elements(response)
+    end
+  end
+
+  property "parse_elements/1 returns {:error, %UnexpectedResponseFormatError{}} on an invalid response" do
+    check all response <-
+                one_of([
+                  constant(%{}),
+                  fixed_map(%{
+                    "value" => elements_with_invalid_responses()
+                  })
+                ]) do
+      assert {:error, %UnexpectedResponseFormatError{response_body: ^response}} =
+               ResponseParser.parse_elements(response)
+    end
+  end
+
+  defp elements_with_invalid_responses do
+    gen all valid_elements <- list_of(TestResponses.element(), max_length: 10),
+            invalid_elements <- list_of(constant(%{}), min_length: 1, max_length: 10) do
+      [valid_elements, invalid_elements]
+      |> List.flatten()
+      |> Enum.shuffle()
     end
   end
 

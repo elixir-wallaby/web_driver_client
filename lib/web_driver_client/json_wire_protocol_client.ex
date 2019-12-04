@@ -10,10 +10,11 @@ defmodule WebDriverClient.JSONWireProtocolClient do
   """
 
   import WebDriverClient.CompatibilityMacros
-  import WebDriverClient.Guards
+  import WebDriverClient.JSONWireProtocolClient.Guards
 
   alias Tesla.Env
   alias WebDriverClient.Config
+  alias WebDriverClient.Element
   alias WebDriverClient.HTTPClientError
   alias WebDriverClient.JSONWireProtocolClient.LogEntry
   alias WebDriverClient.JSONWireProtocolClient.ResponseParser
@@ -84,6 +85,39 @@ defmodule WebDriverClient.JSONWireProtocolClient do
     end
   end
 
+  @type element_location_strategy :: :css_selector
+  @type element_selector :: String.t()
+
+  @doc """
+  Finds the elements using the given search strategy
+
+  Specification: https://github.com/SeleniumHQ/selenium/wiki/JsonWireProtocol#post-sessionsessionidelements
+  """
+  doc_metadata subject: :elements
+
+  @spec find_elements(Session.t(), element_location_strategy, element_selector) ::
+          {:ok, [Element.t()]} | {:error, basic_reason}
+  def find_elements(
+        %Session{id: id, config: %Config{} = config},
+        element_location_strategy,
+        element_selector
+      )
+      when is_element_location_strategy(element_location_strategy) and
+             is_element_selector(element_selector) do
+    client = TeslaClientBuilder.build(config)
+    url = "/session/#{id}/elements"
+
+    request_body = %{
+      "using" => element_location_strategy_to_string(element_location_strategy),
+      "value" => element_selector
+    }
+
+    with {:ok, %Env{body: body}} <- Tesla.post(client, url, request_body),
+         {:ok, elements} <- ResponseParser.parse_elements(body) do
+      {:ok, elements}
+    end
+  end
+
   @type log_type :: String.t()
 
   @doc """
@@ -120,4 +154,7 @@ defmodule WebDriverClient.JSONWireProtocolClient do
       {:ok, logs}
     end
   end
+
+  @spec element_location_strategy_to_string(element_location_strategy) :: String.t()
+  defp element_location_strategy_to_string(:css_selector), do: "css selector"
 end

@@ -2,6 +2,8 @@ defmodule WebDriverClient.W3CWireProtocolClient.TestResponses do
   @moduledoc false
   use ExUnitProperties
 
+  @web_element_identifier "element-6066-11e4-a52e-4f735466cecf"
+
   def fetch_window_rect_response do
     window_rect_response() |> map(&Jason.encode!/1)
   end
@@ -12,6 +14,12 @@ defmodule WebDriverClient.W3CWireProtocolClient.TestResponses do
 
   def fetch_current_url_response do
     fixed_map(%{"value" => url()}) |> map(&Jason.encode!/1)
+  end
+
+  def find_elements_response do
+    %{"value" => list_of(element(), max_length: 10)}
+    |> fixed_map()
+    |> map(&Jason.encode!/1)
   end
 
   def fetch_log_types_response do
@@ -44,6 +52,10 @@ defmodule WebDriverClient.W3CWireProtocolClient.TestResponses do
 
   def log_type do
     string(:alphanumeric, min_length: 1, max_length: 10)
+  end
+
+  def element do
+    fixed_map(%{@web_element_identifier => string(:ascii, min_length: 1, max_length: 20)})
   end
 
   defp window_rect_response do

@@ -14,6 +14,12 @@ defmodule WebDriverClient.JSONWireProtocolClient.TestResponses do
     fixed_map(%{"value" => url()}) |> map(&Jason.encode!/1)
   end
 
+  def find_elements_response do
+    %{"value" => list_of(element(), max_length: 10)}
+    |> fixed_map()
+    |> map(&Jason.encode!/1)
+  end
+
   def fetch_log_types_response do
     %{"value" => list_of(log_type(), max_length: 10)}
     |> fixed_map()
@@ -59,6 +65,10 @@ defmodule WebDriverClient.JSONWireProtocolClient.TestResponses do
 
   defp blank_value_response do
     constant(%{"value" => nil})
+  end
+
+  def element do
+    fixed_map(%{"ELEMENT" => string(:ascii, min_length: 1, max_length: 20)})
   end
 
   defp window_size_response do

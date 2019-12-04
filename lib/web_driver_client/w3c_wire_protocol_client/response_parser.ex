@@ -1,12 +1,15 @@
 defmodule WebDriverClient.W3CWireProtocolClient.ResponseParser do
   @moduledoc false
 
+  alias WebDriverClient.Element
   alias WebDriverClient.UnexpectedResponseFormatError
   alias WebDriverClient.W3CWireProtocolClient
   alias WebDriverClient.W3CWireProtocolClient.LogEntry
   alias WebDriverClient.W3CWireProtocolClient.Rect
 
   @type url :: W3CWireProtocolClient.url()
+
+  @web_element_identifier "element-6066-11e4-a52e-4f735466cecf"
 
   @spec parse_value(term) :: {:ok, term} | {:error, UnexpectedResponseFormatError.t()}
   def parse_value(%{"value" => value}), do: {:ok, value}
@@ -42,6 +45,37 @@ defmodule WebDriverClient.W3CWireProtocolClient.ResponseParser do
 
   def parse_rect(body) do
     {:error, UnexpectedResponseFormatError.exception(response_body: body)}
+  end
+
+  @spec parse_elements(term) :: {:ok, [Element.t()]} | {:error, UnexpectedResponseFormatError.t()}
+  def parse_elements(response) do
+    with %{"value" => values} when is_list(values) <- response,
+         elements when is_list(elements) <- do_parse_elements(values) do
+      {:ok, elements}
+    else
+      _ ->
+        {:error, UnexpectedResponseFormatError.exception(response_body: response)}
+    end
+  end
+
+  defp do_parse_elements(elements) do
+    elements
+    |> Enum.reduce_while([], fn
+      %{@web_element_identifier => element_id}, acc
+      when is_binary(element_id) ->
+        element = %Element{
+          id: element_id
+        }
+
+        {:cont, [element | acc]}
+
+      _, _ ->
+        {:halt, :error}
+    end)
+    |> case do
+      :error -> :error
+      element -> Enum.reverse(element)
+    end
   end
 
   defp do_parse_log_entries(log_entries) do

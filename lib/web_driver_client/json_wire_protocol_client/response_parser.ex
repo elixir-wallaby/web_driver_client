@@ -1,6 +1,7 @@
 defmodule WebDriverClient.JSONWireProtocolClient.ResponseParser do
   @moduledoc false
 
+  alias WebDriverClient.Element
   alias WebDriverClient.JSONWireProtocolClient
   alias WebDriverClient.JSONWireProtocolClient.LogEntry
   alias WebDriverClient.Size
@@ -57,6 +58,37 @@ defmodule WebDriverClient.JSONWireProtocolClient.ResponseParser do
     |> case do
       :error -> :error
       log_entries -> Enum.reverse(log_entries)
+    end
+  end
+
+  @spec parse_elements(term) :: {:ok, [Element.t()]} | {:error, UnexpectedResponseFormatError.t()}
+  def parse_elements(response) do
+    with %{"value" => values} when is_list(values) <- response,
+         elements when is_list(elements) <- do_parse_elements(values) do
+      {:ok, elements}
+    else
+      _ ->
+        {:error, UnexpectedResponseFormatError.exception(response_body: response)}
+    end
+  end
+
+  defp do_parse_elements(elements) do
+    elements
+    |> Enum.reduce_while([], fn
+      %{"ELEMENT" => element_id}, acc
+      when is_binary(element_id) ->
+        element = %Element{
+          id: element_id
+        }
+
+        {:cont, [element | acc]}
+
+      _, _ ->
+        {:halt, :error}
+    end)
+    |> case do
+      :error -> :error
+      element -> Enum.reverse(element)
     end
   end
 

@@ -61,6 +61,7 @@ defmodule WebDriverClient.MixProject do
         "Main API": [
           WebDriverClient,
           WebDriverClient.Config,
+          WebDriverClient.Element,
           WebDriverClient.Session,
           WebDriverClient.Size,
           WebDriverClient.HTTPClientError,
@@ -80,6 +81,7 @@ defmodule WebDriverClient.MixProject do
       ],
       groups_for_functions: [
         Navigation: &(&1[:subject] == :navigation),
+        Elements: &(&1[:subject] == :elements),
         Logging: &(&1[:subject] == :logging)
       ]
     ]

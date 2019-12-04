@@ -1,4 +1,4 @@
-defmodule WebDriverClient.Guards do
+defmodule WebDriverClient.JSONWireProtocolClient.Guards do
   @moduledoc false
 
   defguard is_session_id(term) when is_binary(term)

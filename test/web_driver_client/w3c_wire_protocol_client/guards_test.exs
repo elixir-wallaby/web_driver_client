@@ -1,10 +1,10 @@
-defmodule WebDriverClient.GuardsTest do
+defmodule WebDriverClient.W3CWireProtocolClient.GuardsTest do
   use ExUnit.Case, async: true
   use ExUnitProperties
 
-  alias WebDriverClient.Guards
+  alias WebDriverClient.W3CWireProtocolClient.Guards
 
-  require WebDriverClient.Guards
+  require WebDriverClient.W3CWireProtocolClient.Guards
 
   property "is_session_id/1 only returns true on binaries" do
     check all term <- term() do

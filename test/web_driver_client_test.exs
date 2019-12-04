@@ -6,6 +6,7 @@ defmodule WebDriverClientTest do
   import WebDriverClient.ErrorScenarios
 
   alias WebDriverClient.Config
+  alias WebDriverClient.Element
   alias WebDriverClient.HTTPClientError
   alias WebDriverClient.JSONWireProtocolClient.TestResponses, as: JWPTestResponses
   alias WebDriverClient.LogEntry
@@ -394,6 +395,51 @@ defmodule WebDriverClientTest do
 
         assert_expected_response(
           WebDriverClient.fetch_logs(session, "log_type"),
+          error_scenario
+        )
+      end
+    end
+  end
+
+  @tag protocol: :jwp
+  test "find_elements/3 with JWP session returns {:ok, elements} on valid response", %{
+    config: config,
+    bypass: bypass
+  } do
+    session = TestData.session(config: constant(config)) |> pick()
+    resp = JWPTestResponses.find_elements_response() |> pick()
+
+    stub_bypass_response(bypass, resp)
+
+    assert {:ok, elements} = WebDriverClient.find_elements(session, :css_selector, "foo")
+    assert Enum.all?(elements, &match?(%Element{}, &1))
+  end
+
+  @tag protocol: :w3c
+  test "find_elements/3 with W3C session returns {:ok, elements} on valid response", %{
+    config: config,
+    bypass: bypass
+  } do
+    session = TestData.session(config: constant(config)) |> pick()
+    resp = W3CTestResponses.find_elements_response() |> pick()
+
+    stub_bypass_response(bypass, resp)
+
+    assert {:ok, elements} = WebDriverClient.find_elements(session, :css_selector, "foo")
+    assert Enum.all?(elements, &match?(%Element{}, &1))
+  end
+
+  for protocol <- @protocols do
+    @tag protocol: protocol
+    test "find_elements/3 with #{protocol} session returns appropriate errors on various server responses",
+         %{config: config, bypass: bypass} do
+      scenario_server = set_up_error_scenario_tests(bypass)
+
+      for error_scenario <- basic_error_scenarios() do
+        session = build_session_for_scenario(scenario_server, bypass, config, error_scenario)
+
+        assert_expected_response(
+          WebDriverClient.find_elements(session, :css_selector, "foo"),
           error_scenario
         )
       end

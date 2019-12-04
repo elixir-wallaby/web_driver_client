@@ -8,6 +8,7 @@ defmodule WebDriverClient do
 
   alias Tesla.Env
   alias WebDriverClient.Config
+  alias WebDriverClient.Element
   alias WebDriverClient.HTTPClientError
   alias WebDriverClient.JSONWireProtocolClient
   alias WebDriverClient.LogEntry
@@ -133,6 +134,36 @@ defmodule WebDriverClient do
       {:error, error} ->
         {:error, error}
     end
+  end
+
+  @type element_location_strategy :: :css_selector
+  @type element_selector :: String.t()
+
+  @doc """
+  Finds the elements using the given search strategy
+  """
+  doc_metadata subject: :elements
+
+  @spec find_elements(Session.t(), element_location_strategy, element_selector) ::
+          {:ok, [Element.t()]} | {:error, basic_reason}
+  def find_elements(
+        %Session{config: %Config{protocol: :jwp}} = session,
+        element_location_strategy,
+        element_selector
+      )
+      when is_element_location_strategy(element_location_strategy) and
+             is_element_selector(element_selector) do
+    JSONWireProtocolClient.find_elements(session, element_location_strategy, element_selector)
+  end
+
+  def find_elements(
+        %Session{config: %Config{protocol: :w3c}} = session,
+        element_location_strategy,
+        element_selector
+      )
+      when is_element_location_strategy(element_location_strategy) and
+             is_element_selector(element_selector) do
+    W3CWireProtocolClient.find_elements(session, element_location_strategy, element_selector)
   end
 
   @type size_opt :: {:width, pos_integer} | {:height, pos_integer}
