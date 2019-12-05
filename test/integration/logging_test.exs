@@ -19,10 +19,6 @@ defmodule WebDriverClient.Integration.LoggingTest do
         # Chromedriver does not allow for jwp endpoints in w3c mode
         false
 
-      %Scenario{driver: :selenium_3, browser: :firefox, protocol: :jwp} ->
-        # This scenario returns a 500 error
-        false
-
       _ ->
         true
     end)

@@ -23,12 +23,16 @@ defmodule WebDriverClient.IntegrationTesting.Scenarios do
       session_configuration_name: :json,
       protocol: :jwp
     },
-    %Scenario{
-      driver: :selenium_3,
-      browser: :firefox,
-      session_configuration_name: :json_firefox,
-      protocol: :jwp
-    },
+    #
+    # Selenium 3 with Firefox (or at least the
+    # underlying geckodriver) does not support JWP
+    #
+    # %Scenario{
+    #   driver: :selenium_3,
+    #   browser: :firefox,
+    #   session_configuration_name: :json_firefox,
+    #   protocol: :jwp
+    # },
     %Scenario{
       driver: :selenium_3,
       browser: :firefox,
