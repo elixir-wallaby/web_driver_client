@@ -164,7 +164,10 @@ defmodule WebDriverClient.IntegrationTesting.Scenarios do
       when driver in [:selenium_2, :selenium_3] do
     %{
       desiredCapabilities: %{
-        "browserName" => "chrome"
+        "browserName" => "chrome",
+        "goog:chromeOptions" => %{
+          "w3c" => false
+        }
       }
     }
   end
