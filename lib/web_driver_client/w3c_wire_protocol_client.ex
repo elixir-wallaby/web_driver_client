@@ -141,6 +141,41 @@ defmodule WebDriverClient.W3CWireProtocolClient do
     end
   end
 
+  @doc """
+  Finds the elements that are children of the given element
+
+  Specification: https://w3c.github.io/webdriver/#find-elements-from-element
+  """
+  doc_metadata subject: :elements
+
+  @spec find_elements_from_element(
+          Session.t(),
+          Element.t(),
+          element_location_strategy,
+          element_selector
+        ) :: {:ok, [Element.t()]} | {:error, basic_reason}
+  def find_elements_from_element(
+        %Session{id: session_id, config: %Config{} = config},
+        %Element{id: element_id},
+        element_location_strategy,
+        element_selector
+      )
+      when is_element_location_strategy(element_location_strategy) and
+             is_element_selector(element_selector) do
+    client = TeslaClientBuilder.build(config)
+    url = "/session/#{session_id}/element/#{element_id}/elements"
+
+    request_body = %{
+      "using" => element_location_strategy_to_string(element_location_strategy),
+      "value" => element_selector
+    }
+
+    with {:ok, %Env{body: body}} <- Tesla.post(client, url, request_body),
+         {:ok, elements} <- ResponseParser.parse_elements(body) do
+      {:ok, elements}
+    end
+  end
+
   @spec element_location_strategy_to_string(element_location_strategy) :: String.t()
   defp element_location_strategy_to_string(:css_selector), do: "css selector"
   defp element_location_strategy_to_string(:xpath), do: "xpath"

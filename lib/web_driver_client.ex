@@ -166,6 +166,49 @@ defmodule WebDriverClient do
     W3CWireProtocolClient.find_elements(session, element_location_strategy, element_selector)
   end
 
+  @doc """
+  Finds elements that are children of the given element
+  """
+  doc_metadata subject: :elements
+
+  @spec find_elements_from_element(
+          Session.t(),
+          Element.t(),
+          element_location_strategy,
+          element_selector
+        ) :: {:ok, [Element.t()] | {:error, basic_reason}}
+  def find_elements_from_element(
+        %Session{config: %Config{protocol: :jwp}} = session,
+        %Element{} = element,
+        element_location_strategy,
+        element_selector
+      )
+      when is_element_location_strategy(element_location_strategy) and
+             is_element_selector(element_selector) do
+    JSONWireProtocolClient.find_elements_from_element(
+      session,
+      element,
+      element_location_strategy,
+      element_selector
+    )
+  end
+
+  def find_elements_from_element(
+        %Session{config: %Config{protocol: :w3c}} = session,
+        %Element{} = element,
+        element_location_strategy,
+        element_selector
+      )
+      when is_element_location_strategy(element_location_strategy) and
+             is_element_selector(element_selector) do
+    W3CWireProtocolClient.find_elements_from_element(
+      session,
+      element,
+      element_location_strategy,
+      element_selector
+    )
+  end
+
   @type size_opt :: {:width, pos_integer} | {:height, pos_integer}
 
   @doc """

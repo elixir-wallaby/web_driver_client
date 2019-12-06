@@ -18,6 +18,11 @@ defmodule WebDriverClient.IntegrationTesting.TestPages.ElementsPage do
     "does not exist"
   end
 
+  @spec css_selector_for_sample_list :: String.t()
+  def css_selector_for_sample_list do
+    "ul#sample-list"
+  end
+
   @spec xpath_selector_for_list_items :: String.t()
   def xpath_selector_for_list_items do
     "//ul[@id='sample-list']/li"

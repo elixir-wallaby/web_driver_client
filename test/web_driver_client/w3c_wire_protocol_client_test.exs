@@ -335,6 +335,137 @@ defmodule WebDriverClient.W3CWireProtocolClientTest do
     end
   end
 
+  property "find_elements_from_element/4 sends the appropriate HTTP request", %{
+    bypass: bypass,
+    config: config
+  } do
+    check all element_location_strategy <- member_of([:css_selector, :xpath]),
+              element_selector <- string(:ascii) do
+      {config, prefix} = prefix_base_url_for_multiple_runs(config)
+
+      %Session{id: session_id} = session = TestData.session(config: constant(config)) |> pick()
+      %Element{id: element_id} = element = TestData.element() |> pick()
+
+      Bypass.expect_once(
+        bypass,
+        "POST",
+        "/#{prefix}/session/#{session_id}/element/#{element_id}/elements",
+        fn conn ->
+          conn = parse_params(conn)
+
+          expected_using_value =
+            case element_location_strategy do
+              :css_selector -> "css selector"
+              :xpath -> "xpath"
+            end
+
+          assert %{"using" => expected_using_value, "value" => element_selector} == conn.params
+
+          conn
+          |> put_resp_content_type("application/json")
+          |> send_resp(200, "")
+        end
+      )
+
+      W3CWireProtocolClient.find_elements_from_element(
+        session,
+        element,
+        element_location_strategy,
+        element_selector
+      )
+    end
+  end
+
+  property "find_elements_from_element/4 returns {:ok, [%Element{}]} on valid response", %{
+    bypass: bypass,
+    config: config
+  } do
+    check all resp <- TestResponses.find_elements_response() do
+      {config, prefix} = prefix_base_url_for_multiple_runs(config)
+
+      %Session{id: session_id} = session = TestData.session(config: constant(config)) |> pick()
+      %Element{id: element_id} = element = TestData.element() |> pick()
+
+      Bypass.expect_once(
+        bypass,
+        "POST",
+        "/#{prefix}/session/#{session_id}/element/#{element_id}/elements",
+        fn conn ->
+          conn
+          |> put_resp_content_type("application/json")
+          |> send_resp(200, resp)
+        end
+      )
+
+      parsed_response = Jason.decode!(resp)
+
+      element_ids =
+        parsed_response |> Map.fetch!("value") |> Enum.map(& &1[@web_element_identifier])
+
+      assert {:ok, elements} =
+               W3CWireProtocolClient.find_elements_from_element(
+                 session,
+                 element,
+                 :css_selector,
+                 "selector"
+               )
+
+      assert Enum.sort(element_ids) ==
+               elements
+               |> Enum.map(fn %Element{id: id} -> id end)
+               |> Enum.sort()
+    end
+  end
+
+  test "find_elements_from_element/4 returns {:error, %UnexpectedResponseFormatError{}} on invalid response",
+       %{bypass: bypass, config: config} do
+    %Session{id: session_id} = session = TestData.session(config: constant(config)) |> pick()
+    %Element{id: element_id} = element = TestData.element() |> pick()
+
+    parsed_response = %{}
+
+    Bypass.expect_once(
+      bypass,
+      "POST",
+      "/session/#{session_id}/element/#{element_id}/elements",
+      fn conn ->
+        conn
+        |> put_resp_content_type("application/json")
+        |> send_resp(200, Jason.encode!(parsed_response))
+      end
+    )
+
+    assert {:error, %UnexpectedResponseFormatError{response_body: ^parsed_response}} =
+             W3CWireProtocolClient.find_elements_from_element(
+               session,
+               element,
+               :css_selector,
+               "selector"
+             )
+  end
+
+  test "find_elements_from_element/4 returns appropriate errors on various server responses", %{
+    bypass: bypass,
+    config: config
+  } do
+    scenario_server = set_up_error_scenario_tests(bypass)
+
+    for error_scenario <- error_scenarios() do
+      session = build_session_for_scenario(scenario_server, bypass, config, error_scenario)
+      element = TestData.element() |> pick()
+
+      assert_expected_response(
+        W3CWireProtocolClient.find_elements_from_element(
+          session,
+          element,
+          :css_selector,
+          "selector"
+        ),
+        error_scenario
+      )
+    end
+  end
+
   property "fetch_log_types/1 returns {:ok, log_types} on valid response", %{
     bypass: bypass,
     config: config

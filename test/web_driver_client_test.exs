@@ -450,6 +450,64 @@ defmodule WebDriverClientTest do
     end
   end
 
+  @tag protocol: :jwp
+  test "find_elements_from_element/4 with JWP session returns {:ok, elements} on valid response",
+       %{
+         config: config,
+         bypass: bypass
+       } do
+    session = TestData.session(config: constant(config)) |> pick()
+    element = TestData.element() |> pick()
+    resp = JWPTestResponses.find_elements_response() |> pick()
+
+    stub_bypass_response(bypass, resp)
+
+    Enum.each([:css_selector, :xpath], fn strategy ->
+      assert {:ok, elements} =
+               WebDriverClient.find_elements_from_element(session, element, strategy, "foo")
+
+      assert Enum.all?(elements, &match?(%Element{}, &1))
+    end)
+  end
+
+  @tag protocol: :w3c
+  test "find_elements_from_element/4 with W3C session returns {:ok, elements} on valid response",
+       %{
+         config: config,
+         bypass: bypass
+       } do
+    session = TestData.session(config: constant(config)) |> pick()
+    element = TestData.element() |> pick()
+    resp = W3CTestResponses.find_elements_response() |> pick()
+
+    stub_bypass_response(bypass, resp)
+
+    Enum.each([:css_selector, :xpath], fn strategy ->
+      assert {:ok, elements} =
+               WebDriverClient.find_elements_from_element(session, element, strategy, "foo")
+
+      assert Enum.all?(elements, &match?(%Element{}, &1))
+    end)
+  end
+
+  for protocol <- @protocols do
+    @tag protocol: protocol
+    test "find_elements_from_element/4 with #{protocol} session returns appropriate errors on various server responses",
+         %{config: config, bypass: bypass} do
+      scenario_server = set_up_error_scenario_tests(bypass)
+
+      for error_scenario <- basic_error_scenarios() do
+        session = build_session_for_scenario(scenario_server, bypass, config, error_scenario)
+        element = TestData.element() |> pick()
+
+        assert_expected_response(
+          WebDriverClient.find_elements_from_element(session, element, :css_selector, "foo"),
+          error_scenario
+        )
+      end
+    end
+  end
+
   defp build_session_response do
     %{
       "value" => %{

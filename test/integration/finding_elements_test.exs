@@ -43,6 +43,21 @@ defmodule WebDriverClient.Integration.FindingElementsTest do
                  :xpath,
                  ElementsPage.xpath_selector_for_list_items()
                )
+
+      {:ok, [list_element]} =
+        WebDriverClient.find_elements(
+          session,
+          :css_selector,
+          ElementsPage.css_selector_for_sample_list()
+        )
+
+      assert {:ok, [%Element{}, %Element{}, %Element{}, %Element{}]} =
+               WebDriverClient.find_elements_from_element(
+                 session,
+                 list_element,
+                 :css_selector,
+                 "li"
+               )
     end
   end
 
