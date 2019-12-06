@@ -5,7 +5,7 @@ defmodule WebDriverClient.JSONWireProtocolClient.Guards do
 
   defguard is_url(term) when is_binary(term)
 
-  defguard is_element_location_strategy(term) when term in [:css_selector]
+  defguard is_element_location_strategy(term) when term in [:css_selector, :xpath]
 
   defguard is_element_selector(term) when is_binary(term)
 end

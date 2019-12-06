@@ -411,8 +411,10 @@ defmodule WebDriverClientTest do
 
     stub_bypass_response(bypass, resp)
 
-    assert {:ok, elements} = WebDriverClient.find_elements(session, :css_selector, "foo")
-    assert Enum.all?(elements, &match?(%Element{}, &1))
+    Enum.each([:css_selector, :xpath], fn strategy ->
+      assert {:ok, elements} = WebDriverClient.find_elements(session, strategy, "foo")
+      assert Enum.all?(elements, &match?(%Element{}, &1))
+    end)
   end
 
   @tag protocol: :w3c
@@ -425,8 +427,10 @@ defmodule WebDriverClientTest do
 
     stub_bypass_response(bypass, resp)
 
-    assert {:ok, elements} = WebDriverClient.find_elements(session, :css_selector, "foo")
-    assert Enum.all?(elements, &match?(%Element{}, &1))
+    Enum.each([:css_selector, :xpath], fn strategy ->
+      assert {:ok, elements} = WebDriverClient.find_elements(session, strategy, "foo")
+      assert Enum.all?(elements, &match?(%Element{}, &1))
+    end)
   end
 
   for protocol <- @protocols do

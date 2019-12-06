@@ -17,4 +17,9 @@ defmodule WebDriverClient.IntegrationTesting.TestPages.ElementsPage do
   def css_selector_for_non_existent_element do
     "does not exist"
   end
+
+  @spec xpath_selector_for_list_items :: String.t()
+  def xpath_selector_for_list_items do
+    "//ul[@id='sample-list']/li"
+  end
 end

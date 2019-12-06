@@ -36,6 +36,13 @@ defmodule WebDriverClient.Integration.FindingElementsTest do
                  :css_selector,
                  ElementsPage.css_selector_for_non_existent_element()
                )
+
+      assert {:ok, [%Element{}, %Element{}, %Element{}, %Element{}]} =
+               WebDriverClient.find_elements(
+                 session,
+                 :xpath,
+                 ElementsPage.xpath_selector_for_list_items()
+               )
     end
   end
 

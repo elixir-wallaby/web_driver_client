@@ -136,7 +136,7 @@ defmodule WebDriverClient do
     end
   end
 
-  @type element_location_strategy :: :css_selector
+  @type element_location_strategy :: :css_selector | :xpath
   @type element_selector :: String.t()
 
   @doc """

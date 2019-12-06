@@ -26,7 +26,7 @@ defmodule WebDriverClient.JSONWireProtocolClient.GuardsTest do
     end
   end
 
-  @element_location_strategies [:css_selector]
+  @element_location_strategies [:css_selector, :xpath]
 
   property "is_element_location_strategy/1 only returns on known values" do
     check all term <-

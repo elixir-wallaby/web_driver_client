@@ -85,7 +85,7 @@ defmodule WebDriverClient.JSONWireProtocolClient do
     end
   end
 
-  @type element_location_strategy :: :css_selector
+  @type element_location_strategy :: :css_selector | :xpath
   @type element_selector :: String.t()
 
   @doc """
@@ -157,4 +157,5 @@ defmodule WebDriverClient.JSONWireProtocolClient do
 
   @spec element_location_strategy_to_string(element_location_strategy) :: String.t()
   defp element_location_strategy_to_string(:css_selector), do: "css selector"
+  defp element_location_strategy_to_string(:xpath), do: "xpath"
 end

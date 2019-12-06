@@ -219,7 +219,7 @@ defmodule WebDriverClient.JSONWireProtocolClientTest do
     bypass: bypass,
     config: config
   } do
-    check all element_location_strategy <- constant(:css_selector),
+    check all element_location_strategy <- member_of([:css_selector, :xpath]),
               element_selector <- string(:ascii) do
       {config, prefix} = prefix_base_url_for_multiple_runs(config)
 
@@ -235,6 +235,7 @@ defmodule WebDriverClient.JSONWireProtocolClientTest do
           expected_using_value =
             case element_location_strategy do
               :css_selector -> "css selector"
+              :xpath -> "xpath"
             end
 
           assert %{"using" => expected_using_value, "value" => element_selector} == conn.params
