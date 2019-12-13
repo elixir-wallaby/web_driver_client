@@ -19,6 +19,7 @@ defmodule WebDriverClient.JSONWireProtocolClient do
   alias WebDriverClient.JSONWireProtocolClient.LogEntry
   alias WebDriverClient.JSONWireProtocolClient.ResponseParser
   alias WebDriverClient.JSONWireProtocolClient.TeslaClientBuilder
+  alias WebDriverClient.JSONWireProtocolClient.WebDriverError
   alias WebDriverClient.Session
   alias WebDriverClient.Size
   alias WebDriverClient.UnexpectedResponseFormatError
@@ -28,6 +29,7 @@ defmodule WebDriverClient.JSONWireProtocolClient do
   @type basic_reason ::
           HTTPClientError.t()
           | UnexpectedResponseFormatError.t()
+          | WebDriverError.t()
 
   @doc """
   Starts a new session

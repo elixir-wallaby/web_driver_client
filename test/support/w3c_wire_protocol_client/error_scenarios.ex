@@ -9,9 +9,9 @@ defmodule WebDriverClient.W3CWireProtocolClient.ErrorScenarios do
   alias WebDriverClient.HTTPClientError
   alias WebDriverClient.TestData
   alias WebDriverClient.UnexpectedResponseFormatError
-  alias WebDriverClient.UnexpectedStatusCodeError
   alias WebDriverClient.W3CWireProtocolClient.ErrorScenarios.ErrorScenario
   alias WebDriverClient.W3CWireProtocolClient.ErrorScenarios.ScenarioServer
+  alias WebDriverClient.W3CWireProtocolClient.WebDriverError
 
   defguardp is_no_content_status_code(status_code)
             when is_integer(status_code) and status_code in [204, 304]
@@ -25,8 +25,12 @@ defmodule WebDriverClient.W3CWireProtocolClient.ErrorScenarios do
     %ErrorScenario{communication_error: :server_down}
   end
 
-  def get_named_scenario(:unexpected_status_code) do
-    %ErrorScenario{status_code: 500, response_body: {:other, "Internal error"}}
+  def get_named_scenario(:web_driver_error) do
+    %ErrorScenario{
+      status_code: 400,
+      content_type: @json_content_type,
+      response_body: {:valid_json, %{"value" => %{"error" => "invalid selector"}}}
+    }
   end
 
   def get_named_scenario(:unexpected_response_format) do
@@ -36,6 +40,36 @@ defmodule WebDriverClient.W3CWireProtocolClient.ErrorScenarios do
       response_body: {:other, "foo"}
     }
   end
+
+  # See https://w3c.github.io/webdriver/#errors
+  @web_driver_errors [
+    {400, "element click intercepted", :element_click_intercepted},
+    {400, "element not interactable", :element_not_interactable},
+    {400, "insecure certificate", :insecure_certificate},
+    {400, "invalid argument", :invalid_argument},
+    {400, "invalid cookie domain", :invalid_cookie_domain},
+    {400, "invalid element state", :invalid_element_state},
+    {400, "invalid selector", :invalid_selector},
+    {404, "invalid session id", :invalid_session_id},
+    {500, "javascript error", :javascript_error},
+    {500, "move target out of bounds", :move_target_out_of_bounds},
+    {404, "no such alert", :no_such_alert},
+    {404, "no such cookie", :no_such_cookie},
+    {404, "no such element", :no_such_element},
+    {404, "no such frame", :no_such_frame},
+    {404, "no such window", :no_such_window},
+    {500, "script timeout error", :script_timeout_error},
+    {500, "session not created", :session_not_created},
+    {404, "stale element reference", :stale_element_reference},
+    {500, "timeout", :timeout},
+    {500, "unable to set cookie", :unable_to_set_cookie},
+    {500, "unable to capture screen", :unable_to_capture_screen},
+    {500, "unexpected alert open", :unexpected_alert_open},
+    {404, "unknown command", :unknown_command},
+    {500, "unknown error", :unknown_error},
+    {405, "unknown method", :unknown_method},
+    {500, "unsupported operation", :unsupported_operation}
+  ]
 
   def error_scenarios do
     communication_error_scenarios = [
@@ -68,10 +102,21 @@ defmodule WebDriverClient.W3CWireProtocolClient.ErrorScenarios do
         }
       end
 
+    web_driver_error_scenarios =
+      for {status_code, error, reason_atom} <- @web_driver_errors do
+        %ErrorScenario{
+          status_code: status_code,
+          content_type: @json_content_type,
+          response_body: {:valid_json, %{"value" => %{"error" => error}}},
+          web_driver_error: reason_atom
+        }
+      end
+
     Enum.concat([
       communication_error_scenarios,
       invalid_status_code_scenarios,
-      invalid_json_scenarios
+      invalid_json_scenarios,
+      web_driver_error_scenarios
     ])
   end
 
@@ -166,6 +211,15 @@ defmodule WebDriverClient.W3CWireProtocolClient.ErrorScenarios do
   end
 
   defp do_assert_expected_response(response, %ErrorScenario{
+         web_driver_error: reason_atom,
+         status_code: status_code
+       })
+       when not is_nil(reason_atom) do
+    assert {:error, %WebDriverError{reason: ^reason_atom, http_status_code: ^status_code}} =
+             response
+  end
+
+  defp do_assert_expected_response(response, %ErrorScenario{
          communication_error: :nonexistent_domain
        }) do
     assert {:error, %HTTPClientError{reason: :nxdomain}} = response
@@ -173,25 +227,8 @@ defmodule WebDriverClient.W3CWireProtocolClient.ErrorScenarios do
 
   defp do_assert_expected_response(
          response,
-         %ErrorScenario{status_code: status_code} = error_scenario
-       )
-       when not is_http_success(status_code) do
-    response_body = get_expected_body(error_scenario)
-
-    assert {:error,
-            %UnexpectedStatusCodeError{status_code: ^status_code, response_body: ^response_body}} =
-             response
-  end
-
-  defp do_assert_expected_response(
-         response,
-         %ErrorScenario{
-           content_type: @json_content_type,
-           response_body: {:other, _response_body},
-           status_code: status_code
-         }
-       )
-       when not is_no_content_status_code(status_code) do
+         %ErrorScenario{}
+       ) do
     assert {:error, %UnexpectedResponseFormatError{}} = response
   end
 
@@ -206,24 +243,4 @@ defmodule WebDriverClient.W3CWireProtocolClient.ErrorScenarios do
                       end)
 
   defp known_status_codes, do: @known_status_codes
-
-  defp get_expected_body(%ErrorScenario{status_code: status_code})
-       when is_no_content_status_code(status_code) do
-    ""
-  end
-
-  defp get_expected_body(%ErrorScenario{
-         content_type: @json_content_type,
-         response_body: {:valid_json, parsed_body}
-       }) do
-    parsed_body
-  end
-
-  defp get_expected_body(%ErrorScenario{response_body: {:valid_json, parsed_body}}) do
-    Jason.encode!(parsed_body)
-  end
-
-  defp get_expected_body(%ErrorScenario{response_body: {:other, body}}) do
-    body
-  end
 end

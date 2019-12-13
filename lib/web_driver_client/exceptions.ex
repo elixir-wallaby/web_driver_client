@@ -41,34 +41,26 @@ defmodule WebDriverClient.UnexpectedResponseFormatError do
   end
 end
 
-defmodule WebDriverClient.UnexpectedStatusCodeError do
+defmodule WebDriverClient.WebDriverError do
   @moduledoc """
-  Indicates we received a response with an unexpected HTTP
-  status code.
+  Indicates a known WebDriver error occurred
   """
 
-  defexception [:message, :status_code, :response_body]
+  defexception [:message, :reason]
 
+  @type reason :: :invalid_selector
   @type t :: %__MODULE__{
           message: String.t(),
-          status_code: 100..599,
-          response_body: String.t()
+          reason: reason
         }
 
-  def exception(opts) when is_list(opts) do
-    status_code = Keyword.fetch!(opts, :status_code)
-    response_body = Keyword.fetch!(opts, :response_body)
+  def exception(opts) do
+    reason = Keyword.fetch!(opts, :reason)
 
     message = """
-    unexpected HTTP status code
-    status_code: #{status_code}"
-    response_body: #{inspect(response_body)}"
+    a WebDriver error occurred: #{inspect(reason)}
     """
 
-    %__MODULE__{
-      status_code: status_code,
-      response_body: response_body,
-      message: message
-    }
+    %__MODULE__{message: message, reason: reason}
   end
 end

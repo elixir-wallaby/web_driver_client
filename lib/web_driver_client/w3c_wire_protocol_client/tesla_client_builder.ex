@@ -10,9 +10,9 @@ defmodule WebDriverClient.W3CWireProtocolClient.TeslaClientBuilder do
     middleware =
       [
         {Tesla.Middleware.BaseUrl, base_url},
+        WebDriverClient.W3CWireProtocolClient.Middleware.ErrorResponseHandler,
         WebDriverClient.Middleware.JSONParsingErrorTranslator,
         Tesla.Middleware.JSON,
-        WebDriverClient.Middleware.UnexpectedStatusCodeErrorHandler,
         WebDriverClient.Middleware.HTTPClientErrorHandler,
         Tesla.Middleware.Logger
       ]

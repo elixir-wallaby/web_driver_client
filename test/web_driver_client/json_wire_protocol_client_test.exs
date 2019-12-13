@@ -8,6 +8,7 @@ defmodule WebDriverClient.JSONWireProtocolClientTest do
   alias WebDriverClient.Element
   alias WebDriverClient.JSONWireProtocolClient
   alias WebDriverClient.JSONWireProtocolClient.LogEntry
+  alias WebDriverClient.JSONWireProtocolClient.Response.Status
   alias WebDriverClient.JSONWireProtocolClient.TestResponses
   alias WebDriverClient.Session
   alias WebDriverClient.Size

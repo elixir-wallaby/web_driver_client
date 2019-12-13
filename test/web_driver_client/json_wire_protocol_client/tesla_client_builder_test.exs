@@ -8,9 +8,11 @@ defmodule WebDriverClient.JSONWireProtocolClient.TeslaClientBuilderTest do
   alias Tesla.Env
   alias WebDriverClient.Config
   alias WebDriverClient.HTTPClientError
+  alias WebDriverClient.JSONWireProtocolClient.Response.Status
   alias WebDriverClient.JSONWireProtocolClient.ResponseParser
   alias WebDriverClient.JSONWireProtocolClient.TeslaClientBuilder
   alias WebDriverClient.JSONWireProtocolClient.TestResponses
+  alias WebDriverClient.JSONWireProtocolClient.WebDriverError
   alias WebDriverClient.UnexpectedResponseFormatError
 
   @moduletag :bypass
@@ -31,17 +33,19 @@ defmodule WebDriverClient.JSONWireProtocolClient.TeslaClientBuilderTest do
 
   defmodule TestState do
     @moduledoc false
-    defstruct [:communication_error, :content_type, :response_body, :status_code]
+    defstruct [:communication_error, :content_type, :response_body, :status_code, :jwp_status]
 
     @type content_type :: String.t()
     @type response_body :: {:valid_json, map()} | {:other, String.t()}
     @type status_code :: integer()
+    @type jwp_status :: integer()
 
     @type t :: %__MODULE__{
             communication_error: nil | :server_down | :nonexistent_domain,
             content_type: content_type,
             response_body: response_body,
-            status_code: status_code
+            status_code: status_code,
+            jwp_status: jwp_status
           }
   end
 
@@ -66,10 +70,11 @@ defmodule WebDriverClient.JSONWireProtocolClient.TeslaClientBuilderTest do
         %TestState{
           communication_error: nil,
           content_type: @json_content_type,
-          response_body: {:valid_json, %{"value" => _, "status" => _} = parsed_body},
-          status_code: status_code
+          response_body: {:valid_json, %{"value" => _, "status" => jwp_status} = parsed_body},
+          status_code: status_code,
+          jwp_status: jwp_status
         }
-        when not is_no_content_status_code(status_code) ->
+        when not is_no_content_status_code(status_code) and jwp_status == 0 ->
           {:ok, expected_response} = ResponseParser.parse_response(parsed_body)
 
           assert {:ok, %Env{body: ^expected_response, status: ^status_code}} =
@@ -80,6 +85,20 @@ defmodule WebDriverClient.JSONWireProtocolClient.TeslaClientBuilderTest do
 
         %TestState{communication_error: :nonexistent_domain} ->
           assert {:error, %HTTPClientError{reason: :nxdomain}} = Tesla.get(client, path)
+
+        %TestState{
+          communication_error: nil,
+          content_type: @json_content_type,
+          response_body: {:valid_json, %{"value" => _, "status" => jwp_status}},
+          status_code: status_code,
+          jwp_status: jwp_status
+        }
+        when jwp_status > 0 ->
+          expected_reason = Status.reason_atom(jwp_status)
+
+          assert {:error,
+                  %WebDriverError{reason: ^expected_reason, http_status_code: ^status_code}} =
+                   Tesla.get(client, path)
 
         %TestState{
           communication_error: nil
@@ -188,6 +207,18 @@ defmodule WebDriverClient.JSONWireProtocolClient.TeslaClientBuilderTest do
 
   defp known_status_codes, do: @known_status_codes
 
+  @known_jwp_status_codes Enum.flat_map(1..40, fn jwp_status_code ->
+                            try do
+                              _ = Status.reason_atom(jwp_status_code)
+                              [jwp_status_code]
+                            rescue
+                              ArgumentError ->
+                                []
+                            end
+                          end)
+
+  defp known_jwp_status_codes, do: @known_jwp_status_codes
+
   @typep test_id :: String.t()
 
   @spec generate_test_id :: test_id
@@ -216,27 +247,37 @@ defmodule WebDriverClient.JSONWireProtocolClient.TeslaClientBuilderTest do
 
   @spec server_response_test_state :: StreamData.t(TestState.t())
   defp server_response_test_state do
-    %{
-      content_type: content_type(),
-      status_code:
-        frequency([
-          {4, constant(200)},
-          {1, member_of(known_status_codes())}
-        ]),
-      response_body:
-        frequency([
-          {4, {:valid_json, TestResponses.jwp_response(nil)}},
-          {2,
-           {:valid_json,
-            scale(
-              map_of(string(:alphanumeric), string(:alphanumeric)),
-              &trunc(:math.log(&1))
-            )}},
-          {1, {:other, non_json_string()}}
-        ])
-    }
-    |> fixed_map()
-    |> map(&struct!(TestState, &1))
+    gen all jwp_status <-
+              frequency([
+                {9, constant(0)},
+                {1, member_of(known_jwp_status_codes())}
+              ]),
+            test_state <-
+              %{
+                content_type: content_type(),
+                status_code:
+                  frequency([
+                    {4, constant(200)},
+                    {1, member_of(known_status_codes())}
+                  ]),
+                jwp_status: constant(jwp_status),
+                response_body:
+                  frequency([
+                    {4,
+                     {:valid_json, TestResponses.jwp_response(nil, status: constant(jwp_status))}},
+                    {2,
+                     {:valid_json,
+                      scale(
+                        map_of(string(:alphanumeric), string(:alphanumeric)),
+                        &trunc(:math.log(&1))
+                      )}},
+                    {1, {:other, non_json_string()}}
+                  ])
+              }
+              |> fixed_map()
+              |> map(&struct!(TestState, &1)) do
+      test_state
+    end
   end
 
   @spec content_type :: StreamData.t(String.t() | nil)

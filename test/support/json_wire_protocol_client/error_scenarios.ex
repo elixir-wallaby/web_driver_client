@@ -9,6 +9,9 @@ defmodule WebDriverClient.JSONWireProtocolClient.ErrorScenarios do
   alias WebDriverClient.HTTPClientError
   alias WebDriverClient.JSONWireProtocolClient.ErrorScenarios.ErrorScenario
   alias WebDriverClient.JSONWireProtocolClient.ErrorScenarios.ScenarioServer
+  alias WebDriverClient.JSONWireProtocolClient.Response.Status
+  alias WebDriverClient.JSONWireProtocolClient.TestResponses
+  alias WebDriverClient.JSONWireProtocolClient.WebDriverError
   alias WebDriverClient.TestData
   alias WebDriverClient.UnexpectedResponseFormatError
 
@@ -29,6 +32,16 @@ defmodule WebDriverClient.JSONWireProtocolClient.ErrorScenarios do
     }
   end
 
+  def get_named_scenario(:web_driver_error) do
+    %ErrorScenario{
+      http_status_code: 200,
+      content_type: @json_content_type,
+      response_body: {:valid_json, TestResponses.jwp_response(nil, status: constant(6)) |> pick()}
+    }
+  end
+
+  @basic_http_status_codes [200, 400, 500]
+
   def error_scenarios do
     communication_error_scenarios = [
       %ErrorScenario{communication_error: :server_down},
@@ -47,7 +60,7 @@ defmodule WebDriverClient.JSONWireProtocolClient.ErrorScenarios do
 
     invalid_formatted_response_scenarios =
       for http_status_code
-          when not is_no_content_http_status_code(http_status_code) <- known_http_status_codes() do
+          when not is_no_content_http_status_code(http_status_code) <- @basic_http_status_codes do
         %ErrorScenario{
           http_status_code: http_status_code,
           content_type: @json_content_type,
@@ -55,10 +68,23 @@ defmodule WebDriverClient.JSONWireProtocolClient.ErrorScenarios do
         }
       end
 
+    invalid_jwp_status_scenarios =
+      for http_status_code
+          when not is_no_content_http_status_code(http_status_code) <- @basic_http_status_codes,
+          jwp_status <- known_jwp_status_codes() do
+        %ErrorScenario{
+          http_status_code: http_status_code,
+          content_type: @json_content_type,
+          response_body:
+            {:valid_json, TestResponses.jwp_response(nil, status: constant(jwp_status)) |> pick()}
+        }
+      end
+
     Enum.concat([
       communication_error_scenarios,
       invalid_json_scenarios,
-      invalid_formatted_response_scenarios
+      invalid_formatted_response_scenarios,
+      invalid_jwp_status_scenarios
     ])
   end
 
@@ -161,11 +187,17 @@ defmodule WebDriverClient.JSONWireProtocolClient.ErrorScenarios do
   defp do_assert_expected_response(
          response,
          %ErrorScenario{
+           content_type: @json_content_type,
+           response_body: {:valid_json, %{"value" => _, "status" => status}},
            http_status_code: http_status_code
          }
        )
-       when not is_no_content_http_status_code(http_status_code) do
-    assert {:error, %UnexpectedResponseFormatError{}} = response
+       when not is_no_content_http_status_code(http_status_code) and status > 0 do
+    expected_reason = Status.reason_atom(status)
+
+    assert {:error,
+            %WebDriverError{reason: ^expected_reason, http_status_code: ^http_status_code}} =
+             response
   end
 
   defp do_assert_expected_response(
@@ -180,6 +212,16 @@ defmodule WebDriverClient.JSONWireProtocolClient.ErrorScenarios do
     assert {:error, %UnexpectedResponseFormatError{response_body: ^response_body}} = response
   end
 
+  defp do_assert_expected_response(
+         response,
+         %ErrorScenario{
+           http_status_code: http_status_code
+         }
+       )
+       when not is_no_content_http_status_code(http_status_code) do
+    assert {:error, %UnexpectedResponseFormatError{}} = response
+  end
+
   @known_http_status_codes Enum.flat_map(100..599, fn http_status_code ->
                              try do
                                _ = Plug.Conn.Status.reason_atom(http_status_code)
@@ -191,4 +233,16 @@ defmodule WebDriverClient.JSONWireProtocolClient.ErrorScenarios do
                            end)
 
   defp known_http_status_codes, do: @known_http_status_codes
+
+  @known_jwp_status_codes Enum.flat_map(1..40, fn jwp_status_code ->
+                            try do
+                              _ = Status.reason_atom(jwp_status_code)
+                              [jwp_status_code]
+                            rescue
+                              ArgumentError ->
+                                []
+                            end
+                          end)
+
+  defp known_jwp_status_codes, do: @known_jwp_status_codes
 end

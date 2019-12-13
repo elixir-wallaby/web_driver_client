@@ -76,6 +76,26 @@ defmodule WebDriverClient.W3CWireProtocolClient.TestResponses do
     constant(%{"value" => nil}) |> map(&Jason.encode!/1)
   end
 
+  def error_response do
+    error_reason = "invalid selector"
+
+    %{
+      "error" => constant(error_reason),
+      "message" =>
+        scale(
+          string(:printable),
+          &trunc(:math.log(&1))
+        ),
+      "stacktrace" =>
+        scale(
+          string(:printable),
+          &trunc(:math.log(&1))
+        )
+    }
+    |> fixed_map()
+    |> map(&Jason.encode!/1)
+  end
+
   def navigate_to_response do
     constant(%{"value" => nil}) |> map(&Jason.encode!/1)
   end

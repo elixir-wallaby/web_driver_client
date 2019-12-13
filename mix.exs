@@ -67,16 +67,18 @@ defmodule WebDriverClient.MixProject do
           WebDriverClient.HTTPClientError,
           WebDriverClient.LogEntry,
           WebDriverClient.UnexpectedResponseFormatError,
-          WebDriverClient.UnexpectedStatusCodeError
+          WebDriverClient.WebDriverError
         ],
         "Low-level JWP API": [
           WebDriverClient.JSONWireProtocolClient,
-          WebDriverClient.JSONWireProtocolClient.LogEntry
+          WebDriverClient.JSONWireProtocolClient.LogEntry,
+          WebDriverClient.JSONWireProtocolClient.WebDriverError
         ],
         "Low-level W3C API": [
           WebDriverClient.W3CWireProtocolClient,
           WebDriverClient.W3CWireProtocolClient.LogEntry,
-          WebDriverClient.W3CWireProtocolClient.Rect
+          WebDriverClient.W3CWireProtocolClient.Rect,
+          WebDriverClient.W3CWireProtocolClient.WebDriverError
         ]
       ],
       groups_for_functions: [

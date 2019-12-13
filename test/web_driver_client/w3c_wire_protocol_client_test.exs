@@ -140,7 +140,9 @@ defmodule WebDriverClient.W3CWireProtocolClientTest do
     resp = TestResponses.end_session_response() |> pick()
 
     Bypass.expect_once(bypass, "DELETE", "/session/#{session_id}", fn conn ->
-      send_resp(conn, 200, resp)
+      conn
+      |> put_resp_content_type("application/json")
+      |> send_resp(200, resp)
     end)
 
     assert :ok = W3CWireProtocolClient.end_session(session)

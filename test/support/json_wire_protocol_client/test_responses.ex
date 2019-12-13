@@ -149,10 +149,12 @@ defmodule WebDriverClient.JSONWireProtocolClient.TestResponses do
     fixed_map(%{"ELEMENT" => string(:ascii, min_length: 1, max_length: 20)})
   end
 
-  def jwp_response(value) do
+  def jwp_response(value, opts \\ []) do
+    status = Keyword.get(opts, :status, constant(0))
+
     fixed_map(%{
       "sessionId" => unshrinkable(session_id()),
-      "status" => constant(0),
+      "status" => status,
       "value" => value
     })
   end

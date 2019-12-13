@@ -13,9 +13,9 @@ defmodule WebDriverClientTest do
   alias WebDriverClient.Size
   alias WebDriverClient.TestData
   alias WebDriverClient.UnexpectedResponseFormatError
-  alias WebDriverClient.UnexpectedStatusCodeError
   alias WebDriverClient.W3CWireProtocolClient.ErrorScenarios, as: W3CErrorScenarios
   alias WebDriverClient.W3CWireProtocolClient.TestResponses, as: W3CTestResponses
+  alias WebDriverClient.WebDriverError
 
   @moduletag :bypass
   @moduletag :capture_log
@@ -553,11 +553,11 @@ defmodule WebDriverClientTest do
   end
 
   defp basic_error_scenarios(:w3c) do
-    [:http_client_error, :unexpected_response_format, :unexpected_status_code]
+    [:http_client_error, :unexpected_response_format, :web_driver_error]
   end
 
   defp basic_error_scenarios(:jwp) do
-    [:http_client_error, :unexpected_response_format]
+    [:http_client_error, :unexpected_response_format, :web_driver_error]
   end
 
   defp build_session_for_scenario(:jwp, scenario_server, bypass, config, error_scenario) do
@@ -582,8 +582,9 @@ defmodule WebDriverClientTest do
     assert {:error, %UnexpectedResponseFormatError{}} = response
   end
 
-  defp assert_expected_response(:w3c, response, :unexpected_status_code) do
-    assert {:error, %UnexpectedStatusCodeError{}} = response
+  defp assert_expected_response(protocol, response, :web_driver_error)
+       when protocol in [:w3c, :jwp] do
+    assert {:error, %WebDriverError{}} = response
   end
 
   defp build_start_session_payload do

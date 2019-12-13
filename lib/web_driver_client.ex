@@ -14,15 +14,15 @@ defmodule WebDriverClient do
   alias WebDriverClient.Session
   alias WebDriverClient.Size
   alias WebDriverClient.UnexpectedResponseFormatError
-  alias WebDriverClient.UnexpectedStatusCodeError
   alias WebDriverClient.W3CWireProtocolClient
+  alias WebDriverClient.WebDriverError
 
   @type config_opt :: {:config, Config.t()}
   @type url :: String.t()
   @type basic_reason ::
           HTTPClientError.t()
           | UnexpectedResponseFormatError.t()
-          | UnexpectedStatusCodeError.t()
+          | WebDriverError.t()
 
   @doc """
   Starts a new session
@@ -33,10 +33,22 @@ defmodule WebDriverClient do
 
     case config do
       %Config{protocol: :jwp} ->
-        JSONWireProtocolClient.start_session(payload, config)
+        case JSONWireProtocolClient.start_session(payload, config) do
+          {:ok, session} ->
+            {:ok, session}
+
+          {:error, error} ->
+            {:error, to_error(error)}
+        end
 
       %Config{protocol: :w3c} ->
-        W3CWireProtocolClient.start_session(payload, config)
+        case W3CWireProtocolClient.start_session(payload, config) do
+          {:ok, session} ->
+            {:ok, session}
+
+          {:error, error} ->
+            {:error, to_error(error)}
+        end
     end
   end
 
@@ -50,10 +62,22 @@ defmodule WebDriverClient do
 
     case config do
       %Config{protocol: :jwp} ->
-        JSONWireProtocolClient.fetch_sessions(config)
+        case JSONWireProtocolClient.fetch_sessions(config) do
+          {:ok, sessions} ->
+            {:ok, sessions}
+
+          {:error, error} ->
+            {:error, to_error(error)}
+        end
 
       %Config{protocol: :w3c} ->
-        W3CWireProtocolClient.fetch_sessions(config)
+        case W3CWireProtocolClient.fetch_sessions(config) do
+          {:ok, session} ->
+            {:ok, session}
+
+          {:error, error} ->
+            {:error, to_error(error)}
+        end
     end
   end
 
@@ -63,11 +87,23 @@ defmodule WebDriverClient do
   doc_metadata subject: :sessions
   @spec end_session(Session.t()) :: :ok | {:error, basic_reason}
   def end_session(%Session{config: %Config{protocol: :jwp}} = session) do
-    JSONWireProtocolClient.end_session(session)
+    case JSONWireProtocolClient.end_session(session) do
+      :ok ->
+        :ok
+
+      {:error, error} ->
+        {:error, to_error(error)}
+    end
   end
 
   def end_session(%Session{config: %Config{protocol: :w3c}} = session) do
-    W3CWireProtocolClient.end_session(session)
+    case W3CWireProtocolClient.end_session(session) do
+      :ok ->
+        :ok
+
+      {:error, error} ->
+        {:error, to_error(error)}
+    end
   end
 
   @doc """
@@ -78,12 +114,24 @@ defmodule WebDriverClient do
 
   def navigate_to(%Session{config: %Config{protocol: :jwp}} = session, url)
       when is_url(url) do
-    JSONWireProtocolClient.navigate_to(session, url)
+    case JSONWireProtocolClient.navigate_to(session, url) do
+      :ok ->
+        :ok
+
+      {:error, error} ->
+        {:error, to_error(error)}
+    end
   end
 
   def navigate_to(%Session{config: %Config{protocol: :w3c}} = session, url)
       when is_url(url) do
-    W3CWireProtocolClient.navigate_to(session, url)
+    case W3CWireProtocolClient.navigate_to(session, url) do
+      :ok ->
+        :ok
+
+      {:error, error} ->
+        {:error, to_error(error)}
+    end
   end
 
   @doc """
@@ -92,11 +140,23 @@ defmodule WebDriverClient do
   doc_metadata subject: :navigation
   @spec fetch_current_url(Session.t()) :: {:ok, url} | {:error, basic_reason}
   def fetch_current_url(%Session{config: %Config{protocol: :jwp}} = session) do
-    JSONWireProtocolClient.fetch_current_url(session)
+    case JSONWireProtocolClient.fetch_current_url(session) do
+      {:ok, current_url} ->
+        {:ok, current_url}
+
+      {:error, error} ->
+        {:error, to_error(error)}
+    end
   end
 
   def fetch_current_url(%Session{config: %Config{protocol: :w3c}} = session) do
-    W3CWireProtocolClient.fetch_current_url(session)
+    case W3CWireProtocolClient.fetch_current_url(session) do
+      {:ok, current_url} ->
+        {:ok, current_url}
+
+      {:error, error} ->
+        {:error, to_error(error)}
+    end
   end
 
   @doc """
@@ -104,7 +164,13 @@ defmodule WebDriverClient do
   """
   @spec fetch_window_size(Session.t()) :: {:ok, Size.t()} | {:error, basic_reason}
   def fetch_window_size(%Session{config: %Config{protocol: :jwp}} = session) do
-    JSONWireProtocolClient.fetch_window_size(session)
+    case JSONWireProtocolClient.fetch_window_size(session) do
+      {:ok, size} ->
+        {:ok, size}
+
+      {:error, error} ->
+        {:error, to_error(error)}
+    end
   end
 
   def fetch_window_size(%Session{config: %Config{protocol: :w3c}} = session) do
@@ -113,7 +179,7 @@ defmodule WebDriverClient do
         {:ok, %Size{width: width, height: height}}
 
       {:error, error} ->
-        {:error, error}
+        {:error, to_error(error)}
     end
   end
 
@@ -134,7 +200,17 @@ defmodule WebDriverClient do
       )
       when is_element_location_strategy(element_location_strategy) and
              is_element_selector(element_selector) do
-    JSONWireProtocolClient.find_elements(session, element_location_strategy, element_selector)
+    case JSONWireProtocolClient.find_elements(
+           session,
+           element_location_strategy,
+           element_selector
+         ) do
+      {:ok, elements} ->
+        {:ok, elements}
+
+      {:error, error} ->
+        {:error, to_error(error)}
+    end
   end
 
   def find_elements(
@@ -144,7 +220,13 @@ defmodule WebDriverClient do
       )
       when is_element_location_strategy(element_location_strategy) and
              is_element_selector(element_selector) do
-    W3CWireProtocolClient.find_elements(session, element_location_strategy, element_selector)
+    case W3CWireProtocolClient.find_elements(session, element_location_strategy, element_selector) do
+      {:ok, elements} ->
+        {:ok, elements}
+
+      {:error, error} ->
+        {:error, to_error(error)}
+    end
   end
 
   @doc """
@@ -166,12 +248,18 @@ defmodule WebDriverClient do
       )
       when is_element_location_strategy(element_location_strategy) and
              is_element_selector(element_selector) do
-    JSONWireProtocolClient.find_elements_from_element(
-      session,
-      element,
-      element_location_strategy,
-      element_selector
-    )
+    case JSONWireProtocolClient.find_elements_from_element(
+           session,
+           element,
+           element_location_strategy,
+           element_selector
+         ) do
+      {:ok, elements} ->
+        {:ok, elements}
+
+      {:error, error} ->
+        {:error, to_error(error)}
+    end
   end
 
   def find_elements_from_element(
@@ -182,12 +270,18 @@ defmodule WebDriverClient do
       )
       when is_element_location_strategy(element_location_strategy) and
              is_element_selector(element_selector) do
-    W3CWireProtocolClient.find_elements_from_element(
-      session,
-      element,
-      element_location_strategy,
-      element_selector
-    )
+    case W3CWireProtocolClient.find_elements_from_element(
+           session,
+           element,
+           element_location_strategy,
+           element_selector
+         ) do
+      {:ok, elements} ->
+        {:ok, elements}
+
+      {:error, error} ->
+        {:error, to_error(error)}
+    end
   end
 
   @type size_opt :: {:width, pos_integer} | {:height, pos_integer}
@@ -200,12 +294,24 @@ defmodule WebDriverClient do
 
   def set_window_size(%Session{config: %Config{protocol: :jwp}} = session, opts)
       when is_list(opts) do
-    JSONWireProtocolClient.set_window_size(session, opts)
+    case JSONWireProtocolClient.set_window_size(session, opts) do
+      :ok ->
+        :ok
+
+      {:error, error} ->
+        {:error, to_error(error)}
+    end
   end
 
   def set_window_size(%Session{config: %Config{protocol: :w3c}} = session, opts)
       when is_list(opts) do
-    W3CWireProtocolClient.set_window_rect(session, opts)
+    case W3CWireProtocolClient.set_window_rect(session, opts) do
+      :ok ->
+        :ok
+
+      {:error, error} ->
+        {:error, to_error(error)}
+    end
   end
 
   @type log_type :: String.t()
@@ -216,11 +322,23 @@ defmodule WebDriverClient do
   doc_metadata subject: :logging
   @spec fetch_log_types(Session.t()) :: {:ok, [log_type]} | {:error, basic_reason()}
   def fetch_log_types(%Session{config: %Config{protocol: :jwp}} = session) do
-    JSONWireProtocolClient.fetch_log_types(session)
+    case JSONWireProtocolClient.fetch_log_types(session) do
+      {:ok, log_types} ->
+        {:ok, log_types}
+
+      {:error, error} ->
+        {:error, to_error(error)}
+    end
   end
 
   def fetch_log_types(%Session{config: %Config{protocol: :w3c}} = session) do
-    W3CWireProtocolClient.fetch_log_types(session)
+    case W3CWireProtocolClient.fetch_log_types(session) do
+      {:ok, log_types} ->
+        {:ok, log_types}
+
+      {:error, error} ->
+        {:error, to_error(error)}
+    end
   end
 
   @doc """
@@ -232,17 +350,25 @@ defmodule WebDriverClient do
 
   def fetch_logs(%Session{config: %Config{protocol: :jwp}} = session, log_type)
       when is_binary(log_type) do
-    with {:ok, log_entries} <- JSONWireProtocolClient.fetch_logs(session, log_type) do
-      log_entries = Enum.map(log_entries, &to_log_entry/1)
-      {:ok, log_entries}
+    case JSONWireProtocolClient.fetch_logs(session, log_type) do
+      {:ok, log_entries} ->
+        log_entries = Enum.map(log_entries, &to_log_entry/1)
+        {:ok, log_entries}
+
+      {:error, error} ->
+        {:error, to_error(error)}
     end
   end
 
   def fetch_logs(%Session{config: %Config{protocol: :w3c}} = session, log_type)
       when is_binary(log_type) do
-    with {:ok, log_entries} <- W3CWireProtocolClient.fetch_logs(session, log_type) do
-      log_entries = Enum.map(log_entries, &to_log_entry/1)
-      {:ok, log_entries}
+    case W3CWireProtocolClient.fetch_logs(session, log_type) do
+      {:ok, log_entries} ->
+        log_entries = Enum.map(log_entries, &to_log_entry/1)
+        {:ok, log_entries}
+
+      {:error, error} ->
+        {:error, to_error(error)}
     end
   end
 
@@ -259,4 +385,15 @@ defmodule WebDriverClient do
     |> Map.from_struct()
     |> (&struct!(LogEntry, &1)).()
   end
+
+  defp to_error(%JSONWireProtocolClient.WebDriverError{reason: reason}) do
+    WebDriverError.exception(reason: reason)
+  end
+
+  defp to_error(%W3CWireProtocolClient.WebDriverError{reason: reason}) do
+    WebDriverError.exception(reason: reason)
+  end
+
+  defp to_error(%HTTPClientError{} = error), do: error
+  defp to_error(%UnexpectedResponseFormatError{} = error), do: error
 end

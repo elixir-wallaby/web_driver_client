@@ -6,6 +6,7 @@ defmodule WebDriverClient.Integration.FindingElementsTest do
   alias WebDriverClient.IntegrationTesting.TestGenerator
   alias WebDriverClient.IntegrationTesting.TestPages.ElementsPage
   alias WebDriverClient.Session
+  alias WebDriverClient.WebDriverError
 
   require TestGenerator
 
@@ -58,6 +59,27 @@ defmodule WebDriverClient.Integration.FindingElementsTest do
                  :css_selector,
                  "li"
                )
+    end
+
+    test "invalid selectors", %{scenario: scenario} do
+      config = Scenarios.get_config(scenario)
+      payload = Scenarios.get_start_session_payload(scenario)
+
+      {:ok, session} = WebDriverClient.start_session(payload, config: config)
+
+      ensure_session_is_closed(session)
+
+      :ok = WebDriverClient.navigate_to(session, ElementsPage.url())
+
+      assert {:error, %WebDriverError{reason: reason}} =
+               WebDriverClient.find_elements(
+                 session,
+                 :css_selector,
+                 "checkbox:foo"
+               )
+
+      # For some reason PhantomJS returns :invalid_element_state
+      assert reason in [:invalid_selector, :invalid_element_state]
     end
   end
 
