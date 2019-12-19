@@ -4,6 +4,45 @@ defmodule WebDriverClient.W3CWireProtocolClient.TestResponses do
 
   @web_element_identifier "element-6066-11e4-a52e-4f735466cecf"
 
+  def fetch_sessions_response do
+    constant(%{
+      "sessionId" => "",
+      "status" => 0,
+      "value" => [
+        %{
+          "capabilities" => %{
+            "acceptInsecureCerts" => false,
+            "browserName" => "chrome",
+            "browserVersion" => "77.0.3865.120",
+            "chrome" => %{
+              "chromedriverVersion" =>
+                "77.0.3865.40 (f484704e052e0b556f8030b65b953dce96503217-refs/branch-heads/3865@{#442})",
+              "userDataDir" =>
+                "/var/folders/mn/dxbldtrx3jv0q_hnnz8kfmf00000gn/T/.com.google.Chrome.Iw15gJ"
+            },
+            "goog:chromeOptions" => %{
+              "debuggerAddress" => "localhost:63322"
+            },
+            "networkConnectionEnabled" => false,
+            "pageLoadStrategy" => "normal",
+            "platformName" => "mac os x",
+            "proxy" => %{},
+            "setWindowRect" => true,
+            "strictFileInteractability" => false,
+            "timeouts" => %{
+              "implicit" => 0,
+              "pageLoad" => 300_000,
+              "script" => 30_000
+            },
+            "unhandledPromptBehavior" => "dismiss and notify"
+          },
+          "id" => "9e8adbbf4187003d9e0d9b2934a9c5d0"
+        }
+      ]
+    })
+    |> map(&Jason.encode!/1)
+  end
+
   def end_session_response do
     constant(%{"value" => nil}) |> map(&Jason.encode!/1)
   end

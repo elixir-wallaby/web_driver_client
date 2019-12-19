@@ -1,9 +1,11 @@
 defmodule WebDriverClient.JSONWireProtocolClient.ResponseParser do
   @moduledoc false
 
+  alias WebDriverClient.Config
   alias WebDriverClient.Element
   alias WebDriverClient.JSONWireProtocolClient
   alias WebDriverClient.JSONWireProtocolClient.LogEntry
+  alias WebDriverClient.Session
   alias WebDriverClient.Size
   alias WebDriverClient.UnexpectedResponseFormatError
 
@@ -89,6 +91,36 @@ defmodule WebDriverClient.JSONWireProtocolClient.ResponseParser do
     |> case do
       :error -> :error
       element -> Enum.reverse(element)
+    end
+  end
+
+  @spec parse_fetch_sessions_response(term, Config.t()) ::
+          {:ok, [Session.t()]} | {:error, UnexpectedResponseFormatError.t()}
+  def parse_fetch_sessions_response(response, %Config{} = config) do
+    with %{"value" => values} when is_list(values) <- response,
+         sessions when is_list(sessions) <- do_parse_sessions(values, config) do
+      {:ok, sessions}
+    else
+      _ ->
+        {:error, UnexpectedResponseFormatError.exception(response_body: response)}
+    end
+  end
+
+  defp do_parse_sessions(sessions, config) do
+    sessions
+    |> Enum.reduce_while([], fn
+      %{"id" => session_id}, acc
+      when is_binary(session_id) ->
+        session = Session.build(session_id, config)
+
+        {:cont, [session | acc]}
+
+      _, _ ->
+        {:halt, :error}
+    end)
+    |> case do
+      :error -> :error
+      sessions -> Enum.reverse(sessions)
     end
   end
 

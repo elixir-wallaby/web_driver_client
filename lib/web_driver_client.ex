@@ -12,7 +12,6 @@ defmodule WebDriverClient do
   alias WebDriverClient.HTTPClientError
   alias WebDriverClient.JSONWireProtocolClient
   alias WebDriverClient.LogEntry
-  alias WebDriverClient.ResponseParsers.FetchSessionsResponseParser
   alias WebDriverClient.ResponseParsers.SessionParser
   alias WebDriverClient.Session
   alias WebDriverClient.Size
@@ -50,19 +49,17 @@ defmodule WebDriverClient do
   @doc """
   Returns the list of sessions
   """
+  doc_metadata subject: :sessions
   @spec fetch_sessions([config_opt]) :: {:ok, [Session.t()]} | {:error, basic_reason}
   def fetch_sessions(opts) when is_list(opts) do
     config = Keyword.fetch!(opts, :config)
-    client = TeslaClientBuilder.build(config)
 
-    with {:ok, %Env{body: body}} <- Tesla.get(client, "/sessions") do
-      case FetchSessionsResponseParser.parse(body, config) do
-        {:ok, sessions} ->
-          {:ok, sessions}
+    case config do
+      %Config{protocol: :jwp} ->
+        JSONWireProtocolClient.fetch_sessions(config)
 
-        :error ->
-          {:error, UnexpectedResponseFormatError.exception(response_body: body)}
-      end
+      %Config{protocol: :w3c} ->
+        W3CWireProtocolClient.fetch_sessions(config)
     end
   end
 

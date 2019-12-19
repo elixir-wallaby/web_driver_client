@@ -18,6 +18,60 @@ defmodule WebDriverClient.JSONWireProtocolClientTest do
   @moduletag :capture_log
   @moduletag protocol: :jwp
 
+  test "fetch_sessions/1 returns {:ok, [%Session{}]} on a valid response", %{
+    bypass: bypass,
+    config: config
+  } do
+    resp = TestResponses.fetch_sessions_response() |> pick()
+
+    session_id =
+      resp
+      |> Jason.decode!()
+      |> Map.fetch!("value")
+      |> List.first()
+      |> Map.fetch!("id")
+
+    Bypass.expect_once(bypass, "GET", "/sessions", fn conn ->
+      conn
+      |> put_resp_content_type("application/json")
+      |> send_resp(200, resp)
+    end)
+
+    assert {:ok, [%Session{id: ^session_id, config: ^config} | _]} =
+             JSONWireProtocolClient.fetch_sessions(config)
+  end
+
+  test "fetch_sessions/1 returns {:error, %UnexpectedResponseFormatError{}} with an unexpected response",
+       %{bypass: bypass, config: config} do
+    parsed_response = %{}
+
+    Bypass.expect_once(bypass, "GET", "/sessions", fn conn ->
+      conn
+      |> put_resp_content_type("application/json")
+      |> send_resp(200, Jason.encode!(parsed_response))
+    end)
+
+    assert {:error, %UnexpectedResponseFormatError{response_body: ^parsed_response}} =
+             JSONWireProtocolClient.fetch_sessions(config)
+  end
+
+  test "fetch_sessions/1 returns appropriate errors on various server responses", %{
+    bypass: bypass,
+    config: config
+  } do
+    scenario_server = set_up_error_scenario_tests(bypass)
+
+    for error_scenario <- error_scenarios() do
+      %Session{config: config} =
+        build_session_for_scenario(scenario_server, bypass, config, error_scenario)
+
+      assert_expected_response(
+        JSONWireProtocolClient.fetch_sessions(config),
+        error_scenario
+      )
+    end
+  end
+
   test "end_session/1 with a %Session{} uses the config on the session", %{
     bypass: bypass,
     config: config

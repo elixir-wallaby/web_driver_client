@@ -32,6 +32,22 @@ defmodule WebDriverClient.W3CWireProtocolClient do
           | UnexpectedStatusCodeError.t()
 
   @doc """
+  Returns the list of currently active sessions
+
+  This isn't part of the official W3C spec
+  """
+  doc_metadata subject: :sessions
+  @spec fetch_sessions(Config.t()) :: {:ok, [Session.t()]} | {:error, basic_reason}
+  def fetch_sessions(%Config{} = config) do
+    client = TeslaClientBuilder.build(config)
+
+    with {:ok, %Env{body: body}} <- Tesla.get(client, "/sessions"),
+         {:ok, sessions} <- ResponseParser.parse_fetch_sessions_response(body, config) do
+      {:ok, sessions}
+    end
+  end
+
+  @doc """
   End the session.
 
   Specification: https://w3c.github.io/webdriver/#delete-session

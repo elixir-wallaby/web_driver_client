@@ -6,7 +6,9 @@ defmodule WebDriverClient.JSONWireProtocolClient.ResponseParserTest do
   alias WebDriverClient.JSONWireProtocolClient.LogEntry
   alias WebDriverClient.JSONWireProtocolClient.ResponseParser
   alias WebDriverClient.JSONWireProtocolClient.TestResponses
+  alias WebDriverClient.Session
   alias WebDriverClient.Size
+  alias WebDriverClient.TestData
   alias WebDriverClient.UnexpectedResponseFormatError
 
   property "parse_value/1 returns {:ok, url} when result is a string" do
@@ -152,6 +154,28 @@ defmodule WebDriverClient.JSONWireProtocolClient.ResponseParserTest do
       assert {:error, %UnexpectedResponseFormatError{response_body: ^response}} =
                ResponseParser.parse_elements(response)
     end
+  end
+
+  test "parse_fetch_sessions_response/2 returns {:ok [%Session{}]} when all sessions are valid" do
+    config = TestData.config() |> pick()
+    resp = TestResponses.fetch_sessions_response() |> pick() |> Jason.decode!()
+
+    session_id =
+      resp
+      |> Map.fetch!("value")
+      |> List.first()
+      |> Map.fetch!("id")
+
+    assert {:ok, [%Session{id: ^session_id, config: ^config}]} =
+             ResponseParser.parse_fetch_sessions_response(resp, config)
+  end
+
+  test "parse_fetch_sessions_response/2 returns {:error, %UnexpectedResponseFormatError{}} on an invalid response" do
+    config = TestData.config() |> pick()
+    response = %{}
+
+    assert {:error, %UnexpectedResponseFormatError{response_body: ^response}} =
+             ResponseParser.parse_fetch_sessions_response(response, config)
   end
 
   defp elements_with_invalid_responses do

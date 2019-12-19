@@ -2,6 +2,39 @@ defmodule WebDriverClient.JSONWireProtocolClient.TestResponses do
   @moduledoc false
   use ExUnitProperties
 
+  def fetch_sessions_response do
+    constant(%{
+      "sessionId" => nil,
+      "status" => 0,
+      "value" => [
+        %{
+          "capabilities" => %{
+            "acceptSslCerts" => false,
+            "applicationCacheEnabled" => false,
+            "browserConnectionEnabled" => false,
+            "browserName" => "phantomjs",
+            "cssSelectorsEnabled" => true,
+            "databaseEnabled" => false,
+            "driverName" => "ghostdriver",
+            "driverVersion" => "1.2.0",
+            "handlesAlerts" => false,
+            "javascriptEnabled" => true,
+            "locationContextEnabled" => false,
+            "nativeEvents" => true,
+            "platform" => "mac-unknown-64bit",
+            "proxy" => %{"proxyType" => "direct"},
+            "rotatable" => false,
+            "takesScreenshot" => true,
+            "version" => "2.1.1",
+            "webStorageEnabled" => false
+          },
+          "id" => "89243fd0-2225-11ea-9a6f-8df630e6d233"
+        }
+      ]
+    })
+    |> map(&Jason.encode!/1)
+  end
+
   def end_session_response do
     constant(%{"value" => nil}) |> map(&Jason.encode!/1)
   end

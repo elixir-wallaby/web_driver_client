@@ -3,6 +3,8 @@ defmodule WebDriverClient.W3CWireProtocolClient.ResponseParserTest do
   use ExUnitProperties
 
   alias WebDriverClient.Element
+  alias WebDriverClient.Session
+  alias WebDriverClient.TestData
   alias WebDriverClient.UnexpectedResponseFormatError
   alias WebDriverClient.W3CWireProtocolClient.LogEntry
   alias WebDriverClient.W3CWireProtocolClient.Rect
@@ -158,6 +160,28 @@ defmodule WebDriverClient.W3CWireProtocolClient.ResponseParserTest do
       assert {:error, %UnexpectedResponseFormatError{response_body: ^response}} =
                ResponseParser.parse_elements(response)
     end
+  end
+
+  test "parse_fetch_sessions_response/2 returns {:ok [%Session{}]} when all sessions are valid" do
+    config = TestData.config() |> pick()
+    resp = TestResponses.fetch_sessions_response() |> pick() |> Jason.decode!()
+
+    session_id =
+      resp
+      |> Map.fetch!("value")
+      |> List.first()
+      |> Map.fetch!("id")
+
+    assert {:ok, [%Session{id: ^session_id, config: ^config}]} =
+             ResponseParser.parse_fetch_sessions_response(resp, config)
+  end
+
+  test "parse_fetch_sessions_response/2 returns {:error, %UnexpectedResponseFormatError{}} on an invalid response" do
+    config = TestData.config() |> pick()
+    response = %{}
+
+    assert {:error, %UnexpectedResponseFormatError{response_body: ^response}} =
+             ResponseParser.parse_fetch_sessions_response(response, config)
   end
 
   defp elements_with_invalid_responses do
