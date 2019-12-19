@@ -69,19 +69,14 @@ defmodule WebDriverClient do
   @doc """
   Ends a session
   """
+  doc_metadata subject: :sessions
   @spec end_session(Session.t()) :: :ok | {:error, basic_reason}
-  def end_session(%Session{id: id, config: %Config{} = config})
-      when is_session_id(id) do
-    config
-    |> TeslaClientBuilder.build()
-    |> Tesla.delete("/session/#{id}")
-    |> case do
-      {:ok, %Env{}} ->
-        :ok
+  def end_session(%Session{config: %Config{protocol: :jwp}} = session) do
+    JSONWireProtocolClient.end_session(session)
+  end
 
-      {:error, reason} ->
-        {:error, reason}
-    end
+  def end_session(%Session{config: %Config{protocol: :w3c}} = session) do
+    W3CWireProtocolClient.end_session(session)
   end
 
   @doc """

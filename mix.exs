@@ -80,6 +80,7 @@ defmodule WebDriverClient.MixProject do
         ]
       ],
       groups_for_functions: [
+        Sessions: &(&1[:subject] == :sessions),
         Navigation: &(&1[:subject] == :navigation),
         Elements: &(&1[:subject] == :elements),
         Logging: &(&1[:subject] == :logging)

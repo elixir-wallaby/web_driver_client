@@ -20,6 +20,36 @@ defmodule WebDriverClient.W3CWireProtocolClientTest do
 
   @web_element_identifier "element-6066-11e4-a52e-4f735466cecf"
 
+  test "end_session/1 with a %Session{} uses the config on the session", %{
+    bypass: bypass,
+    config: config
+  } do
+    %Session{id: session_id} = session = TestData.session(config: constant(config)) |> pick()
+    resp = TestResponses.end_session_response() |> pick()
+
+    Bypass.expect_once(bypass, "DELETE", "/session/#{session_id}", fn conn ->
+      send_resp(conn, 200, resp)
+    end)
+
+    assert :ok = W3CWireProtocolClient.end_session(session)
+  end
+
+  test "end_session/1 returns appropriate errors on various server responses", %{
+    bypass: bypass,
+    config: config
+  } do
+    scenario_server = set_up_error_scenario_tests(bypass)
+
+    for error_scenario <- error_scenarios() do
+      session = build_session_for_scenario(scenario_server, bypass, config, error_scenario)
+
+      assert_expected_response(
+        W3CWireProtocolClient.end_session(session),
+        error_scenario
+      )
+    end
+  end
+
   test "navigate_to/2 with valid data calls the correct url and returns the response", %{
     config: config,
     bypass: bypass

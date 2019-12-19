@@ -2,6 +2,10 @@ defmodule WebDriverClient.JSONWireProtocolClient.TestResponses do
   @moduledoc false
   use ExUnitProperties
 
+  def end_session_response do
+    constant(%{"value" => nil}) |> map(&Jason.encode!/1)
+  end
+
   def navigate_to_response do
     constant(%{"value" => nil}) |> map(&Jason.encode!/1)
   end

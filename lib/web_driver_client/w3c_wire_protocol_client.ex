@@ -32,6 +32,27 @@ defmodule WebDriverClient.W3CWireProtocolClient do
           | UnexpectedStatusCodeError.t()
 
   @doc """
+  End the session.
+
+  Specification: https://w3c.github.io/webdriver/#delete-session
+  """
+  doc_metadata subject: :sessions
+  @spec end_session(Session.t()) :: :ok | {:error, basic_reason}
+  def end_session(%Session{id: id, config: %Config{} = config})
+      when is_session_id(id) do
+    config
+    |> TeslaClientBuilder.build()
+    |> Tesla.delete("/session/#{id}")
+    |> case do
+      {:ok, %Env{}} ->
+        :ok
+
+      {:error, reason} ->
+        {:error, reason}
+    end
+  end
+
+  @doc """
   Navigate to a new URL
 
   Specification: https://w3c.github.io/webdriver/#navigate-to

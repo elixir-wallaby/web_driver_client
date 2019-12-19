@@ -147,17 +147,47 @@ defmodule WebDriverClientTest do
              WebDriverClient.fetch_sessions(config: config)
   end
 
-  test "end_session/1 with a %Session{} uses the config on the session", %{
-    bypass: bypass,
-    config: config
+  @tag protocol: :jwp
+  test "end_session/1 with jwp session returns :ok on success", %{
+    config: config,
+    bypass: bypass
   } do
-    %Session{id: session_id} = session = TestData.session(config: constant(config)) |> pick()
+    session = TestData.session(config: constant(config)) |> pick()
+    resp = JWPTestResponses.end_session_response() |> pick()
 
-    Bypass.expect_once(bypass, "DELETE", "/session/#{session_id}", fn conn ->
-      send_resp(conn, 200, "")
-    end)
+    stub_bypass_response(bypass, resp)
 
     assert :ok = WebDriverClient.end_session(session)
+  end
+
+  @tag protocol: :w3c
+  test "end_session/1 with w3c session returns :ok on success", %{
+    config: config,
+    bypass: bypass
+  } do
+    session = TestData.session(config: constant(config)) |> pick()
+    resp = W3CTestResponses.end_session_response() |> pick()
+
+    stub_bypass_response(bypass, resp)
+
+    assert :ok = WebDriverClient.end_session(session)
+  end
+
+  for protocol <- @protocols do
+    @tag protocol: protocol
+    test "end_session/1 with #{protocol} session returns appropriate errors on various server responses",
+         %{config: config, bypass: bypass} do
+      scenario_server = set_up_error_scenario_tests(bypass)
+
+      for error_scenario <- basic_error_scenarios() do
+        session = build_session_for_scenario(scenario_server, bypass, config, error_scenario)
+
+        assert_expected_response(
+          WebDriverClient.end_session(session),
+          error_scenario
+        )
+      end
+    end
   end
 
   @tag protocol: :jwp

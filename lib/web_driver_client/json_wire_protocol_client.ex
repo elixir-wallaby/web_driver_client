@@ -32,6 +32,27 @@ defmodule WebDriverClient.JSONWireProtocolClient do
           | UnexpectedStatusCodeError.t()
 
   @doc """
+  End the session.
+
+  Specification: https://github.com/SeleniumHQ/selenium/wiki/JsonWireProtocol#delete-sessionsessionid
+  """
+  doc_metadata subject: :sessions
+  @spec end_session(Session.t()) :: :ok | {:error, basic_reason}
+  def end_session(%Session{id: id, config: %Config{} = config})
+      when is_session_id(id) do
+    config
+    |> TeslaClientBuilder.build()
+    |> Tesla.delete("/session/#{id}")
+    |> case do
+      {:ok, %Env{}} ->
+        :ok
+
+      {:error, reason} ->
+        {:error, reason}
+    end
+  end
+
+  @doc """
   Navigate to a new URL
 
   Specification: https://github.com/SeleniumHQ/selenium/wiki/JsonWireProtocol#post-sessionsessionidurl
