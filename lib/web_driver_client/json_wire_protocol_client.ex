@@ -32,6 +32,28 @@ defmodule WebDriverClient.JSONWireProtocolClient do
           | UnexpectedStatusCodeError.t()
 
   @doc """
+  Navigate to a new URL
+
+  Specification: https://github.com/SeleniumHQ/selenium/wiki/JsonWireProtocol#post-sessionsessionidurl
+  """
+  doc_metadata subject: :navigation
+  @spec navigate_to(Session.t(), url) :: {:ok, url} | {:error, basic_reason}
+  def navigate_to(%Session{id: id, config: %Config{} = config}, url) when is_url(url) do
+    request_body = %{"url" => url}
+
+    config
+    |> TeslaClientBuilder.build()
+    |> Tesla.post("/session/#{id}/url", request_body)
+    |> case do
+      {:ok, %Env{}} ->
+        :ok
+
+      {:error, reason} ->
+        {:error, reason}
+    end
+  end
+
+  @doc """
   Fetches the url of the current page.
 
   Specification: https://github.com/SeleniumHQ/selenium/wiki/JsonWireProtocol#sessionsessionidurl

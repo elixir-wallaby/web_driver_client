@@ -4,6 +4,10 @@ defmodule WebDriverClient.W3CWireProtocolClient.TestResponses do
 
   @web_element_identifier "element-6066-11e4-a52e-4f735466cecf"
 
+  def navigate_to_response do
+    constant(%{"value" => nil}) |> map(&Jason.encode!/1)
+  end
+
   def fetch_window_rect_response do
     window_rect_response() |> map(&Jason.encode!/1)
   end

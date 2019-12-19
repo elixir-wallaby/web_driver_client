@@ -18,6 +18,46 @@ defmodule WebDriverClient.JSONWireProtocolClientTest do
   @moduletag :capture_log
   @moduletag protocol: :jwp
 
+  test "navigate_to/2 with valid data calls the correct url and returns the response", %{
+    config: config,
+    bypass: bypass
+  } do
+    %Session{id: session_id} = session = TestData.session(config: constant(config)) |> pick()
+
+    browser_url = "http://foo.bar.example"
+
+    Bypass.expect_once(bypass, "POST", "/session/#{session_id}/url", fn conn ->
+      conn = parse_params(conn)
+
+      assert conn.params == %{"url" => browser_url}
+
+      response_body = Jason.encode!(%{"value" => nil})
+
+      conn
+      |> put_resp_content_type("application/json")
+      |> send_resp(200, response_body)
+    end)
+
+    assert :ok = JSONWireProtocolClient.navigate_to(session, browser_url)
+  end
+
+  test "navigate_to/2 returns appropriate errors on various server responses", %{
+    bypass: bypass,
+    config: config
+  } do
+    scenario_server = set_up_error_scenario_tests(bypass)
+
+    for error_scenario <- error_scenarios() do
+      session = build_session_for_scenario(scenario_server, bypass, config, error_scenario)
+      url = "http://www.example.com"
+
+      assert_expected_response(
+        JSONWireProtocolClient.navigate_to(session, url),
+        error_scenario
+      )
+    end
+  end
+
   property "fetch_current_url/1 returns {:ok, url} on valid response", %{
     bypass: bypass,
     config: config

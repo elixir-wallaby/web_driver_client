@@ -32,6 +32,28 @@ defmodule WebDriverClient.W3CWireProtocolClient do
           | UnexpectedStatusCodeError.t()
 
   @doc """
+  Navigate to a new URL
+
+  Specification: https://w3c.github.io/webdriver/#navigate-to
+  """
+  doc_metadata subject: :navigation
+  @spec navigate_to(Session.t(), url) :: {:ok, url} | {:error, basic_reason}
+  def navigate_to(%Session{id: id, config: %Config{} = config}, url) when is_url(url) do
+    request_body = %{"url" => url}
+
+    config
+    |> TeslaClientBuilder.build()
+    |> Tesla.post("/session/#{id}/url", request_body)
+    |> case do
+      {:ok, %Env{}} ->
+        :ok
+
+      {:error, reason} ->
+        {:error, reason}
+    end
+  end
+
+  @doc """
   Fetches the current url of the top-level browsing context.
 
   Specification: https://w3c.github.io/webdriver/#get-current-url

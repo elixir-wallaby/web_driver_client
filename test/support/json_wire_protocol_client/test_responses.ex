@@ -2,6 +2,10 @@ defmodule WebDriverClient.JSONWireProtocolClient.TestResponses do
   @moduledoc false
   use ExUnitProperties
 
+  def navigate_to_response do
+    constant(%{"value" => nil}) |> map(&Jason.encode!/1)
+  end
+
   def fetch_window_size_response do
     window_size_response() |> map(&Jason.encode!/1)
   end

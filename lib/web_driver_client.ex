@@ -89,20 +89,15 @@ defmodule WebDriverClient do
   """
   doc_metadata subject: :navigation
   @spec navigate_to(Session.t(), url) :: :ok | {:error, basic_reason}
-  def navigate_to(%Session{id: id, config: %Config{} = config}, url)
-      when is_session_id(id) and is_url(url) do
-    request_body = %{"url" => url}
 
-    config
-    |> TeslaClientBuilder.build()
-    |> Tesla.post("/session/#{id}/url", request_body)
-    |> case do
-      {:ok, %Env{}} ->
-        :ok
+  def navigate_to(%Session{config: %Config{protocol: :jwp}} = session, url)
+      when is_url(url) do
+    JSONWireProtocolClient.navigate_to(session, url)
+  end
 
-      {:error, reason} ->
-        {:error, reason}
-    end
+  def navigate_to(%Session{config: %Config{protocol: :w3c}} = session, url)
+      when is_url(url) do
+    W3CWireProtocolClient.navigate_to(session, url)
   end
 
   @doc """
