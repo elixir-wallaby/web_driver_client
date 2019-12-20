@@ -1,6 +1,8 @@
 defmodule WebDriverClient.W3CWireProtocolClient.ResponseParser do
   @moduledoc false
 
+  import WebDriverClient.W3CWireProtocolClient.Guards
+
   alias WebDriverClient.Config
   alias WebDriverClient.Element
   alias WebDriverClient.Session
@@ -109,6 +111,18 @@ defmodule WebDriverClient.W3CWireProtocolClient.ResponseParser do
          sessions when is_list(sessions) <- do_parse_sessions(values, config) do
       {:ok, sessions}
     else
+      _ ->
+        {:error, UnexpectedResponseFormatError.exception(response_body: response)}
+    end
+  end
+
+  @spec parse_start_session_response(term, Config.t()) ::
+          {:ok, Session.t()} | {:error, UnexpectedResponseFormatError.t()}
+  def parse_start_session_response(response, %Config{} = config) do
+    case response do
+      %{"value" => %{"sessionId" => session_id}} when is_session_id(session_id) ->
+        {:ok, Session.build(session_id, config)}
+
       _ ->
         {:error, UnexpectedResponseFormatError.exception(response_body: response)}
     end

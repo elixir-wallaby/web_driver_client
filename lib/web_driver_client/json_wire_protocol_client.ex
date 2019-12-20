@@ -32,6 +32,22 @@ defmodule WebDriverClient.JSONWireProtocolClient do
           | UnexpectedStatusCodeError.t()
 
   @doc """
+  Starts a new session
+
+  Specification: https://github.com/SeleniumHQ/selenium/wiki/JsonWireProtocol#post-session
+  """
+  doc_metadata subject: :sessions
+  @spec start_session(map, Config.t()) :: {:ok, Session.t()} | {:error, basic_reason}
+  def start_session(payload, %Config{} = config) when is_map(payload) do
+    client = TeslaClientBuilder.build(config)
+
+    with {:ok, %Env{body: body}} <- Tesla.post(client, "/session", payload),
+         {:ok, session} <- ResponseParser.parse_start_session_response(body, config) do
+      {:ok, session}
+    end
+  end
+
+  @doc """
   Returns the list of currently active sessions
 
   Specification: https://github.com/SeleniumHQ/selenium/wiki/JsonWireProtocol#get-sessions

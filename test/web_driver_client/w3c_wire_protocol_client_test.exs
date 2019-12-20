@@ -20,6 +20,64 @@ defmodule WebDriverClient.W3CWireProtocolClientTest do
 
   @web_element_identifier "element-6066-11e4-a52e-4f735466cecf"
 
+  test "start_session/2 returns {:ok, %Session{}} on a valid response", %{
+    bypass: bypass,
+    config: config
+  } do
+    resp = TestResponses.start_session_response() |> pick()
+    payload = build_start_session_payload()
+
+    session_id =
+      resp
+      |> Jason.decode!()
+      |> get_in(["value", "sessionId"])
+
+    Bypass.expect_once(bypass, "POST", "/session", fn conn ->
+      conn = parse_params(conn)
+      assert ^payload = conn.params
+
+      conn
+      |> put_resp_content_type("application/json")
+      |> send_resp(200, resp)
+    end)
+
+    assert {:ok, %Session{id: ^session_id, config: ^config}} =
+             W3CWireProtocolClient.start_session(payload, config)
+  end
+
+  test "start_session/2 returns {:error, %UnexpectedResponseFormatError{}} with an unexpected response",
+       %{bypass: bypass, config: config} do
+    parsed_response = %{}
+    payload = build_start_session_payload()
+
+    Bypass.expect_once(bypass, "POST", "/session", fn conn ->
+      conn
+      |> put_resp_content_type("application/json")
+      |> send_resp(200, Jason.encode!(parsed_response))
+    end)
+
+    assert {:error, %UnexpectedResponseFormatError{response_body: ^parsed_response}} =
+             W3CWireProtocolClient.start_session(payload, config)
+  end
+
+  test "start_session/2 returns appropriate errors on various server responses", %{
+    bypass: bypass,
+    config: config
+  } do
+    scenario_server = set_up_error_scenario_tests(bypass)
+    payload = build_start_session_payload()
+
+    for error_scenario <- error_scenarios() do
+      %Session{config: config} =
+        build_session_for_scenario(scenario_server, bypass, config, error_scenario)
+
+      assert_expected_response(
+        W3CWireProtocolClient.start_session(payload, config),
+        error_scenario
+      )
+    end
+  end
+
   test "fetch_sessions/1 returns {:ok, [%Session{}]} on a valid response", %{
     bypass: bypass,
     config: config
@@ -754,5 +812,9 @@ defmodule WebDriverClient.W3CWireProtocolClientTest do
         error_scenario
       )
     end
+  end
+
+  defp build_start_session_payload do
+    %{"capablities" => %{"browserName" => "firefox"}}
   end
 end

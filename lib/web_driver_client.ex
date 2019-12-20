@@ -6,16 +6,13 @@ defmodule WebDriverClient do
   import WebDriverClient.CompatibilityMacros
   import WebDriverClient.Guards
 
-  alias Tesla.Env
   alias WebDriverClient.Config
   alias WebDriverClient.Element
   alias WebDriverClient.HTTPClientError
   alias WebDriverClient.JSONWireProtocolClient
   alias WebDriverClient.LogEntry
-  alias WebDriverClient.ResponseParsers.SessionParser
   alias WebDriverClient.Session
   alias WebDriverClient.Size
-  alias WebDriverClient.TeslaClientBuilder
   alias WebDriverClient.UnexpectedResponseFormatError
   alias WebDriverClient.UnexpectedStatusCodeError
   alias WebDriverClient.W3CWireProtocolClient
@@ -33,16 +30,13 @@ defmodule WebDriverClient do
   @spec start_session(map(), [config_opt]) :: {:ok, Session.t()} | {:error, basic_reason}
   def start_session(payload, opts) when is_list(opts) and is_map(payload) do
     config = Keyword.fetch!(opts, :config)
-    client = TeslaClientBuilder.build(config)
 
-    with {:ok, %Env{body: body}} <- Tesla.post(client, "/session", payload) do
-      case SessionParser.parse(body, config) do
-        {:ok, session} ->
-          {:ok, session}
+    case config do
+      %Config{protocol: :jwp} ->
+        JSONWireProtocolClient.start_session(payload, config)
 
-        :error ->
-          {:error, UnexpectedResponseFormatError.exception(response_body: body)}
-      end
+      %Config{protocol: :w3c} ->
+        W3CWireProtocolClient.start_session(payload, config)
     end
   end
 

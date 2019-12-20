@@ -32,6 +32,22 @@ defmodule WebDriverClient.W3CWireProtocolClient do
           | UnexpectedStatusCodeError.t()
 
   @doc """
+  Starts a new session
+
+  Specification: https://w3c.github.io/webdriver/#new-session-0
+  """
+  doc_metadata subject: :sessions
+  @spec start_session(map, Config.t()) :: {:ok, Session.t()} | {:error, basic_reason}
+  def start_session(payload, %Config{} = config) when is_map(payload) do
+    client = TeslaClientBuilder.build(config)
+
+    with {:ok, %Env{body: body}} <- Tesla.post(client, "/session", payload),
+         {:ok, session} <- ResponseParser.parse_start_session_response(body, config) do
+      {:ok, session}
+    end
+  end
+
+  @doc """
   Returns the list of currently active sessions
 
   This isn't part of the official W3C spec

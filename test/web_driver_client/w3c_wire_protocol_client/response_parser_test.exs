@@ -184,6 +184,23 @@ defmodule WebDriverClient.W3CWireProtocolClient.ResponseParserTest do
              ResponseParser.parse_fetch_sessions_response(response, config)
   end
 
+  test "parse_start_session_response/2 returns {:ok, Session.t()} on know response" do
+    config = TestData.config() |> pick()
+    resp = TestResponses.start_session_response() |> pick() |> Jason.decode!()
+    session_id = get_in(resp, ["value", "sessionId"])
+
+    assert {:ok, %Session{id: ^session_id, config: ^config}} =
+             ResponseParser.parse_start_session_response(resp, config)
+  end
+
+  test "parse_start_session_response/2 returns {:error, %UnexpectedResponseFormatError{}} on an invalid response" do
+    config = TestData.config() |> pick()
+    response = %{}
+
+    assert {:error, %UnexpectedResponseFormatError{response_body: ^response}} =
+             ResponseParser.parse_start_session_response(response, config)
+  end
+
   defp elements_with_invalid_responses do
     gen all valid_elements <- list_of(TestResponses.element(), max_length: 10),
             invalid_elements <- list_of(constant(%{}), min_length: 1, max_length: 10) do
