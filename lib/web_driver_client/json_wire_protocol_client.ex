@@ -18,9 +18,9 @@ defmodule WebDriverClient.JSONWireProtocolClient do
   alias WebDriverClient.HTTPClientError
   alias WebDriverClient.JSONWireProtocolClient.LogEntry
   alias WebDriverClient.JSONWireProtocolClient.ResponseParser
+  alias WebDriverClient.JSONWireProtocolClient.TeslaClientBuilder
   alias WebDriverClient.Session
   alias WebDriverClient.Size
-  alias WebDriverClient.TeslaClientBuilder
   alias WebDriverClient.UnexpectedResponseFormatError
   alias WebDriverClient.UnexpectedStatusCodeError
 

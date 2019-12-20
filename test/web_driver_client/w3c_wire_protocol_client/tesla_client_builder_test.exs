@@ -1,4 +1,4 @@
-defmodule WebDriverClient.TeslaClientBuilderTest do
+defmodule WebDriverClient.W3CWireProtocolClient.TeslaClientBuilderTest do
   use WebDriverClient.APIClientCase, async: true
   use ExUnitProperties
 
@@ -8,9 +8,9 @@ defmodule WebDriverClient.TeslaClientBuilderTest do
   alias Tesla.Env
   alias WebDriverClient.Config
   alias WebDriverClient.HTTPClientError
-  alias WebDriverClient.TeslaClientBuilder
   alias WebDriverClient.UnexpectedResponseFormatError
   alias WebDriverClient.UnexpectedStatusCodeError
+  alias WebDriverClient.W3CWireProtocolClient.TeslaClientBuilder
 
   @moduletag :bypass
   @moduletag :capture_log

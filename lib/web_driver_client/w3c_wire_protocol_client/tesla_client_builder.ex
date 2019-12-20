@@ -1,4 +1,4 @@
-defmodule WebDriverClient.TeslaClientBuilder do
+defmodule WebDriverClient.W3CWireProtocolClient.TeslaClientBuilder do
   @moduledoc false
   alias Tesla.Client
   alias WebDriverClient.Config
