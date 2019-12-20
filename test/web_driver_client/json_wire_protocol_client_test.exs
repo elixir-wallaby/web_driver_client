@@ -138,7 +138,9 @@ defmodule WebDriverClient.JSONWireProtocolClientTest do
     resp = TestResponses.end_session_response() |> pick()
 
     Bypass.expect_once(bypass, "DELETE", "/session/#{session_id}", fn conn ->
-      send_resp(conn, 200, resp)
+      conn
+      |> put_resp_content_type("application/json")
+      |> send_resp(200, resp)
     end)
 
     assert :ok = JSONWireProtocolClient.end_session(session)
@@ -167,17 +169,16 @@ defmodule WebDriverClient.JSONWireProtocolClientTest do
     %Session{id: session_id} = session = TestData.session(config: constant(config)) |> pick()
 
     browser_url = "http://foo.bar.example"
+    resp = TestResponses.navigate_to_response() |> pick()
 
     Bypass.expect_once(bypass, "POST", "/session/#{session_id}/url", fn conn ->
       conn = parse_params(conn)
 
       assert conn.params == %{"url" => browser_url}
 
-      response_body = Jason.encode!(%{"value" => nil})
-
       conn
       |> put_resp_content_type("application/json")
-      |> send_resp(200, response_body)
+      |> send_resp(200, resp)
     end)
 
     assert :ok = JSONWireProtocolClient.navigate_to(session, browser_url)

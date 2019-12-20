@@ -3,101 +3,114 @@ defmodule WebDriverClient.JSONWireProtocolClient.TestResponses do
   use ExUnitProperties
 
   def start_session_response do
-    constant(%{
-      "sessionId" => "23564850-22df-11ea-a53a-41b8553d9c06",
-      "status" => 0,
-      "value" => %{
-        "acceptSslCerts" => false,
-        "applicationCacheEnabled" => false,
-        "browserConnectionEnabled" => false,
-        "browserName" => "phantomjs",
-        "cssSelectorsEnabled" => true,
-        "databaseEnabled" => false,
-        "driverName" => "ghostdriver",
-        "driverVersion" => "1.2.0",
-        "handlesAlerts" => false,
-        "javascriptEnabled" => true,
-        "locationContextEnabled" => false,
-        "nativeEvents" => true,
-        "platform" => "mac-unknown-64bit",
-        "proxy" => %{"proxyType" => "direct"},
-        "rotatable" => false,
-        "takesScreenshot" => true,
-        "version" => "2.1.1",
-        "webStorageEnabled" => false
-      }
-    })
+    %{
+      "acceptSslCerts" => false,
+      "applicationCacheEnabled" => false,
+      "browserConnectionEnabled" => false,
+      "browserName" => "phantomjs",
+      "cssSelectorsEnabled" => true,
+      "databaseEnabled" => false,
+      "driverName" => "ghostdriver",
+      "driverVersion" => "1.2.0",
+      "handlesAlerts" => false,
+      "javascriptEnabled" => true,
+      "locationContextEnabled" => false,
+      "nativeEvents" => true,
+      "platform" => "mac-unknown-64bit",
+      "proxy" => %{"proxyType" => "direct"},
+      "rotatable" => false,
+      "takesScreenshot" => true,
+      "version" => "2.1.1",
+      "webStorageEnabled" => false
+    }
+    |> constant()
+    |> jwp_response()
     |> map(&Jason.encode!/1)
   end
 
   def fetch_sessions_response do
-    constant(%{
-      "sessionId" => nil,
-      "status" => 0,
-      "value" => [
-        %{
-          "capabilities" => %{
-            "acceptSslCerts" => false,
-            "applicationCacheEnabled" => false,
-            "browserConnectionEnabled" => false,
-            "browserName" => "phantomjs",
-            "cssSelectorsEnabled" => true,
-            "databaseEnabled" => false,
-            "driverName" => "ghostdriver",
-            "driverVersion" => "1.2.0",
-            "handlesAlerts" => false,
-            "javascriptEnabled" => true,
-            "locationContextEnabled" => false,
-            "nativeEvents" => true,
-            "platform" => "mac-unknown-64bit",
-            "proxy" => %{"proxyType" => "direct"},
-            "rotatable" => false,
-            "takesScreenshot" => true,
-            "version" => "2.1.1",
-            "webStorageEnabled" => false
-          },
-          "id" => "89243fd0-2225-11ea-9a6f-8df630e6d233"
-        }
-      ]
-    })
+    [
+      %{
+        "capabilities" => %{
+          "acceptSslCerts" => false,
+          "applicationCacheEnabled" => false,
+          "browserConnectionEnabled" => false,
+          "browserName" => "phantomjs",
+          "cssSelectorsEnabled" => true,
+          "databaseEnabled" => false,
+          "driverName" => "ghostdriver",
+          "driverVersion" => "1.2.0",
+          "handlesAlerts" => false,
+          "javascriptEnabled" => true,
+          "locationContextEnabled" => false,
+          "nativeEvents" => true,
+          "platform" => "mac-unknown-64bit",
+          "proxy" => %{"proxyType" => "direct"},
+          "rotatable" => false,
+          "takesScreenshot" => true,
+          "version" => "2.1.1",
+          "webStorageEnabled" => false
+        },
+        "id" => "89243fd0-2225-11ea-9a6f-8df630e6d233"
+      }
+    ]
+    |> constant()
+    |> jwp_response()
     |> map(&Jason.encode!/1)
   end
 
   def end_session_response do
-    constant(%{"value" => nil}) |> map(&Jason.encode!/1)
+    nil
+    |> jwp_response()
+    |> map(&Jason.encode!/1)
   end
 
   def navigate_to_response do
-    constant(%{"value" => nil}) |> map(&Jason.encode!/1)
+    nil
+    |> jwp_response()
+    |> map(&Jason.encode!/1)
   end
 
   def fetch_window_size_response do
-    window_size_response() |> map(&Jason.encode!/1)
+    %{
+      "width" => integer(0..1000),
+      "height" => integer(0..1000)
+    }
+    |> fixed_map()
+    |> jwp_response()
+    |> map(&Jason.encode!/1)
   end
 
   def set_window_size_response do
-    blank_value_response() |> map(&Jason.encode!/1)
+    nil
+    |> jwp_response()
+    |> map(&Jason.encode!/1)
   end
 
   def fetch_current_url_response do
-    fixed_map(%{"value" => url()}) |> map(&Jason.encode!/1)
+    url()
+    |> jwp_response()
+    |> map(&Jason.encode!/1)
   end
 
   def find_elements_response do
-    %{"value" => list_of(element(), max_length: 10)}
-    |> fixed_map()
+    element()
+    |> list_of(max_length: 10)
+    |> jwp_response()
     |> map(&Jason.encode!/1)
   end
 
   def fetch_log_types_response do
-    %{"value" => list_of(log_type(), max_length: 10)}
-    |> fixed_map()
+    log_type()
+    |> list_of(max_length: 10)
+    |> jwp_response()
     |> map(&Jason.encode!/1)
   end
 
   def fetch_logs_response do
-    %{"value" => list_of(log_entry(), max_length: 10)}
-    |> fixed_map()
+    log_entry()
+    |> list_of(max_length: 10)
+    |> jwp_response()
     |> map(&Jason.encode!/1)
   end
 
@@ -132,21 +145,15 @@ defmodule WebDriverClient.JSONWireProtocolClient.TestResponses do
     string(:alphanumeric, min_length: 1, max_length: 10)
   end
 
-  defp blank_value_response do
-    constant(%{"value" => nil})
-  end
-
   def element do
     fixed_map(%{"ELEMENT" => string(:ascii, min_length: 1, max_length: 20)})
   end
 
-  defp window_size_response do
+  def jwp_response(value) do
     fixed_map(%{
-      "value" =>
-        fixed_map(%{
-          "width" => integer(0..1000),
-          "height" => integer(0..1000)
-        })
+      "sessionId" => unshrinkable(session_id()),
+      "status" => constant(0),
+      "value" => value
     })
   end
 
@@ -161,5 +168,9 @@ defmodule WebDriverClient.JSONWireProtocolClient.TestResponses do
         |> DateTime.to_unix(:millisecond)
         |> Kernel.+(&1))
     )
+  end
+
+  defp session_id do
+    string(:alphanumeric, min_length: 1, max_length: 30)
   end
 end
