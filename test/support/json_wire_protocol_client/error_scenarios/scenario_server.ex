@@ -1,10 +1,10 @@
-defmodule WebDriverClient.ErrorScenarios.ScenarioServer do
+defmodule WebDriverClient.JSONWireProtocolClient.ErrorScenarios.ScenarioServer do
   @moduledoc false
   use Agent
 
   import Plug.Conn
 
-  alias WebDriverClient.ErrorScenarios.ErrorScenario
+  alias WebDriverClient.JSONWireProtocolClient.ErrorScenarios.ErrorScenario
 
   def start_link(_opt) do
     Agent.start_link(fn -> nil end)

@@ -3,7 +3,6 @@ defmodule WebDriverClientTest do
   use ExUnitProperties
 
   import Plug.Conn
-  import WebDriverClient.ErrorScenarios
 
   alias WebDriverClient.Element
   alias WebDriverClient.JSONWireProtocolClient.TestResponses, as: JWPTestResponses
@@ -47,14 +46,15 @@ defmodule WebDriverClientTest do
   for protocol <- @protocols do
     @tag protocol: protocol
     test "start_session/2 with #{protocol} session returns appropriate errors on various server responses",
-         %{config: config, bypass: bypass} do
-      scenario_server = set_up_error_scenario_tests(bypass)
+         %{config: config, bypass: bypass, protocol: protocol} do
+      scenario_server = set_up_error_scenario_tests(protocol, bypass)
 
-      for error_scenario <- basic_error_scenarios() do
+      for error_scenario <- basic_error_scenarios(protocol) do
         %Session{config: config} =
-          build_session_for_scenario(scenario_server, bypass, config, error_scenario)
+          build_session_for_scenario(protocol, scenario_server, bypass, config, error_scenario)
 
         assert_expected_response(
+          protocol,
           WebDriverClient.start_session(build_start_session_payload(), config: config),
           error_scenario
         )
@@ -91,14 +91,15 @@ defmodule WebDriverClientTest do
   for protocol <- @protocols do
     @tag protocol: protocol
     test "fetch_sessions/1 with #{protocol} session returns appropriate errors on various server responses",
-         %{config: config, bypass: bypass} do
-      scenario_server = set_up_error_scenario_tests(bypass)
+         %{config: config, bypass: bypass, protocol: protocol} do
+      scenario_server = set_up_error_scenario_tests(protocol, bypass)
 
-      for error_scenario <- basic_error_scenarios() do
+      for error_scenario <- basic_error_scenarios(protocol) do
         %Session{config: config} =
-          build_session_for_scenario(scenario_server, bypass, config, error_scenario)
+          build_session_for_scenario(protocol, scenario_server, bypass, config, error_scenario)
 
         assert_expected_response(
+          protocol,
           WebDriverClient.fetch_sessions(config: config),
           error_scenario
         )
@@ -135,13 +136,15 @@ defmodule WebDriverClientTest do
   for protocol <- @protocols do
     @tag protocol: protocol
     test "end_session/1 with #{protocol} session returns appropriate errors on various server responses",
-         %{config: config, bypass: bypass} do
-      scenario_server = set_up_error_scenario_tests(bypass)
+         %{config: config, bypass: bypass, protocol: protocol} do
+      scenario_server = set_up_error_scenario_tests(protocol, bypass)
 
-      for error_scenario <- basic_error_scenarios() do
-        session = build_session_for_scenario(scenario_server, bypass, config, error_scenario)
+      for error_scenario <- basic_error_scenarios(protocol) do
+        session =
+          build_session_for_scenario(protocol, scenario_server, bypass, config, error_scenario)
 
         assert_expected_response(
+          protocol,
           WebDriverClient.end_session(session),
           error_scenario
         )
@@ -180,13 +183,15 @@ defmodule WebDriverClientTest do
   for protocol <- @protocols do
     @tag protocol: protocol
     test "navigate_to/2 with #{protocol} session returns appropriate errors on various server responses",
-         %{config: config, bypass: bypass} do
-      scenario_server = set_up_error_scenario_tests(bypass)
+         %{config: config, bypass: bypass, protocol: protocol} do
+      scenario_server = set_up_error_scenario_tests(protocol, bypass)
 
-      for error_scenario <- basic_error_scenarios() do
-        session = build_session_for_scenario(scenario_server, bypass, config, error_scenario)
+      for error_scenario <- basic_error_scenarios(protocol) do
+        session =
+          build_session_for_scenario(protocol, scenario_server, bypass, config, error_scenario)
 
         assert_expected_response(
+          protocol,
           WebDriverClient.navigate_to(session, "http://foo.com"),
           error_scenario
         )
@@ -223,13 +228,15 @@ defmodule WebDriverClientTest do
   for protocol <- @protocols do
     @tag protocol: protocol
     test "fetch_current_url/1 with #{protocol} session returns appropriate errors on various server responses",
-         %{config: config, bypass: bypass} do
-      scenario_server = set_up_error_scenario_tests(bypass)
+         %{config: config, bypass: bypass, protocol: protocol} do
+      scenario_server = set_up_error_scenario_tests(protocol, bypass)
 
-      for error_scenario <- basic_error_scenarios() do
-        session = build_session_for_scenario(scenario_server, bypass, config, error_scenario)
+      for error_scenario <- basic_error_scenarios(protocol) do
+        session =
+          build_session_for_scenario(protocol, scenario_server, bypass, config, error_scenario)
 
         assert_expected_response(
+          protocol,
           WebDriverClient.fetch_current_url(session),
           error_scenario
         )
@@ -265,13 +272,15 @@ defmodule WebDriverClientTest do
   for protocol <- @protocols do
     @tag protocol: protocol
     test "fetch_window_size/1 with #{protocol} session returns appropriate errors on various server responses",
-         %{config: config, bypass: bypass} do
-      scenario_server = set_up_error_scenario_tests(bypass)
+         %{config: config, bypass: bypass, protocol: protocol} do
+      scenario_server = set_up_error_scenario_tests(protocol, bypass)
 
-      for error_scenario <- basic_error_scenarios() do
-        session = build_session_for_scenario(scenario_server, bypass, config, error_scenario)
+      for error_scenario <- basic_error_scenarios(protocol) do
+        session =
+          build_session_for_scenario(protocol, scenario_server, bypass, config, error_scenario)
 
         assert_expected_response(
+          protocol,
           WebDriverClient.fetch_window_size(session),
           error_scenario
         )
@@ -308,13 +317,15 @@ defmodule WebDriverClientTest do
   for protocol <- @protocols do
     @tag protocol: protocol
     test "set_window_size/1 with #{protocol} session returns appropriate errors on various server responses",
-         %{config: config, bypass: bypass} do
-      scenario_server = set_up_error_scenario_tests(bypass)
+         %{config: config, bypass: bypass, protocol: protocol} do
+      scenario_server = set_up_error_scenario_tests(protocol, bypass)
 
-      for error_scenario <- basic_error_scenarios() do
-        session = build_session_for_scenario(scenario_server, bypass, config, error_scenario)
+      for error_scenario <- basic_error_scenarios(protocol) do
+        session =
+          build_session_for_scenario(protocol, scenario_server, bypass, config, error_scenario)
 
         assert_expected_response(
+          protocol,
           WebDriverClient.set_window_size(session),
           error_scenario
         )
@@ -353,13 +364,15 @@ defmodule WebDriverClientTest do
   for protocol <- @protocols do
     @tag protocol: protocol
     test "fetch_log_types/1 with #{protocol} session returns appropriate errors on various server responses",
-         %{config: config, bypass: bypass} do
-      scenario_server = set_up_error_scenario_tests(bypass)
+         %{config: config, bypass: bypass, protocol: protocol} do
+      scenario_server = set_up_error_scenario_tests(protocol, bypass)
 
-      for error_scenario <- basic_error_scenarios() do
-        session = build_session_for_scenario(scenario_server, bypass, config, error_scenario)
+      for error_scenario <- basic_error_scenarios(protocol) do
+        session =
+          build_session_for_scenario(protocol, scenario_server, bypass, config, error_scenario)
 
         assert_expected_response(
+          protocol,
           WebDriverClient.fetch_log_types(session),
           error_scenario
         )
@@ -398,13 +411,15 @@ defmodule WebDriverClientTest do
   for protocol <- @protocols do
     @tag protocol: protocol
     test "fetch_logs/2 with #{protocol} session returns appropriate errors on various server responses",
-         %{config: config, bypass: bypass} do
-      scenario_server = set_up_error_scenario_tests(bypass)
+         %{config: config, bypass: bypass, protocol: protocol} do
+      scenario_server = set_up_error_scenario_tests(protocol, bypass)
 
-      for error_scenario <- basic_error_scenarios() do
-        session = build_session_for_scenario(scenario_server, bypass, config, error_scenario)
+      for error_scenario <- basic_error_scenarios(protocol) do
+        session =
+          build_session_for_scenario(protocol, scenario_server, bypass, config, error_scenario)
 
         assert_expected_response(
+          protocol,
           WebDriverClient.fetch_logs(session, "log_type"),
           error_scenario
         )
@@ -447,13 +462,15 @@ defmodule WebDriverClientTest do
   for protocol <- @protocols do
     @tag protocol: protocol
     test "find_elements/3 with #{protocol} session returns appropriate errors on various server responses",
-         %{config: config, bypass: bypass} do
-      scenario_server = set_up_error_scenario_tests(bypass)
+         %{config: config, bypass: bypass, protocol: protocol} do
+      scenario_server = set_up_error_scenario_tests(protocol, bypass)
 
-      for error_scenario <- basic_error_scenarios() do
-        session = build_session_for_scenario(scenario_server, bypass, config, error_scenario)
+      for error_scenario <- basic_error_scenarios(protocol) do
+        session =
+          build_session_for_scenario(protocol, scenario_server, bypass, config, error_scenario)
 
         assert_expected_response(
+          protocol,
           WebDriverClient.find_elements(session, :css_selector, "foo"),
           error_scenario
         )
@@ -504,20 +521,50 @@ defmodule WebDriverClientTest do
   for protocol <- @protocols do
     @tag protocol: protocol
     test "find_elements_from_element/4 with #{protocol} session returns appropriate errors on various server responses",
-         %{config: config, bypass: bypass} do
-      scenario_server = set_up_error_scenario_tests(bypass)
+         %{config: config, bypass: bypass, protocol: protocol} do
+      scenario_server = set_up_error_scenario_tests(protocol, bypass)
 
-      for error_scenario <- basic_error_scenarios() do
-        session = build_session_for_scenario(scenario_server, bypass, config, error_scenario)
+      for error_scenario <- basic_error_scenarios(protocol) do
+        session =
+          build_session_for_scenario(protocol, scenario_server, bypass, config, error_scenario)
+
         element = TestData.element() |> pick()
 
         assert_expected_response(
+          protocol,
           WebDriverClient.find_elements_from_element(session, element, :css_selector, "foo"),
           error_scenario
         )
       end
     end
   end
+
+  defp set_up_error_scenario_tests(protocol, bypass) do
+    get_error_scenario_module(protocol).set_up_error_scenario_tests(bypass)
+  end
+
+  defp basic_error_scenarios(protocol) do
+    get_error_scenario_module(protocol).basic_error_scenarios()
+  end
+
+  defp build_session_for_scenario(protocol, scenario_server, bypass, config, error_scenario) do
+    get_error_scenario_module(protocol).build_session_for_scenario(
+      scenario_server,
+      bypass,
+      config,
+      error_scenario
+    )
+  end
+
+  defp assert_expected_response(protocol, response, scenario) do
+    get_error_scenario_module(protocol).assert_expected_response(
+      response,
+      scenario
+    )
+  end
+
+  defp get_error_scenario_module(:jwp), do: WebDriverClient.JSONWireProtocolClient.ErrorScenarios
+  defp get_error_scenario_module(:w3c), do: WebDriverClient.W3CWireProtocolClient.ErrorScenarios
 
   defp build_start_session_payload do
     %{"capablities" => %{"browserName" => "firefox"}}

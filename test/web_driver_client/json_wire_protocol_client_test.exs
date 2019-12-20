@@ -3,7 +3,7 @@ defmodule WebDriverClient.JSONWireProtocolClientTest do
   use ExUnitProperties
 
   import Plug.Conn
-  import WebDriverClient.ErrorScenarios
+  import WebDriverClient.JSONWireProtocolClient.ErrorScenarios
 
   alias WebDriverClient.Element
   alias WebDriverClient.JSONWireProtocolClient

@@ -1,4 +1,4 @@
-defmodule WebDriverClient.ErrorScenarios.ErrorScenario do
+defmodule WebDriverClient.W3CWireProtocolClient.ErrorScenarios.ErrorScenario do
   @moduledoc false
   defstruct [:communication_error, :status_code, :content_type, :response_body]
 

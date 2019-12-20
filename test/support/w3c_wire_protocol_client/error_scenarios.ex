@@ -1,4 +1,4 @@
-defmodule WebDriverClient.ErrorScenarios do
+defmodule WebDriverClient.W3CWireProtocolClient.ErrorScenarios do
   @moduledoc false
   use ExUnitProperties
 
@@ -6,12 +6,12 @@ defmodule WebDriverClient.ErrorScenarios do
 
   alias ExUnit.AssertionError
   alias WebDriverClient.Config
-  alias WebDriverClient.ErrorScenarios.ErrorScenario
-  alias WebDriverClient.ErrorScenarios.ScenarioServer
   alias WebDriverClient.HTTPClientError
   alias WebDriverClient.TestData
   alias WebDriverClient.UnexpectedResponseFormatError
   alias WebDriverClient.UnexpectedStatusCodeError
+  alias WebDriverClient.W3CWireProtocolClient.ErrorScenarios.ErrorScenario
+  alias WebDriverClient.W3CWireProtocolClient.ErrorScenarios.ScenarioServer
 
   defguardp is_no_content_status_code(status_code)
             when is_integer(status_code) and status_code in [204, 304]

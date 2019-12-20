@@ -3,7 +3,7 @@ defmodule WebDriverClient.W3CWireProtocolClientTest do
   use ExUnitProperties
 
   import Plug.Conn
-  import WebDriverClient.ErrorScenarios
+  import WebDriverClient.W3CWireProtocolClient.ErrorScenarios
 
   alias WebDriverClient.Element
   alias WebDriverClient.Session
