@@ -11,7 +11,6 @@ defmodule WebDriverClientTest do
   alias WebDriverClient.Session
   alias WebDriverClient.Size
   alias WebDriverClient.TestData
-  alias WebDriverClient.UnexpectedResponseFormatError
   alias WebDriverClient.W3CWireProtocolClient.TestResponses, as: W3CTestResponses
 
   @moduletag :bypass
@@ -19,42 +18,48 @@ defmodule WebDriverClientTest do
 
   @protocols [:jwp, :w3c]
 
-  test "start_session/1 returns {:ok, Session.t()} with a valid response", %{
+  @tag protocol: :jwp
+  test "start_session/2 with JWP config returns {:ok, Session.t()} with a valid response", %{
     config: config,
     bypass: bypass
   } do
-    response_body = build_session_response()
-    session_id = get_in(response_body, ["value", "sessionId"])
-    payload = build_start_session_payload()
+    resp = JWPTestResponses.start_session_response() |> pick()
 
-    Bypass.expect_once(bypass, "POST", "/session", fn conn ->
-      conn = parse_params(conn)
-      assert ^payload = conn.params
+    stub_bypass_response(bypass, resp)
 
-      conn
-      |> put_resp_content_type("application/json")
-      |> send_resp(200, Jason.encode!(response_body))
-    end)
-
-    assert {:ok, %Session{id: ^session_id, config: ^config}} =
-             WebDriverClient.start_session(payload, config: config)
+    assert {:ok, %Session{config: ^config}} =
+             WebDriverClient.start_session(build_start_session_payload(), config: config)
   end
 
-  test "start_session/1 returns {:error, UnexpectedResponseFormatError.t()} with an unexpected response",
-       %{
-         config: config,
-         bypass: bypass
-       } do
-    response_body = "foo"
-    payload = build_start_session_payload()
+  @tag protocol: :w3c
+  test "start_session/2 with W3C config returns {:ok, Session.t()} with a valid response", %{
+    config: config,
+    bypass: bypass
+  } do
+    resp = W3CTestResponses.start_session_response() |> pick()
 
-    Bypass.expect_once(bypass, "POST", "/session", fn conn ->
-      conn
-      |> send_resp(200, response_body)
-    end)
+    stub_bypass_response(bypass, resp)
 
-    assert {:error, %UnexpectedResponseFormatError{response_body: ^response_body}} =
-             WebDriverClient.start_session(payload, config: config)
+    assert {:ok, %Session{config: ^config}} =
+             WebDriverClient.start_session(build_start_session_payload(), config: config)
+  end
+
+  for protocol <- @protocols do
+    @tag protocol: protocol
+    test "start_session/2 with #{protocol} session returns appropriate errors on various server responses",
+         %{config: config, bypass: bypass} do
+      scenario_server = set_up_error_scenario_tests(bypass)
+
+      for error_scenario <- basic_error_scenarios() do
+        %Session{config: config} =
+          build_session_for_scenario(scenario_server, bypass, config, error_scenario)
+
+        assert_expected_response(
+          WebDriverClient.start_session(build_start_session_payload(), config: config),
+          error_scenario
+        )
+      end
+    end
   end
 
   @tag protocol: :jwp
@@ -512,34 +517,6 @@ defmodule WebDriverClientTest do
         )
       end
     end
-  end
-
-  defp build_session_response do
-    %{
-      "value" => %{
-        "capabilities" => %{
-          "acceptInsecureCerts" => false,
-          "browserName" => "chrome",
-          "browserVersion" => "77.0.3865.120",
-          "chrome" => %{
-            "chromedriverVersion" =>
-              "77.0.3865.40 (f484704e052e0b556f8030b65b953dce96503217-refs/branch-heads/3865@{#442})",
-            "userDataDir" =>
-              "/var/folders/mn/dxbldtrx3jv0q_hnnz8kfmf00000gn/T/.com.google.Chrome.QNPU8L"
-          },
-          "goog:chromeOptions" => %{"debuggerAddress" => "localhost:62775"},
-          "networkConnectionEnabled" => false,
-          "pageLoadStrategy" => "normal",
-          "platformName" => "mac os x",
-          "proxy" => %{},
-          "setWindowRect" => true,
-          "strictFileInteractability" => false,
-          "timeouts" => %{"implicit" => 0, "pageLoad" => 300_000, "script" => 30_000},
-          "unhandledPromptBehavior" => "dismiss and notify"
-        },
-        "sessionId" => "882326fd74ae485962d435e265c51fbd"
-      }
-    }
   end
 
   defp build_start_session_payload do
