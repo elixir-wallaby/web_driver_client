@@ -11,13 +11,9 @@ defmodule WebDriverClient.JSONWireProtocolClient.ErrorScenarios do
   alias WebDriverClient.JSONWireProtocolClient.ErrorScenarios.ScenarioServer
   alias WebDriverClient.TestData
   alias WebDriverClient.UnexpectedResponseFormatError
-  alias WebDriverClient.UnexpectedStatusCodeError
 
   defguardp is_no_content_status_code(status_code)
             when is_integer(status_code) and status_code in [204, 304]
-
-  defguardp is_http_success(status_code)
-            when is_integer(status_code) and status_code >= 200 and status_code < 300
 
   @json_content_type "application/json"
 
@@ -45,24 +41,9 @@ defmodule WebDriverClient.JSONWireProtocolClient.ErrorScenarios do
       %ErrorScenario{communication_error: :nonexistent_domain}
     ]
 
-    invalid_status_code_scenarios =
-      for status_code when not is_http_success(status_code) <- known_status_codes(),
-          content_type <- [@json_content_type, "text/plain", nil],
-          response_body <- [
-            {:valid_json, %{"foo" => "bar"}},
-            {:other, "abc"}
-          ] do
-        %ErrorScenario{
-          status_code: status_code,
-          content_type: content_type,
-          response_body: response_body
-        }
-      end
-
     invalid_json_scenarios =
       for status_code
-          when is_http_success(status_code) and not is_no_content_status_code(status_code) <-
-            known_status_codes() do
+          when not is_no_content_status_code(status_code) <- known_status_codes() do
         %ErrorScenario{
           status_code: status_code,
           content_type: @json_content_type,
@@ -72,8 +53,7 @@ defmodule WebDriverClient.JSONWireProtocolClient.ErrorScenarios do
 
     invalid_formatted_response_scenarios =
       for status_code
-          when is_http_success(status_code) and not is_no_content_status_code(status_code) <-
-            known_status_codes() do
+          when not is_no_content_status_code(status_code) <- known_status_codes() do
         %ErrorScenario{
           status_code: status_code,
           content_type: @json_content_type,
@@ -83,7 +63,6 @@ defmodule WebDriverClient.JSONWireProtocolClient.ErrorScenarios do
 
     Enum.concat([
       communication_error_scenarios,
-      invalid_status_code_scenarios,
       invalid_json_scenarios,
       invalid_formatted_response_scenarios
     ])
@@ -187,21 +166,7 @@ defmodule WebDriverClient.JSONWireProtocolClient.ErrorScenarios do
 
   defp do_assert_expected_response(
          response,
-         %ErrorScenario{status_code: status_code} = error_scenario
-       )
-       when not is_http_success(status_code) do
-    response_body = get_expected_body(error_scenario)
-
-    assert {:error,
-            %UnexpectedStatusCodeError{status_code: ^status_code, response_body: ^response_body}} =
-             response
-  end
-
-  defp do_assert_expected_response(
-         response,
          %ErrorScenario{
-           content_type: @json_content_type,
-           response_body: {:other, _response_body},
            status_code: status_code
          }
        )
@@ -232,24 +197,4 @@ defmodule WebDriverClient.JSONWireProtocolClient.ErrorScenarios do
                       end)
 
   defp known_status_codes, do: @known_status_codes
-
-  defp get_expected_body(%ErrorScenario{status_code: status_code})
-       when is_no_content_status_code(status_code) do
-    ""
-  end
-
-  defp get_expected_body(%ErrorScenario{
-         content_type: @json_content_type,
-         response_body: {:valid_json, parsed_body}
-       }) do
-    parsed_body
-  end
-
-  defp get_expected_body(%ErrorScenario{response_body: {:valid_json, parsed_body}}) do
-    Jason.encode!(parsed_body)
-  end
-
-  defp get_expected_body(%ErrorScenario{response_body: {:other, body}}) do
-    body
-  end
 end

@@ -12,7 +12,6 @@ defmodule WebDriverClient.JSONWireProtocolClient.TeslaClientBuilderTest do
   alias WebDriverClient.JSONWireProtocolClient.TeslaClientBuilder
   alias WebDriverClient.JSONWireProtocolClient.TestResponses
   alias WebDriverClient.UnexpectedResponseFormatError
-  alias WebDriverClient.UnexpectedStatusCodeError
 
   @moduletag :bypass
   @moduletag :capture_log
@@ -46,9 +45,6 @@ defmodule WebDriverClient.JSONWireProtocolClient.TeslaClientBuilderTest do
           }
   end
 
-  defguardp is_http_success(status_code)
-            when is_integer(status_code) and status_code >= 200 and status_code < 300
-
   defguardp is_no_content_status_code(status_code)
             when is_integer(status_code) and status_code in [204, 304]
 
@@ -73,7 +69,7 @@ defmodule WebDriverClient.JSONWireProtocolClient.TeslaClientBuilderTest do
           response_body: {:valid_json, %{"value" => _, "status" => _} = parsed_body},
           status_code: status_code
         }
-        when is_http_success(status_code) and not is_no_content_status_code(status_code) ->
+        when not is_no_content_status_code(status_code) ->
           {:ok, expected_response} = ResponseParser.parse_response(parsed_body)
 
           assert {:ok, %Env{body: ^expected_response, status: ^status_code}} =
@@ -84,18 +80,6 @@ defmodule WebDriverClient.JSONWireProtocolClient.TeslaClientBuilderTest do
 
         %TestState{communication_error: :nonexistent_domain} ->
           assert {:error, %HTTPClientError{reason: :nxdomain}} = Tesla.get(client, path)
-
-        %TestState{
-          status_code: status_code
-        } = state
-        when not is_http_success(status_code) ->
-          response_body = get_expected_body(state)
-
-          assert {:error,
-                  %UnexpectedStatusCodeError{
-                    response_body: ^response_body,
-                    status_code: ^status_code
-                  }} = Tesla.get(client, path)
 
         %TestState{
           communication_error: nil
@@ -157,26 +141,6 @@ defmodule WebDriverClient.JSONWireProtocolClient.TeslaClientBuilderTest do
 
   defp set_up_bypass_from_state(_, _, _path) do
     :ok
-  end
-
-  defp get_expected_body(%TestState{status_code: status_code})
-       when is_no_content_status_code(status_code) do
-    ""
-  end
-
-  defp get_expected_body(%TestState{
-         content_type: @json_content_type,
-         response_body: {:valid_json, parsed_body}
-       }) do
-    parsed_body
-  end
-
-  defp get_expected_body(%TestState{response_body: {:valid_json, parsed_body}}) do
-    Jason.encode!(parsed_body)
-  end
-
-  defp get_expected_body(%TestState{response_body: {:other, body}}) do
-    body
   end
 
   defp put_response_body_from_state(conn, %TestState{

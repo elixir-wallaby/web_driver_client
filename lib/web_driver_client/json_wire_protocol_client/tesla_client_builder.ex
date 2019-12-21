@@ -13,7 +13,6 @@ defmodule WebDriverClient.JSONWireProtocolClient.TeslaClientBuilder do
         WebDriverClient.JSONWireProtocolClient.Middleware.APIResponseHandler,
         WebDriverClient.Middleware.JSONParsingErrorTranslator,
         Tesla.Middleware.JSON,
-        WebDriverClient.Middleware.UnexpectedStatusCodeErrorHandler,
         WebDriverClient.Middleware.HTTPClientErrorHandler,
         Tesla.Middleware.Logger
       ]

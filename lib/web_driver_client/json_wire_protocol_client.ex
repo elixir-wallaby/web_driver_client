@@ -22,14 +22,12 @@ defmodule WebDriverClient.JSONWireProtocolClient do
   alias WebDriverClient.Session
   alias WebDriverClient.Size
   alias WebDriverClient.UnexpectedResponseFormatError
-  alias WebDriverClient.UnexpectedStatusCodeError
 
   @type url :: String.t()
 
   @type basic_reason ::
           HTTPClientError.t()
           | UnexpectedResponseFormatError.t()
-          | UnexpectedStatusCodeError.t()
 
   @doc """
   Starts a new session
