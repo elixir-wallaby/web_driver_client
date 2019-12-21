@@ -29,6 +29,12 @@ defmodule WebDriverClient.JSONWireProtocolClient.ErrorScenarios do
         status_code: 200,
         content_type: @json_content_type,
         response_body: {:other, "foo"}
+      },
+      # Missing status
+      %ErrorScenario{
+        status_code: 200,
+        content_type: @json_content_type,
+        response_body: {:valid_json, %{"value" => nil}}
       }
     ]
   end
@@ -64,10 +70,22 @@ defmodule WebDriverClient.JSONWireProtocolClient.ErrorScenarios do
         }
       end
 
+    invalid_formatted_response_scenarios =
+      for status_code
+          when is_http_success(status_code) and not is_no_content_status_code(status_code) <-
+            known_status_codes() do
+        %ErrorScenario{
+          status_code: status_code,
+          content_type: @json_content_type,
+          response_body: {:valid_json, %{"value" => nil}}
+        }
+      end
+
     Enum.concat([
       communication_error_scenarios,
       invalid_status_code_scenarios,
-      invalid_json_scenarios
+      invalid_json_scenarios,
+      invalid_formatted_response_scenarios
     ])
   end
 
@@ -189,6 +207,18 @@ defmodule WebDriverClient.JSONWireProtocolClient.ErrorScenarios do
        )
        when not is_no_content_status_code(status_code) do
     assert {:error, %UnexpectedResponseFormatError{}} = response
+  end
+
+  defp do_assert_expected_response(
+         response,
+         %ErrorScenario{
+           content_type: @json_content_type,
+           response_body: {:valid_json, response_body},
+           status_code: status_code
+         }
+       )
+       when not is_no_content_status_code(status_code) do
+    assert {:error, %UnexpectedResponseFormatError{response_body: ^response_body}} = response
   end
 
   @known_status_codes Enum.flat_map(100..599, fn status_code ->

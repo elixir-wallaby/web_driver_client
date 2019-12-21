@@ -10,6 +10,7 @@ defmodule WebDriverClient.JSONWireProtocolClient.TeslaClientBuilder do
     middleware =
       [
         {Tesla.Middleware.BaseUrl, base_url},
+        WebDriverClient.JSONWireProtocolClient.Middleware.APIResponseHandler,
         WebDriverClient.Middleware.JSONParsingErrorTranslator,
         Tesla.Middleware.JSON,
         WebDriverClient.Middleware.UnexpectedStatusCodeErrorHandler,

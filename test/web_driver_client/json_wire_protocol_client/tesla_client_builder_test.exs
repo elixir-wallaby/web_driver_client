@@ -9,6 +9,7 @@ defmodule WebDriverClient.JSONWireProtocolClient.TeslaClientBuilderTest do
   alias WebDriverClient.Config
   alias WebDriverClient.HTTPClientError
   alias WebDriverClient.JSONWireProtocolClient.TeslaClientBuilder
+  alias WebDriverClient.JSONWireProtocolClient.TestResponses
   alias WebDriverClient.UnexpectedResponseFormatError
   alias WebDriverClient.UnexpectedStatusCodeError
 
@@ -65,6 +66,17 @@ defmodule WebDriverClient.JSONWireProtocolClient.TeslaClientBuilderTest do
         |> TeslaClientBuilder.build()
 
       case state do
+        %TestState{
+          communication_error: nil,
+          content_type: @json_content_type,
+          response_body: {:valid_json, %{"value" => _, "status" => _}},
+          status_code: status_code
+        }
+        when is_http_success(status_code) and not is_no_content_status_code(status_code) ->
+          response_body = get_expected_body(state)
+
+          assert {:ok, %Env{body: ^response_body, status: ^status_code}} = Tesla.get(client, path)
+
         %TestState{communication_error: :server_down} ->
           assert {:error, %HTTPClientError{reason: :econnrefused}} = Tesla.get(client, path)
 
@@ -84,19 +96,9 @@ defmodule WebDriverClient.JSONWireProtocolClient.TeslaClientBuilderTest do
                   }} = Tesla.get(client, path)
 
         %TestState{
-          content_type: @json_content_type,
-          response_body: {:other, _},
-          status_code: status_code
-        }
-        when not is_no_content_status_code(status_code) ->
+          communication_error: nil
+        } ->
           assert {:error, %UnexpectedResponseFormatError{}} = Tesla.get(client, path)
-
-        %TestState{
-          status_code: status_code
-        } = state ->
-          response_body = get_expected_body(state)
-
-          assert {:ok, %Env{body: ^response_body, status: ^status_code}} = Tesla.get(client, path)
       end
     end
   end
@@ -245,13 +247,15 @@ defmodule WebDriverClient.JSONWireProtocolClient.TeslaClientBuilderTest do
           {1, member_of(known_status_codes())}
         ]),
       response_body:
-        one_of([
-          {:valid_json,
-           scale(
-             map_of(string(:alphanumeric), string(:alphanumeric)),
-             &trunc(:math.log(&1))
-           )},
-          {:other, non_json_string()}
+        frequency([
+          {4, {:valid_json, TestResponses.jwp_response(nil)}},
+          {2,
+           {:valid_json,
+            scale(
+              map_of(string(:alphanumeric), string(:alphanumeric)),
+              &trunc(:math.log(&1))
+            )}},
+          {1, {:other, non_json_string()}}
         ])
     })
     |> map(&struct!(TestState, &1))
