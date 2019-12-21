@@ -7,38 +7,49 @@ defmodule WebDriverClient.JSONWireProtocolClient.ResponseParser do
   alias WebDriverClient.Element
   alias WebDriverClient.JSONWireProtocolClient
   alias WebDriverClient.JSONWireProtocolClient.LogEntry
+  alias WebDriverClient.JSONWireProtocolClient.Response
   alias WebDriverClient.Session
   alias WebDriverClient.Size
   alias WebDriverClient.UnexpectedResponseFormatError
 
-  @spec parse_value(term) :: {:ok, term} | {:error, UnexpectedResponseFormatError.t()}
-  def parse_value(%{"value" => value}) do
+  defguardp is_status(term) when is_integer(term) and term >= 0
+
+  @spec parse_response(term) :: {:ok, Response.t()} | {:error, UnexpectedResponseFormatError.t()}
+  def parse_response(term) do
+    with %{"value" => value, "status" => status} when is_status(status) <- term,
+         session_id when is_session_id(session_id) or is_nil(session_id) <-
+           Map.get(term, "sessionId") do
+      {:ok, %Response{session_id: session_id, status: status, value: value, original_body: term}}
+    else
+      _ ->
+        {:error, UnexpectedResponseFormatError.exception(response_body: term)}
+    end
+  end
+
+  @spec parse_value(Response.t()) :: {:ok, term}
+  def parse_value(%Response{value: value}) do
     {:ok, value}
   end
 
-  def parse_value(body) do
-    {:error, UnexpectedResponseFormatError.exception(response_body: body)}
-  end
-
-  @spec parse_url(term) ::
+  @spec parse_url(Response.t()) ::
           {:ok, JSONWireProtocolClient.url()} | {:error, UnexpectedResponseFormatError.t()}
-  def parse_url(%{"value" => url}) when is_binary(url) do
+  def parse_url(%Response{value: url}) when is_binary(url) do
     {:ok, url}
   end
 
-  def parse_url(body) do
-    {:error, UnexpectedResponseFormatError.exception(response_body: body)}
+  def parse_url(%Response{original_body: original_body}) do
+    {:error, UnexpectedResponseFormatError.exception(response_body: original_body)}
   end
 
-  @spec parse_log_entries(term) ::
+  @spec parse_log_entries(Response.t()) ::
           {:ok, [LogEntry.t()]} | {:error, UnexpectedResponseFormatError.t()}
-  def parse_log_entries(response) do
-    with %{"value" => values} when is_list(values) <- response,
+  def parse_log_entries(%Response{value: value, original_body: original_body}) do
+    with values when is_list(values) <- value,
          log_entries when is_list(log_entries) <- do_parse_log_entries(values) do
       {:ok, log_entries}
     else
       _ ->
-        {:error, UnexpectedResponseFormatError.exception(response_body: response)}
+        {:error, UnexpectedResponseFormatError.exception(response_body: original_body)}
     end
   end
 
@@ -65,14 +76,15 @@ defmodule WebDriverClient.JSONWireProtocolClient.ResponseParser do
     end
   end
 
-  @spec parse_elements(term) :: {:ok, [Element.t()]} | {:error, UnexpectedResponseFormatError.t()}
-  def parse_elements(response) do
-    with %{"value" => values} when is_list(values) <- response,
+  @spec parse_elements(Response.t()) ::
+          {:ok, [Element.t()]} | {:error, UnexpectedResponseFormatError.t()}
+  def parse_elements(%Response{value: value, original_body: original_body}) do
+    with values when is_list(values) <- value,
          elements when is_list(elements) <- do_parse_elements(values) do
       {:ok, elements}
     else
       _ ->
-        {:error, UnexpectedResponseFormatError.exception(response_body: response)}
+        {:error, UnexpectedResponseFormatError.exception(response_body: original_body)}
     end
   end
 
@@ -96,28 +108,27 @@ defmodule WebDriverClient.JSONWireProtocolClient.ResponseParser do
     end
   end
 
-  @spec parse_fetch_sessions_response(term, Config.t()) ::
+  @spec parse_fetch_sessions_response(Response.t(), Config.t()) ::
           {:ok, [Session.t()]} | {:error, UnexpectedResponseFormatError.t()}
-  def parse_fetch_sessions_response(response, %Config{} = config) do
-    with %{"value" => values} when is_list(values) <- response,
+  def parse_fetch_sessions_response(
+        %Response{value: value, original_body: original_body},
+        %Config{} = config
+      ) do
+    with values when is_list(values) <- value,
          sessions when is_list(sessions) <- do_parse_sessions(values, config) do
       {:ok, sessions}
     else
       _ ->
-        {:error, UnexpectedResponseFormatError.exception(response_body: response)}
+        {:error, UnexpectedResponseFormatError.exception(response_body: original_body)}
     end
   end
 
-  @spec parse_start_session_response(term, Config.t()) ::
-          {:ok, Session.t()} | {:error, UnexpectedResponseFormatError.t()}
-  def parse_start_session_response(response, %Config{} = config) do
-    case response do
-      %{"sessionId" => session_id} when is_session_id(session_id) ->
-        {:ok, Session.build(session_id, config)}
-
-      _ ->
-        {:error, UnexpectedResponseFormatError.exception(response_body: response)}
-    end
+  @spec parse_start_session_response(Response.t(), Config.t()) :: {:ok, Session.t()}
+  def parse_start_session_response(
+        %Response{session_id: session_id},
+        %Config{} = config
+      ) do
+    {:ok, Session.build(session_id, config)}
   end
 
   defp do_parse_sessions(sessions, config) do
@@ -138,13 +149,13 @@ defmodule WebDriverClient.JSONWireProtocolClient.ResponseParser do
     end
   end
 
-  @spec parse_size(term) :: {:ok, Size.t()} | {:error, UnexpectedResponseFormatError.t()}
-  def parse_size(%{"value" => %{"width" => width, "height" => height}})
+  @spec parse_size(Response.t()) :: {:ok, Size.t()} | {:error, UnexpectedResponseFormatError.t()}
+  def parse_size(%Response{value: %{"width" => width, "height" => height}})
       when is_integer(width) and is_integer(height) do
     {:ok, %Size{width: width, height: height}}
   end
 
-  def parse_size(body) do
-    {:error, UnexpectedResponseFormatError.exception(response_body: body)}
+  def parse_size(%Response{original_body: original_body}) do
+    {:error, UnexpectedResponseFormatError.exception(response_body: original_body)}
   end
 end

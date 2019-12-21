@@ -157,6 +157,10 @@ defmodule WebDriverClient.JSONWireProtocolClient.TestResponses do
     })
   end
 
+  def status_int do
+    integer(0..40)
+  end
+
   defp url do
     constant("http://example.com")
   end
@@ -170,7 +174,7 @@ defmodule WebDriverClient.JSONWireProtocolClient.TestResponses do
     )
   end
 
-  defp session_id do
+  def session_id do
     string(:alphanumeric, min_length: 1, max_length: 30)
   end
 end

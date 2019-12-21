@@ -8,6 +8,7 @@ defmodule WebDriverClient.JSONWireProtocolClient.TeslaClientBuilderTest do
   alias Tesla.Env
   alias WebDriverClient.Config
   alias WebDriverClient.HTTPClientError
+  alias WebDriverClient.JSONWireProtocolClient.ResponseParser
   alias WebDriverClient.JSONWireProtocolClient.TeslaClientBuilder
   alias WebDriverClient.JSONWireProtocolClient.TestResponses
   alias WebDriverClient.UnexpectedResponseFormatError
@@ -69,13 +70,14 @@ defmodule WebDriverClient.JSONWireProtocolClient.TeslaClientBuilderTest do
         %TestState{
           communication_error: nil,
           content_type: @json_content_type,
-          response_body: {:valid_json, %{"value" => _, "status" => _}},
+          response_body: {:valid_json, %{"value" => _, "status" => _} = parsed_body},
           status_code: status_code
         }
         when is_http_success(status_code) and not is_no_content_status_code(status_code) ->
-          response_body = get_expected_body(state)
+          {:ok, expected_response} = ResponseParser.parse_response(parsed_body)
 
-          assert {:ok, %Env{body: ^response_body, status: ^status_code}} = Tesla.get(client, path)
+          assert {:ok, %Env{body: ^expected_response, status: ^status_code}} =
+                   Tesla.get(client, path)
 
         %TestState{communication_error: :server_down} ->
           assert {:error, %HTTPClientError{reason: :econnrefused}} = Tesla.get(client, path)

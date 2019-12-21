@@ -2,6 +2,7 @@ defmodule WebDriverClient.JSONWireProtocolClient.Middleware.APIResponseHandler d
   @moduledoc false
 
   alias Tesla.Env
+  alias WebDriverClient.JSONWireProtocolClient.ResponseParser
   alias WebDriverClient.UnexpectedResponseFormatError
 
   @behaviour Tesla.Middleware
@@ -17,12 +18,11 @@ defmodule WebDriverClient.JSONWireProtocolClient.Middleware.APIResponseHandler d
     end
   end
 
-  defp parse_api_response(%Env{body: %{"value" => _value, "status" => status}} = env)
-       when is_integer(status) do
-    {:ok, env}
-  end
-
-  defp parse_api_response(%Env{body: body}) do
-    {:error, UnexpectedResponseFormatError.exception(response_body: body)}
+  @spec parse_api_response(Env.t()) ::
+          {:ok, Env.t()} | {:error, UnexpectedResponseFormatError.t()}
+  defp parse_api_response(%Env{body: body} = env) do
+    with {:ok, response} <- ResponseParser.parse_response(body) do
+      {:ok, %Env{env | body: response}}
+    end
   end
 end
