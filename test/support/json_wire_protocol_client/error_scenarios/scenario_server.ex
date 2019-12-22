@@ -24,18 +24,18 @@ defmodule WebDriverClient.JSONWireProtocolClient.ErrorScenarios.ScenarioServer d
 
   defp put_response_body_from_scenario(conn, %ErrorScenario{
          response_body: {:valid_json, to_encode},
-         status_code: status_code
+         http_status_code: http_status_code
        }) do
     json = Jason.encode!(to_encode)
 
-    resp(conn, status_code, json)
+    resp(conn, http_status_code, json)
   end
 
   defp put_response_body_from_scenario(conn, %ErrorScenario{
          response_body: {:other, body},
-         status_code: status_code
+         http_status_code: http_status_code
        }) do
-    resp(conn, status_code, body)
+    resp(conn, http_status_code, body)
   end
 
   defp put_content_type_from_scenario(conn, %ErrorScenario{content_type: nil}), do: conn

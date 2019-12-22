@@ -12,23 +12,23 @@ defmodule WebDriverClient.JSONWireProtocolClient.ErrorScenarios do
   alias WebDriverClient.TestData
   alias WebDriverClient.UnexpectedResponseFormatError
 
-  defguardp is_no_content_status_code(status_code)
-            when is_integer(status_code) and status_code in [204, 304]
+  defguardp is_no_content_http_status_code(http_status_code)
+            when is_integer(http_status_code) and http_status_code in [204, 304]
 
   @json_content_type "application/json"
 
   def basic_error_scenarios do
     [
       %ErrorScenario{communication_error: :server_down},
-      %ErrorScenario{status_code: 500, response_body: {:other, "Internal error"}},
+      %ErrorScenario{http_status_code: 500, response_body: {:other, "Internal error"}},
       %ErrorScenario{
-        status_code: 200,
+        http_status_code: 200,
         content_type: @json_content_type,
         response_body: {:other, "foo"}
       },
       # Missing status
       %ErrorScenario{
-        status_code: 200,
+        http_status_code: 200,
         content_type: @json_content_type,
         response_body: {:valid_json, %{"value" => nil}}
       }
@@ -42,20 +42,20 @@ defmodule WebDriverClient.JSONWireProtocolClient.ErrorScenarios do
     ]
 
     invalid_json_scenarios =
-      for status_code
-          when not is_no_content_status_code(status_code) <- known_status_codes() do
+      for http_status_code
+          when not is_no_content_http_status_code(http_status_code) <- known_http_status_codes() do
         %ErrorScenario{
-          status_code: status_code,
+          http_status_code: http_status_code,
           content_type: @json_content_type,
           response_body: {:other, "asdf"}
         }
       end
 
     invalid_formatted_response_scenarios =
-      for status_code
-          when not is_no_content_status_code(status_code) <- known_status_codes() do
+      for http_status_code
+          when not is_no_content_http_status_code(http_status_code) <- known_http_status_codes() do
         %ErrorScenario{
-          status_code: status_code,
+          http_status_code: http_status_code,
           content_type: @json_content_type,
           response_body: {:valid_json, %{"value" => nil}}
         }
@@ -167,10 +167,10 @@ defmodule WebDriverClient.JSONWireProtocolClient.ErrorScenarios do
   defp do_assert_expected_response(
          response,
          %ErrorScenario{
-           status_code: status_code
+           http_status_code: http_status_code
          }
        )
-       when not is_no_content_status_code(status_code) do
+       when not is_no_content_http_status_code(http_status_code) do
     assert {:error, %UnexpectedResponseFormatError{}} = response
   end
 
@@ -179,22 +179,22 @@ defmodule WebDriverClient.JSONWireProtocolClient.ErrorScenarios do
          %ErrorScenario{
            content_type: @json_content_type,
            response_body: {:valid_json, response_body},
-           status_code: status_code
+           http_status_code: http_status_code
          }
        )
-       when not is_no_content_status_code(status_code) do
+       when not is_no_content_http_status_code(http_status_code) do
     assert {:error, %UnexpectedResponseFormatError{response_body: ^response_body}} = response
   end
 
-  @known_status_codes Enum.flat_map(100..599, fn status_code ->
-                        try do
-                          _ = Plug.Conn.Status.reason_atom(status_code)
-                          [status_code]
-                        rescue
-                          ArgumentError ->
-                            []
-                        end
-                      end)
+  @known_http_status_codes Enum.flat_map(100..599, fn http_status_code ->
+                             try do
+                               _ = Plug.Conn.Status.reason_atom(http_status_code)
+                               [http_status_code]
+                             rescue
+                               ArgumentError ->
+                                 []
+                             end
+                           end)
 
-  defp known_status_codes, do: @known_status_codes
+  defp known_http_status_codes, do: @known_http_status_codes
 end
