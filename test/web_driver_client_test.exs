@@ -5,11 +5,16 @@ defmodule WebDriverClientTest do
   import Plug.Conn
 
   alias WebDriverClient.Element
+  alias WebDriverClient.HTTPClientError
+  alias WebDriverClient.JSONWireProtocolClient.ErrorScenarios, as: JWPErrorScenarios
   alias WebDriverClient.JSONWireProtocolClient.TestResponses, as: JWPTestResponses
   alias WebDriverClient.LogEntry
   alias WebDriverClient.Session
   alias WebDriverClient.Size
   alias WebDriverClient.TestData
+  alias WebDriverClient.UnexpectedResponseFormatError
+  alias WebDriverClient.UnexpectedStatusCodeError
+  alias WebDriverClient.W3CWireProtocolClient.ErrorScenarios, as: W3CErrorScenarios
   alias WebDriverClient.W3CWireProtocolClient.TestResponses, as: W3CTestResponses
 
   @moduletag :bypass
@@ -539,32 +544,47 @@ defmodule WebDriverClientTest do
     end
   end
 
-  defp set_up_error_scenario_tests(protocol, bypass) do
-    get_error_scenario_module(protocol).set_up_error_scenario_tests(bypass)
+  defp set_up_error_scenario_tests(:jwp, bypass) do
+    JWPErrorScenarios.set_up_error_scenario_tests(bypass)
   end
 
-  defp basic_error_scenarios(protocol) do
-    get_error_scenario_module(protocol).basic_error_scenarios()
+  defp set_up_error_scenario_tests(:w3c, bypass) do
+    W3CErrorScenarios.set_up_error_scenario_tests(bypass)
   end
 
-  defp build_session_for_scenario(protocol, scenario_server, bypass, config, error_scenario) do
-    get_error_scenario_module(protocol).build_session_for_scenario(
-      scenario_server,
-      bypass,
-      config,
-      error_scenario
-    )
+  defp basic_error_scenarios(:w3c) do
+    [:http_client_error, :unexpected_response_format, :unexpected_status_code]
   end
 
-  defp assert_expected_response(protocol, response, scenario) do
-    get_error_scenario_module(protocol).assert_expected_response(
-      response,
-      scenario
-    )
+  defp basic_error_scenarios(:jwp) do
+    [:http_client_error, :unexpected_response_format]
   end
 
-  defp get_error_scenario_module(:jwp), do: WebDriverClient.JSONWireProtocolClient.ErrorScenarios
-  defp get_error_scenario_module(:w3c), do: WebDriverClient.W3CWireProtocolClient.ErrorScenarios
+  defp build_session_for_scenario(:jwp, scenario_server, bypass, config, error_scenario) do
+    scenario = JWPErrorScenarios.get_named_scenario(error_scenario)
+
+    JWPErrorScenarios.build_session_for_scenario(scenario_server, bypass, config, scenario)
+  end
+
+  defp build_session_for_scenario(:w3c, scenario_server, bypass, config, error_scenario) do
+    scenario = W3CErrorScenarios.get_named_scenario(error_scenario)
+
+    W3CErrorScenarios.build_session_for_scenario(scenario_server, bypass, config, scenario)
+  end
+
+  defp assert_expected_response(protocol, response, :http_client_error)
+       when protocol in [:w3c, :jwp] do
+    assert {:error, %HTTPClientError{}} = response
+  end
+
+  defp assert_expected_response(protocol, response, :unexpected_response_format)
+       when protocol in [:w3c, :jwp] do
+    assert {:error, %UnexpectedResponseFormatError{}} = response
+  end
+
+  defp assert_expected_response(:w3c, response, :unexpected_status_code) do
+    assert {:error, %UnexpectedStatusCodeError{}} = response
+  end
 
   defp build_start_session_payload do
     %{"capablities" => %{"browserName" => "firefox"}}

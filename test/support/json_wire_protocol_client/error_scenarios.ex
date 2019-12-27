@@ -17,22 +17,16 @@ defmodule WebDriverClient.JSONWireProtocolClient.ErrorScenarios do
 
   @json_content_type "application/json"
 
-  def basic_error_scenarios do
-    [
-      %ErrorScenario{communication_error: :server_down},
-      %ErrorScenario{http_status_code: 500, response_body: {:other, "Internal error"}},
-      %ErrorScenario{
-        http_status_code: 200,
-        content_type: @json_content_type,
-        response_body: {:other, "foo"}
-      },
-      # Missing status
-      %ErrorScenario{
-        http_status_code: 200,
-        content_type: @json_content_type,
-        response_body: {:valid_json, %{"value" => nil}}
-      }
-    ]
+  def get_named_scenario(:http_client_error) do
+    %ErrorScenario{communication_error: :server_down}
+  end
+
+  def get_named_scenario(:unexpected_response_format) do
+    %ErrorScenario{
+      http_status_code: 200,
+      content_type: @json_content_type,
+      response_body: {:other, "foo"}
+    }
   end
 
   def error_scenarios do

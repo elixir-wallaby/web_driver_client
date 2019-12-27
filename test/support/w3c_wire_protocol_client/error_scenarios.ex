@@ -21,16 +21,20 @@ defmodule WebDriverClient.W3CWireProtocolClient.ErrorScenarios do
 
   @json_content_type "application/json"
 
-  def basic_error_scenarios do
-    [
-      %ErrorScenario{communication_error: :server_down},
-      %ErrorScenario{status_code: 500, response_body: {:other, "Internal error"}},
-      %ErrorScenario{
-        status_code: 200,
-        content_type: @json_content_type,
-        response_body: {:other, "foo"}
-      }
-    ]
+  def get_named_scenario(:http_client_error) do
+    %ErrorScenario{communication_error: :server_down}
+  end
+
+  def get_named_scenario(:unexpected_status_code) do
+    %ErrorScenario{status_code: 500, response_body: {:other, "Internal error"}}
+  end
+
+  def get_named_scenario(:unexpected_response_format) do
+    %ErrorScenario{
+      status_code: 200,
+      content_type: @json_content_type,
+      response_body: {:other, "foo"}
+    }
   end
 
   def error_scenarios do
