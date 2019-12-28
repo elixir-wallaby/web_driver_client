@@ -88,7 +88,7 @@ defmodule WebDriverClient.JSONWireProtocolClient do
   Specification: https://github.com/SeleniumHQ/selenium/wiki/JsonWireProtocol#post-sessionsessionidurl
   """
   doc_metadata subject: :navigation
-  @spec navigate_to(Session.t(), url) :: {:ok, url} | {:error, basic_reason}
+  @spec navigate_to(Session.t(), url) :: :ok | {:error, basic_reason}
   def navigate_to(%Session{id: id, config: %Config{} = config}, url) when is_url(url) do
     request_body = %{"url" => url}
 
@@ -203,7 +203,7 @@ defmodule WebDriverClient.JSONWireProtocolClient do
           Element.t(),
           element_location_strategy,
           element_selector
-        ) :: {:ok, [Element.t()] | {:error, basic_reason}}
+        ) :: {:ok, [Element.t()]} | {:error, basic_reason}
   def find_elements_from_element(
         %Session{id: session_id, config: %Config{} = config},
         %Element{id: element_id},
