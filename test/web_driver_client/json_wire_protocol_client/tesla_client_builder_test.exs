@@ -199,13 +199,24 @@ defmodule WebDriverClient.JSONWireProtocolClient.TeslaClientBuilderTest do
 
   @spec test_state :: StreamData.t(TestState.t())
   def test_state do
-    fixed_map(%{
-      communication_error:
-        frequency([
-          {8, nil},
-          {1, :server_down},
-          {1, :nonexistent_domain}
-        ]),
+    frequency([
+      {9, server_response_test_state()},
+      {1, communication_error_test_state()}
+    ])
+  end
+
+  @spec communication_error_test_state :: StreamData.t(TestState.t())
+  defp communication_error_test_state do
+    %{
+      communication_error: member_of([:server_down, :nonexistent_domain])
+    }
+    |> fixed_map()
+    |> map(&struct!(TestState, &1))
+  end
+
+  @spec server_response_test_state :: StreamData.t(TestState.t())
+  defp server_response_test_state do
+    %{
       content_type: content_type(),
       status_code:
         frequency([
@@ -223,7 +234,8 @@ defmodule WebDriverClient.JSONWireProtocolClient.TeslaClientBuilderTest do
             )}},
           {1, {:other, non_json_string()}}
         ])
-    })
+    }
+    |> fixed_map()
     |> map(&struct!(TestState, &1))
   end
 
