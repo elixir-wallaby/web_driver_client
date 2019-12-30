@@ -90,7 +90,7 @@ defmodule WebDriverClient.W3CWireProtocolClient do
   Specification: https://w3c.github.io/webdriver/#navigate-to
   """
   doc_metadata subject: :navigation
-  @spec navigate_to(Session.t(), url) :: {:ok, url} | {:error, basic_reason}
+  @spec navigate_to(Session.t(), url) :: :ok | {:error, basic_reason}
   def navigate_to(%Session{id: id, config: %Config{} = config}, url) when is_url(url) do
     request_body = %{"url" => url}
 
