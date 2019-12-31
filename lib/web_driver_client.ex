@@ -395,5 +395,26 @@ defmodule WebDriverClient do
   end
 
   defp to_error(%HTTPClientError{} = error), do: error
-  defp to_error(%UnexpectedResponseError{} = error), do: error
+
+  defp to_error(%W3CWireProtocolClient.UnexpectedResponseError{
+         reason: reason,
+         response_body: response_body
+       }) do
+    UnexpectedResponseError.exception(
+      reason: reason,
+      response_body: response_body,
+      protocol: :w3c
+    )
+  end
+
+  defp to_error(%JSONWireProtocolClient.UnexpectedResponseError{
+         reason: reason,
+         response_body: response_body
+       }) do
+    UnexpectedResponseError.exception(
+      reason: reason,
+      response_body: response_body,
+      protocol: :jwp
+    )
+  end
 end

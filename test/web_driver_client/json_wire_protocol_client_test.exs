@@ -10,10 +10,10 @@ defmodule WebDriverClient.JSONWireProtocolClientTest do
   alias WebDriverClient.JSONWireProtocolClient.LogEntry
   alias WebDriverClient.JSONWireProtocolClient.Response.Status
   alias WebDriverClient.JSONWireProtocolClient.TestResponses
+  alias WebDriverClient.JSONWireProtocolClient.UnexpectedResponseError
   alias WebDriverClient.Session
   alias WebDriverClient.Size
   alias WebDriverClient.TestData
-  alias WebDriverClient.UnexpectedResponseError
 
   @moduletag :bypass
   @moduletag :capture_log

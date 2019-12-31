@@ -11,7 +11,7 @@ defmodule WebDriverClient.W3CWireProtocolClient.TeslaClientBuilder do
       [
         {Tesla.Middleware.BaseUrl, base_url},
         WebDriverClient.W3CWireProtocolClient.Middleware.ErrorResponseHandler,
-        WebDriverClient.Middleware.JSONParsingErrorTranslator,
+        WebDriverClient.W3CWireProtocolClient.Middleware.JSONParsingErrorTranslator,
         Tesla.Middleware.JSON,
         WebDriverClient.Middleware.HTTPClientErrorHandler,
         Tesla.Middleware.Logger

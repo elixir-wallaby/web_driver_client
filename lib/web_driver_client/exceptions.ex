@@ -20,24 +20,34 @@ end
 
 defmodule WebDriverClient.UnexpectedResponseError do
   @moduledoc """
-  Indicates the response we received was in an unexpected format
+  Indicates an unexpected response was returned from the
+  server
   """
 
-  defexception [:message, :response_body, :reason]
+  alias WebDriverClient.Config
+
+  defexception [:message, :response_body, :reason, :protocol]
 
   @type t :: %__MODULE__{
           message: String.t(),
           response_body: term,
-          reason: term
+          reason: term,
+          protocol: Config.protocol()
         }
 
   def exception(opts) when is_list(opts) do
     response_body = Keyword.get(opts, :response_body)
     reason = Keyword.get(opts, :reason)
+    protocol = Keyword.fetch!(opts, :protocol)
 
-    message = "unexpected format for api response"
+    message = "unexpected response"
 
-    %__MODULE__{response_body: response_body, message: message, reason: reason}
+    %__MODULE__{
+      response_body: response_body,
+      message: message,
+      reason: reason,
+      protocol: protocol
+    }
   end
 end
 

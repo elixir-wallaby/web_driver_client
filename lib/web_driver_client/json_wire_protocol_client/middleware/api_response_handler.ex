@@ -3,7 +3,7 @@ defmodule WebDriverClient.JSONWireProtocolClient.Middleware.APIResponseHandler d
 
   alias Tesla.Env
   alias WebDriverClient.JSONWireProtocolClient.ResponseParser
-  alias WebDriverClient.UnexpectedResponseError
+  alias WebDriverClient.JSONWireProtocolClient.UnexpectedResponseError
 
   @behaviour Tesla.Middleware
 

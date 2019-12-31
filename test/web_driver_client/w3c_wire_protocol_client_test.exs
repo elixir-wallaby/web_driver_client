@@ -8,11 +8,11 @@ defmodule WebDriverClient.W3CWireProtocolClientTest do
   alias WebDriverClient.Element
   alias WebDriverClient.Session
   alias WebDriverClient.TestData
-  alias WebDriverClient.UnexpectedResponseError
   alias WebDriverClient.W3CWireProtocolClient
   alias WebDriverClient.W3CWireProtocolClient.LogEntry
   alias WebDriverClient.W3CWireProtocolClient.Rect
   alias WebDriverClient.W3CWireProtocolClient.TestResponses
+  alias WebDriverClient.W3CWireProtocolClient.UnexpectedResponseError
 
   @moduletag :bypass
   @moduletag :capture_log

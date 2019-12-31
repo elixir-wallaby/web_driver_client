@@ -2,7 +2,7 @@ defmodule WebDriverClient.W3CWireProtocolClient.Middleware.ErrorResponseHandler 
   @moduledoc false
 
   alias Tesla.Env
-  alias WebDriverClient.UnexpectedResponseError
+  alias WebDriverClient.W3CWireProtocolClient.UnexpectedResponseError
   alias WebDriverClient.W3CWireProtocolClient.WebDriverError
 
   @behaviour Tesla.Middleware

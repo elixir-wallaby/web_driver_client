@@ -19,10 +19,10 @@ defmodule WebDriverClient.JSONWireProtocolClient do
   alias WebDriverClient.JSONWireProtocolClient.LogEntry
   alias WebDriverClient.JSONWireProtocolClient.ResponseParser
   alias WebDriverClient.JSONWireProtocolClient.TeslaClientBuilder
+  alias WebDriverClient.JSONWireProtocolClient.UnexpectedResponseError
   alias WebDriverClient.JSONWireProtocolClient.WebDriverError
   alias WebDriverClient.Session
   alias WebDriverClient.Size
-  alias WebDriverClient.UnexpectedResponseError
 
   @type url :: String.t()
 

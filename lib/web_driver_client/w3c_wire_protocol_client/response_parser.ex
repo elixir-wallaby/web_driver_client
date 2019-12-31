@@ -6,10 +6,10 @@ defmodule WebDriverClient.W3CWireProtocolClient.ResponseParser do
   alias WebDriverClient.Config
   alias WebDriverClient.Element
   alias WebDriverClient.Session
-  alias WebDriverClient.UnexpectedResponseError
   alias WebDriverClient.W3CWireProtocolClient
   alias WebDriverClient.W3CWireProtocolClient.LogEntry
   alias WebDriverClient.W3CWireProtocolClient.Rect
+  alias WebDriverClient.W3CWireProtocolClient.UnexpectedResponseError
 
   @type url :: W3CWireProtocolClient.url()
 

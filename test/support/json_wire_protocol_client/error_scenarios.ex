@@ -11,9 +11,9 @@ defmodule WebDriverClient.JSONWireProtocolClient.ErrorScenarios do
   alias WebDriverClient.JSONWireProtocolClient.ErrorScenarios.ScenarioServer
   alias WebDriverClient.JSONWireProtocolClient.Response.Status
   alias WebDriverClient.JSONWireProtocolClient.TestResponses
+  alias WebDriverClient.JSONWireProtocolClient.UnexpectedResponseError
   alias WebDriverClient.JSONWireProtocolClient.WebDriverError
   alias WebDriverClient.TestData
-  alias WebDriverClient.UnexpectedResponseError
 
   defguardp is_no_content_http_status_code(http_status_code)
             when is_integer(http_status_code) and http_status_code in [204, 304]

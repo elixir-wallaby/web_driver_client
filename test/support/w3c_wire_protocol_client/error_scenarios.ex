@@ -8,9 +8,9 @@ defmodule WebDriverClient.W3CWireProtocolClient.ErrorScenarios do
   alias WebDriverClient.Config
   alias WebDriverClient.HTTPClientError
   alias WebDriverClient.TestData
-  alias WebDriverClient.UnexpectedResponseError
   alias WebDriverClient.W3CWireProtocolClient.ErrorScenarios.ErrorScenario
   alias WebDriverClient.W3CWireProtocolClient.ErrorScenarios.ScenarioServer
+  alias WebDriverClient.W3CWireProtocolClient.UnexpectedResponseError
   alias WebDriverClient.W3CWireProtocolClient.WebDriverError
 
   defguardp is_no_content_status_code(status_code)

@@ -1,7 +1,7 @@
-defmodule WebDriverClient.Middleware.JSONParsingErrorTranslator do
+defmodule WebDriverClient.W3CWireProtocolClient.Middleware.JSONParsingErrorTranslator do
   @moduledoc false
 
-  alias WebDriverClient.UnexpectedResponseError
+  alias WebDriverClient.W3CWireProtocolClient.UnexpectedResponseError
 
   @behaviour Tesla.Middleware
 

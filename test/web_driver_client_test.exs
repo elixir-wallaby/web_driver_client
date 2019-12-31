@@ -579,7 +579,7 @@ defmodule WebDriverClientTest do
 
   defp assert_expected_response(protocol, response, :unexpected_response_format)
        when protocol in [:w3c, :jwp] do
-    assert {:error, %UnexpectedResponseError{}} = response
+    assert {:error, %UnexpectedResponseError{protocol: ^protocol}} = response
   end
 
   defp assert_expected_response(protocol, response, :web_driver_error)

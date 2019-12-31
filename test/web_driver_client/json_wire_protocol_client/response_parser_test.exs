@@ -7,10 +7,10 @@ defmodule WebDriverClient.JSONWireProtocolClient.ResponseParserTest do
   alias WebDriverClient.JSONWireProtocolClient.Response
   alias WebDriverClient.JSONWireProtocolClient.ResponseParser
   alias WebDriverClient.JSONWireProtocolClient.TestResponses
+  alias WebDriverClient.JSONWireProtocolClient.UnexpectedResponseError
   alias WebDriverClient.Session
   alias WebDriverClient.Size
   alias WebDriverClient.TestData
-  alias WebDriverClient.UnexpectedResponseError
 
   property "parse_response/1 returns {:ok, %Response{}} on valid JWP response" do
     check all response <- jwp_response() do

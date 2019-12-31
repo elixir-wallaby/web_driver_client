@@ -1,3 +1,27 @@
+defmodule WebDriverClient.W3CWireProtocolClient.UnexpectedResponseError do
+  @moduledoc """
+  Indicates an unexpected response was received from
+  the server.
+  """
+
+  defexception [:message, :response_body, :reason]
+
+  @type t :: %__MODULE__{
+          message: String.t(),
+          response_body: term,
+          reason: term
+        }
+
+  def exception(opts) when is_list(opts) do
+    response_body = Keyword.get(opts, :response_body)
+    reason = Keyword.get(opts, :reason)
+
+    message = "unexpected response"
+
+    %__MODULE__{response_body: response_body, message: message, reason: reason}
+  end
+end
+
 defmodule WebDriverClient.W3CWireProtocolClient.WebDriverError do
   @moduledoc """
   Indicates a known WebDriver error was returned from

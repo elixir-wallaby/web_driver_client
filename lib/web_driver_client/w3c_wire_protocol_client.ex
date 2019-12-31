@@ -17,11 +17,11 @@ defmodule WebDriverClient.W3CWireProtocolClient do
   alias WebDriverClient.Element
   alias WebDriverClient.HTTPClientError
   alias WebDriverClient.Session
-  alias WebDriverClient.UnexpectedResponseError
   alias WebDriverClient.W3CWireProtocolClient.LogEntry
   alias WebDriverClient.W3CWireProtocolClient.Rect
   alias WebDriverClient.W3CWireProtocolClient.ResponseParser
   alias WebDriverClient.W3CWireProtocolClient.TeslaClientBuilder
+  alias WebDriverClient.W3CWireProtocolClient.UnexpectedResponseError
   alias WebDriverClient.W3CWireProtocolClient.WebDriverError
 
   @type url :: String.t()

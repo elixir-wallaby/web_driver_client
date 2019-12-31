@@ -5,11 +5,11 @@ defmodule WebDriverClient.W3CWireProtocolClient.ResponseParserTest do
   alias WebDriverClient.Element
   alias WebDriverClient.Session
   alias WebDriverClient.TestData
-  alias WebDriverClient.UnexpectedResponseError
   alias WebDriverClient.W3CWireProtocolClient.LogEntry
   alias WebDriverClient.W3CWireProtocolClient.Rect
   alias WebDriverClient.W3CWireProtocolClient.ResponseParser
   alias WebDriverClient.W3CWireProtocolClient.TestResponses
+  alias WebDriverClient.W3CWireProtocolClient.UnexpectedResponseError
 
   @web_element_identifier "element-6066-11e4-a52e-4f735466cecf"
 

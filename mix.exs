@@ -78,6 +78,7 @@ defmodule WebDriverClient.MixProject do
           WebDriverClient.W3CWireProtocolClient,
           WebDriverClient.W3CWireProtocolClient.LogEntry,
           WebDriverClient.W3CWireProtocolClient.Rect,
+          WebDriverClient.W3CWireProtocolClient.UnexpectedResponseError,
           WebDriverClient.W3CWireProtocolClient.WebDriverError
         ]
       ],
