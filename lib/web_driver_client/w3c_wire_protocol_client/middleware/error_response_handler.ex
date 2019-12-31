@@ -2,7 +2,7 @@ defmodule WebDriverClient.W3CWireProtocolClient.Middleware.ErrorResponseHandler 
   @moduledoc false
 
   alias Tesla.Env
-  alias WebDriverClient.UnexpectedResponseFormatError
+  alias WebDriverClient.UnexpectedResponseError
   alias WebDriverClient.W3CWireProtocolClient.WebDriverError
 
   @behaviour Tesla.Middleware
@@ -49,7 +49,7 @@ defmodule WebDriverClient.W3CWireProtocolClient.Middleware.ErrorResponseHandler 
   ]
 
   @spec parse_error(Env.t()) ::
-          {:ok, Env.t()} | {:error, WebDriverError.t() | UnexpectedResponseFormatError.t()}
+          {:ok, Env.t()} | {:error, WebDriverError.t() | UnexpectedResponseError.t()}
   defp parse_error(env)
 
   for {status_code, error_text, error_atom} <- errors do
@@ -75,6 +75,6 @@ defmodule WebDriverClient.W3CWireProtocolClient.Middleware.ErrorResponseHandler 
   end
 
   defp parse_error(%Env{body: body}) do
-    {:error, UnexpectedResponseFormatError.exception(response_body: body)}
+    {:error, UnexpectedResponseError.exception(response_body: body)}
   end
 end

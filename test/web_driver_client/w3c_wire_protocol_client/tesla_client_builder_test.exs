@@ -8,7 +8,7 @@ defmodule WebDriverClient.W3CWireProtocolClient.TeslaClientBuilderTest do
   alias Tesla.Env
   alias WebDriverClient.Config
   alias WebDriverClient.HTTPClientError
-  alias WebDriverClient.UnexpectedResponseFormatError
+  alias WebDriverClient.UnexpectedResponseError
   alias WebDriverClient.W3CWireProtocolClient.TeslaClientBuilder
   alias WebDriverClient.W3CWireProtocolClient.WebDriverError
 
@@ -85,7 +85,7 @@ defmodule WebDriverClient.W3CWireProtocolClient.TeslaClientBuilderTest do
           assert {:error, %WebDriverError{reason: ^error_code}} = Tesla.get(client, path)
 
         %TestState{} ->
-          assert {:error, %UnexpectedResponseFormatError{}} = Tesla.get(client, path)
+          assert {:error, %UnexpectedResponseError{}} = Tesla.get(client, path)
       end
     end
   end

@@ -8,7 +8,7 @@ defmodule WebDriverClient.W3CWireProtocolClient.ErrorScenarios do
   alias WebDriverClient.Config
   alias WebDriverClient.HTTPClientError
   alias WebDriverClient.TestData
-  alias WebDriverClient.UnexpectedResponseFormatError
+  alias WebDriverClient.UnexpectedResponseError
   alias WebDriverClient.W3CWireProtocolClient.ErrorScenarios.ErrorScenario
   alias WebDriverClient.W3CWireProtocolClient.ErrorScenarios.ScenarioServer
   alias WebDriverClient.W3CWireProtocolClient.WebDriverError
@@ -229,7 +229,7 @@ defmodule WebDriverClient.W3CWireProtocolClient.ErrorScenarios do
          response,
          %ErrorScenario{}
        ) do
-    assert {:error, %UnexpectedResponseFormatError{}} = response
+    assert {:error, %UnexpectedResponseError{}} = response
   end
 
   @known_status_codes Enum.flat_map(100..599, fn status_code ->

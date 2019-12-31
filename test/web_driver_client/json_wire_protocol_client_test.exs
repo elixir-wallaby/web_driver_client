@@ -13,7 +13,7 @@ defmodule WebDriverClient.JSONWireProtocolClientTest do
   alias WebDriverClient.Session
   alias WebDriverClient.Size
   alias WebDriverClient.TestData
-  alias WebDriverClient.UnexpectedResponseFormatError
+  alias WebDriverClient.UnexpectedResponseError
 
   @moduletag :bypass
   @moduletag :capture_log
@@ -44,7 +44,7 @@ defmodule WebDriverClient.JSONWireProtocolClientTest do
              JSONWireProtocolClient.start_session(payload, config)
   end
 
-  test "start_session/2 returns {:error, %UnexpectedResponseFormatError{}} with an unexpected response",
+  test "start_session/2 returns {:error, %UnexpectedResponseError{}} with an unexpected response",
        %{bypass: bypass, config: config} do
     parsed_response = %{}
     payload = build_start_session_payload()
@@ -55,7 +55,7 @@ defmodule WebDriverClient.JSONWireProtocolClientTest do
       |> send_resp(200, Jason.encode!(parsed_response))
     end)
 
-    assert {:error, %UnexpectedResponseFormatError{response_body: ^parsed_response}} =
+    assert {:error, %UnexpectedResponseError{response_body: ^parsed_response}} =
              JSONWireProtocolClient.start_session(payload, config)
   end
 
@@ -100,7 +100,7 @@ defmodule WebDriverClient.JSONWireProtocolClientTest do
              JSONWireProtocolClient.fetch_sessions(config)
   end
 
-  test "fetch_sessions/1 returns {:error, %UnexpectedResponseFormatError{}} with an unexpected response",
+  test "fetch_sessions/1 returns {:error, %UnexpectedResponseError{}} with an unexpected response",
        %{bypass: bypass, config: config} do
     parsed_response = %{}
 
@@ -110,7 +110,7 @@ defmodule WebDriverClient.JSONWireProtocolClientTest do
       |> send_resp(200, Jason.encode!(parsed_response))
     end)
 
-    assert {:error, %UnexpectedResponseFormatError{response_body: ^parsed_response}} =
+    assert {:error, %UnexpectedResponseError{response_body: ^parsed_response}} =
              JSONWireProtocolClient.fetch_sessions(config)
   end
 
@@ -229,7 +229,7 @@ defmodule WebDriverClient.JSONWireProtocolClientTest do
     end
   end
 
-  test "fetch_current_url/1 returns {:error, %UnexpectedResponseFormatError{}} on invalid response",
+  test "fetch_current_url/1 returns {:error, %UnexpectedResponseError{}} on invalid response",
        %{bypass: bypass, config: config} do
     %Session{id: session_id} = session = TestData.session(config: constant(config)) |> pick()
 
@@ -246,7 +246,7 @@ defmodule WebDriverClient.JSONWireProtocolClientTest do
       end
     )
 
-    assert {:error, %UnexpectedResponseFormatError{response_body: ^parsed_response}} =
+    assert {:error, %UnexpectedResponseError{response_body: ^parsed_response}} =
              JSONWireProtocolClient.fetch_current_url(session)
   end
 
@@ -312,7 +312,7 @@ defmodule WebDriverClient.JSONWireProtocolClientTest do
       end
     )
 
-    assert {:error, %UnexpectedResponseFormatError{response_body: ^parsed_response}} =
+    assert {:error, %UnexpectedResponseError{response_body: ^parsed_response}} =
              JSONWireProtocolClient.fetch_window_size(session)
   end
 
@@ -467,7 +467,7 @@ defmodule WebDriverClient.JSONWireProtocolClientTest do
     end
   end
 
-  test "find_elements/3 returns {:error, %UnexpectedResponseFormatError{}} on invalid response",
+  test "find_elements/3 returns {:error, %UnexpectedResponseError{}} on invalid response",
        %{bypass: bypass, config: config} do
     %Session{id: session_id} = session = TestData.session(config: constant(config)) |> pick()
 
@@ -484,7 +484,7 @@ defmodule WebDriverClient.JSONWireProtocolClientTest do
       end
     )
 
-    assert {:error, %UnexpectedResponseFormatError{response_body: ^parsed_response}} =
+    assert {:error, %UnexpectedResponseError{response_body: ^parsed_response}} =
              JSONWireProtocolClient.find_elements(session, :css_selector, "selector")
   end
 
@@ -584,7 +584,7 @@ defmodule WebDriverClient.JSONWireProtocolClientTest do
     end
   end
 
-  test "find_elements_from_element/4 returns {:error, %UnexpectedResponseFormatError{}} on invalid response",
+  test "find_elements_from_element/4 returns {:error, %UnexpectedResponseError{}} on invalid response",
        %{bypass: bypass, config: config} do
     %Session{id: session_id} = session = TestData.session(config: constant(config)) |> pick()
     %Element{id: element_id} = element = TestData.element() |> pick()
@@ -602,7 +602,7 @@ defmodule WebDriverClient.JSONWireProtocolClientTest do
       end
     )
 
-    assert {:error, %UnexpectedResponseFormatError{response_body: ^parsed_response}} =
+    assert {:error, %UnexpectedResponseError{response_body: ^parsed_response}} =
              JSONWireProtocolClient.find_elements_from_element(
                session,
                element,
@@ -660,7 +660,7 @@ defmodule WebDriverClient.JSONWireProtocolClientTest do
     end
   end
 
-  test "fetch_log_types/1 returns {:error, %UnexpectedResponseFormatError{}} on invalid response",
+  test "fetch_log_types/1 returns {:error, %UnexpectedResponseError{}} on invalid response",
        %{bypass: bypass, config: config} do
     %Session{id: session_id} = session = TestData.session(config: constant(config)) |> pick()
 
@@ -677,7 +677,7 @@ defmodule WebDriverClient.JSONWireProtocolClientTest do
       end
     )
 
-    assert {:error, %UnexpectedResponseFormatError{response_body: ^parsed_response}} =
+    assert {:error, %UnexpectedResponseError{response_body: ^parsed_response}} =
              JSONWireProtocolClient.fetch_log_types(session)
   end
 
@@ -763,7 +763,7 @@ defmodule WebDriverClient.JSONWireProtocolClientTest do
     end
   end
 
-  test "fetch_logs/2 returns {:error, %UnexpectedResponseFormatError{}} on invalid response",
+  test "fetch_logs/2 returns {:error, %UnexpectedResponseError{}} on invalid response",
        %{bypass: bypass, config: config} do
     %Session{id: session_id} = session = TestData.session(config: constant(config)) |> pick()
 
@@ -780,7 +780,7 @@ defmodule WebDriverClient.JSONWireProtocolClientTest do
       end
     )
 
-    assert {:error, %UnexpectedResponseFormatError{response_body: ^parsed_response}} =
+    assert {:error, %UnexpectedResponseError{response_body: ^parsed_response}} =
              JSONWireProtocolClient.fetch_logs(session, "server")
   end
 

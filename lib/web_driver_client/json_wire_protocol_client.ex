@@ -22,13 +22,13 @@ defmodule WebDriverClient.JSONWireProtocolClient do
   alias WebDriverClient.JSONWireProtocolClient.WebDriverError
   alias WebDriverClient.Session
   alias WebDriverClient.Size
-  alias WebDriverClient.UnexpectedResponseFormatError
+  alias WebDriverClient.UnexpectedResponseError
 
   @type url :: String.t()
 
   @type basic_reason ::
           HTTPClientError.t()
-          | UnexpectedResponseFormatError.t()
+          | UnexpectedResponseError.t()
           | WebDriverError.t()
 
   @doc """

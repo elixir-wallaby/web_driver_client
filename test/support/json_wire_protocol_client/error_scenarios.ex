@@ -13,7 +13,7 @@ defmodule WebDriverClient.JSONWireProtocolClient.ErrorScenarios do
   alias WebDriverClient.JSONWireProtocolClient.TestResponses
   alias WebDriverClient.JSONWireProtocolClient.WebDriverError
   alias WebDriverClient.TestData
-  alias WebDriverClient.UnexpectedResponseFormatError
+  alias WebDriverClient.UnexpectedResponseError
 
   defguardp is_no_content_http_status_code(http_status_code)
             when is_integer(http_status_code) and http_status_code in [204, 304]
@@ -209,7 +209,7 @@ defmodule WebDriverClient.JSONWireProtocolClient.ErrorScenarios do
          }
        )
        when not is_no_content_http_status_code(http_status_code) do
-    assert {:error, %UnexpectedResponseFormatError{response_body: ^response_body}} = response
+    assert {:error, %UnexpectedResponseError{response_body: ^response_body}} = response
   end
 
   defp do_assert_expected_response(
@@ -219,7 +219,7 @@ defmodule WebDriverClient.JSONWireProtocolClient.ErrorScenarios do
          }
        )
        when not is_no_content_http_status_code(http_status_code) do
-    assert {:error, %UnexpectedResponseFormatError{}} = response
+    assert {:error, %UnexpectedResponseError{}} = response
   end
 
   @known_http_status_codes Enum.flat_map(100..599, fn http_status_code ->

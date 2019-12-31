@@ -8,7 +8,7 @@ defmodule WebDriverClient.W3CWireProtocolClientTest do
   alias WebDriverClient.Element
   alias WebDriverClient.Session
   alias WebDriverClient.TestData
-  alias WebDriverClient.UnexpectedResponseFormatError
+  alias WebDriverClient.UnexpectedResponseError
   alias WebDriverClient.W3CWireProtocolClient
   alias WebDriverClient.W3CWireProtocolClient.LogEntry
   alias WebDriverClient.W3CWireProtocolClient.Rect
@@ -45,7 +45,7 @@ defmodule WebDriverClient.W3CWireProtocolClientTest do
              W3CWireProtocolClient.start_session(payload, config)
   end
 
-  test "start_session/2 returns {:error, %UnexpectedResponseFormatError{}} with an unexpected response",
+  test "start_session/2 returns {:error, %UnexpectedResponseError{}} with an unexpected response",
        %{bypass: bypass, config: config} do
     parsed_response = %{}
     payload = build_start_session_payload()
@@ -56,7 +56,7 @@ defmodule WebDriverClient.W3CWireProtocolClientTest do
       |> send_resp(200, Jason.encode!(parsed_response))
     end)
 
-    assert {:error, %UnexpectedResponseFormatError{response_body: ^parsed_response}} =
+    assert {:error, %UnexpectedResponseError{response_body: ^parsed_response}} =
              W3CWireProtocolClient.start_session(payload, config)
   end
 
@@ -101,7 +101,7 @@ defmodule WebDriverClient.W3CWireProtocolClientTest do
              W3CWireProtocolClient.fetch_sessions(config)
   end
 
-  test "fetch_sessions/1 returns {:error, %UnexpectedResponseFormatError{}} with an unexpected response",
+  test "fetch_sessions/1 returns {:error, %UnexpectedResponseError{}} with an unexpected response",
        %{bypass: bypass, config: config} do
     parsed_response = %{}
 
@@ -111,7 +111,7 @@ defmodule WebDriverClient.W3CWireProtocolClientTest do
       |> send_resp(200, Jason.encode!(parsed_response))
     end)
 
-    assert {:error, %UnexpectedResponseFormatError{response_body: ^parsed_response}} =
+    assert {:error, %UnexpectedResponseError{response_body: ^parsed_response}} =
              W3CWireProtocolClient.fetch_sessions(config)
   end
 
@@ -229,7 +229,7 @@ defmodule WebDriverClient.W3CWireProtocolClientTest do
     end
   end
 
-  test "fetch_current_url/1 returns {:error, %UnexpectedResponseFormatError{}} on invalid response",
+  test "fetch_current_url/1 returns {:error, %UnexpectedResponseError{}} on invalid response",
        %{bypass: bypass, config: config} do
     {config, prefix} = prefix_base_url_for_multiple_runs(config)
 
@@ -248,7 +248,7 @@ defmodule WebDriverClient.W3CWireProtocolClientTest do
       end
     )
 
-    assert {:error, %UnexpectedResponseFormatError{response_body: ^parsed_response}} =
+    assert {:error, %UnexpectedResponseError{response_body: ^parsed_response}} =
              W3CWireProtocolClient.fetch_current_url(session)
   end
 
@@ -318,7 +318,7 @@ defmodule WebDriverClient.W3CWireProtocolClientTest do
       end
     )
 
-    assert {:error, %UnexpectedResponseFormatError{response_body: ^parsed_response}} =
+    assert {:error, %UnexpectedResponseError{response_body: ^parsed_response}} =
              W3CWireProtocolClient.fetch_window_rect(session)
   end
 
@@ -480,7 +480,7 @@ defmodule WebDriverClient.W3CWireProtocolClientTest do
     end
   end
 
-  test "find_elements/3 returns {:error, %UnexpectedResponseFormatError{}} on invalid response",
+  test "find_elements/3 returns {:error, %UnexpectedResponseError{}} on invalid response",
        %{bypass: bypass, config: config} do
     %Session{id: session_id} = session = TestData.session(config: constant(config)) |> pick()
 
@@ -497,7 +497,7 @@ defmodule WebDriverClient.W3CWireProtocolClientTest do
       end
     )
 
-    assert {:error, %UnexpectedResponseFormatError{response_body: ^parsed_response}} =
+    assert {:error, %UnexpectedResponseError{response_body: ^parsed_response}} =
              W3CWireProtocolClient.find_elements(session, :css_selector, "selector")
   end
 
@@ -599,7 +599,7 @@ defmodule WebDriverClient.W3CWireProtocolClientTest do
     end
   end
 
-  test "find_elements_from_element/4 returns {:error, %UnexpectedResponseFormatError{}} on invalid response",
+  test "find_elements_from_element/4 returns {:error, %UnexpectedResponseError{}} on invalid response",
        %{bypass: bypass, config: config} do
     %Session{id: session_id} = session = TestData.session(config: constant(config)) |> pick()
     %Element{id: element_id} = element = TestData.element() |> pick()
@@ -617,7 +617,7 @@ defmodule WebDriverClient.W3CWireProtocolClientTest do
       end
     )
 
-    assert {:error, %UnexpectedResponseFormatError{response_body: ^parsed_response}} =
+    assert {:error, %UnexpectedResponseError{response_body: ^parsed_response}} =
              W3CWireProtocolClient.find_elements_from_element(
                session,
                element,
@@ -694,7 +694,7 @@ defmodule WebDriverClient.W3CWireProtocolClientTest do
       end
     )
 
-    assert {:error, %UnexpectedResponseFormatError{response_body: ^parsed_response}} =
+    assert {:error, %UnexpectedResponseError{response_body: ^parsed_response}} =
              W3CWireProtocolClient.fetch_log_types(session)
   end
 
@@ -779,7 +779,7 @@ defmodule WebDriverClient.W3CWireProtocolClientTest do
     end
   end
 
-  test "fetch_logs/2 returns {:error, %UnexpectedResponseFormatError{}} on invalid response",
+  test "fetch_logs/2 returns {:error, %UnexpectedResponseError{}} on invalid response",
        %{bypass: bypass, config: config} do
     %Session{id: session_id} = session = TestData.session(config: constant(config)) |> pick()
 
@@ -796,7 +796,7 @@ defmodule WebDriverClient.W3CWireProtocolClientTest do
       end
     )
 
-    assert {:error, %UnexpectedResponseFormatError{response_body: ^parsed_response}} =
+    assert {:error, %UnexpectedResponseError{response_body: ^parsed_response}} =
              W3CWireProtocolClient.fetch_logs(session, "server")
   end
 

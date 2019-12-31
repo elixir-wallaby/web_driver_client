@@ -10,7 +10,7 @@ defmodule WebDriverClient.JSONWireProtocolClient.ResponseParserTest do
   alias WebDriverClient.Session
   alias WebDriverClient.Size
   alias WebDriverClient.TestData
-  alias WebDriverClient.UnexpectedResponseFormatError
+  alias WebDriverClient.UnexpectedResponseError
 
   property "parse_response/1 returns {:ok, %Response{}} on valid JWP response" do
     check all response <- jwp_response() do
@@ -28,14 +28,14 @@ defmodule WebDriverClient.JSONWireProtocolClient.ResponseParserTest do
     end
   end
 
-  property "parse_response/1 returns {:error, %UnexpectedResponseFormatError{}} on invalid JWP response" do
+  property "parse_response/1 returns {:error, %UnexpectedResponseError{}} on invalid JWP response" do
     check all response <-
                 one_of([
                   invalid_jwp_response(),
                   member_of([1, [], "foo"])
                 ]) do
       assert {:error,
-              %UnexpectedResponseFormatError{
+              %UnexpectedResponseError{
                 response_body: ^response
               }} = ResponseParser.parse_response(response)
     end
@@ -68,7 +68,7 @@ defmodule WebDriverClient.JSONWireProtocolClient.ResponseParserTest do
     end
   end
 
-  property "parse_url/1 returns {:error, %UnexpectedResponseFormatError{}} on an invalid response" do
+  property "parse_url/1 returns {:error, %UnexpectedResponseError{}} on an invalid response" do
     check all response <-
                 [
                   integer(),
@@ -83,7 +83,7 @@ defmodule WebDriverClient.JSONWireProtocolClient.ResponseParserTest do
                 |> TestResponses.jwp_response() do
       {:ok, parsed_response} = ResponseParser.parse_response(response)
 
-      assert {:error, %UnexpectedResponseFormatError{response_body: ^response}} =
+      assert {:error, %UnexpectedResponseError{response_body: ^response}} =
                ResponseParser.parse_url(parsed_response)
     end
   end
@@ -102,7 +102,7 @@ defmodule WebDriverClient.JSONWireProtocolClient.ResponseParserTest do
     end
   end
 
-  property "parse_size/1 returns {:error, %UnexpectedResponseFormatError{}} on an invalid response" do
+  property "parse_size/1 returns {:error, %UnexpectedResponseError{}} on an invalid response" do
     check all response <-
                 %{
                   "width" => string(:alphanumeric, max_length: 3),
@@ -112,7 +112,7 @@ defmodule WebDriverClient.JSONWireProtocolClient.ResponseParserTest do
                 |> TestResponses.jwp_response() do
       {:ok, parsed_response} = ResponseParser.parse_response(response)
 
-      assert {:error, %UnexpectedResponseFormatError{response_body: ^response}} =
+      assert {:error, %UnexpectedResponseError{response_body: ^response}} =
                ResponseParser.parse_size(parsed_response)
     end
   end
@@ -140,11 +140,11 @@ defmodule WebDriverClient.JSONWireProtocolClient.ResponseParserTest do
     end
   end
 
-  property "parse_log_entries/1 returns {:error, %UnexpectedResponseFormatError{}} on an invalid response" do
+  property "parse_log_entries/1 returns {:error, %UnexpectedResponseError{}} on an invalid response" do
     check all response <- log_entries_with_invalid_responses() |> TestResponses.jwp_response() do
       {:ok, parsed_response} = ResponseParser.parse_response(response)
 
-      assert {:error, %UnexpectedResponseFormatError{response_body: ^response}} =
+      assert {:error, %UnexpectedResponseError{response_body: ^response}} =
                ResponseParser.parse_log_entries(parsed_response)
     end
   end
@@ -167,11 +167,11 @@ defmodule WebDriverClient.JSONWireProtocolClient.ResponseParserTest do
     end
   end
 
-  property "parse_elements/1 returns {:error, %UnexpectedResponseFormatError{}} on an invalid response" do
+  property "parse_elements/1 returns {:error, %UnexpectedResponseError{}} on an invalid response" do
     check all response <- elements_with_invalid_responses() |> TestResponses.jwp_response() do
       {:ok, parsed_response} = ResponseParser.parse_response(response)
 
-      assert {:error, %UnexpectedResponseFormatError{response_body: ^response}} =
+      assert {:error, %UnexpectedResponseError{response_body: ^response}} =
                ResponseParser.parse_elements(parsed_response)
     end
   end
@@ -192,13 +192,13 @@ defmodule WebDriverClient.JSONWireProtocolClient.ResponseParserTest do
              ResponseParser.parse_fetch_sessions_response(parsed_response, config)
   end
 
-  test "parse_fetch_sessions_response/2 returns {:error, %UnexpectedResponseFormatError{}} on an invalid response" do
+  test "parse_fetch_sessions_response/2 returns {:error, %UnexpectedResponseError{}} on an invalid response" do
     config = TestData.config() |> pick()
     response = %{} |> constant() |> TestResponses.jwp_response() |> pick()
 
     {:ok, parsed_response} = ResponseParser.parse_response(response)
 
-    assert {:error, %UnexpectedResponseFormatError{response_body: ^response}} =
+    assert {:error, %UnexpectedResponseError{response_body: ^response}} =
              ResponseParser.parse_fetch_sessions_response(parsed_response, config)
   end
 

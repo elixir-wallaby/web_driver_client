@@ -12,7 +12,7 @@ defmodule WebDriverClientTest do
   alias WebDriverClient.Session
   alias WebDriverClient.Size
   alias WebDriverClient.TestData
-  alias WebDriverClient.UnexpectedResponseFormatError
+  alias WebDriverClient.UnexpectedResponseError
   alias WebDriverClient.W3CWireProtocolClient.ErrorScenarios, as: W3CErrorScenarios
   alias WebDriverClient.W3CWireProtocolClient.TestResponses, as: W3CTestResponses
   alias WebDriverClient.WebDriverError
@@ -579,7 +579,7 @@ defmodule WebDriverClientTest do
 
   defp assert_expected_response(protocol, response, :unexpected_response_format)
        when protocol in [:w3c, :jwp] do
-    assert {:error, %UnexpectedResponseFormatError{}} = response
+    assert {:error, %UnexpectedResponseError{}} = response
   end
 
   defp assert_expected_response(protocol, response, :web_driver_error)

@@ -13,7 +13,7 @@ defmodule WebDriverClient do
   alias WebDriverClient.LogEntry
   alias WebDriverClient.Session
   alias WebDriverClient.Size
-  alias WebDriverClient.UnexpectedResponseFormatError
+  alias WebDriverClient.UnexpectedResponseError
   alias WebDriverClient.W3CWireProtocolClient
   alias WebDriverClient.WebDriverError
 
@@ -21,7 +21,7 @@ defmodule WebDriverClient do
   @type url :: String.t()
   @type basic_reason ::
           HTTPClientError.t()
-          | UnexpectedResponseFormatError.t()
+          | UnexpectedResponseError.t()
           | WebDriverError.t()
 
   @doc """
@@ -395,5 +395,5 @@ defmodule WebDriverClient do
   end
 
   defp to_error(%HTTPClientError{} = error), do: error
-  defp to_error(%UnexpectedResponseFormatError{} = error), do: error
+  defp to_error(%UnexpectedResponseError{} = error), do: error
 end

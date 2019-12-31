@@ -18,7 +18,7 @@ defmodule WebDriverClient.HTTPClientError do
   end
 end
 
-defmodule WebDriverClient.UnexpectedResponseFormatError do
+defmodule WebDriverClient.UnexpectedResponseError do
   @moduledoc """
   Indicates the response we received was in an unexpected format
   """

@@ -17,7 +17,7 @@ defmodule WebDriverClient.W3CWireProtocolClient do
   alias WebDriverClient.Element
   alias WebDriverClient.HTTPClientError
   alias WebDriverClient.Session
-  alias WebDriverClient.UnexpectedResponseFormatError
+  alias WebDriverClient.UnexpectedResponseError
   alias WebDriverClient.W3CWireProtocolClient.LogEntry
   alias WebDriverClient.W3CWireProtocolClient.Rect
   alias WebDriverClient.W3CWireProtocolClient.ResponseParser
@@ -28,7 +28,7 @@ defmodule WebDriverClient.W3CWireProtocolClient do
 
   @type basic_reason ::
           HTTPClientError.t()
-          | UnexpectedResponseFormatError.t()
+          | UnexpectedResponseError.t()
           | WebDriverError.t()
 
   @doc """

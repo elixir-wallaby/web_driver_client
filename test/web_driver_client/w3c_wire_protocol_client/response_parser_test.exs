@@ -5,7 +5,7 @@ defmodule WebDriverClient.W3CWireProtocolClient.ResponseParserTest do
   alias WebDriverClient.Element
   alias WebDriverClient.Session
   alias WebDriverClient.TestData
-  alias WebDriverClient.UnexpectedResponseFormatError
+  alias WebDriverClient.UnexpectedResponseError
   alias WebDriverClient.W3CWireProtocolClient.LogEntry
   alias WebDriverClient.W3CWireProtocolClient.Rect
   alias WebDriverClient.W3CWireProtocolClient.ResponseParser
@@ -30,9 +30,9 @@ defmodule WebDriverClient.W3CWireProtocolClient.ResponseParserTest do
     end
   end
 
-  test "parse_value/1 returns {:error, %UnexpectedResponseFormatError{}} on an invalid response" do
+  test "parse_value/1 returns {:error, %UnexpectedResponseError{}} on an invalid response" do
     for response <- [[], %{}] do
-      assert {:error, %UnexpectedResponseFormatError{response_body: ^response}} =
+      assert {:error, %UnexpectedResponseError{response_body: ^response}} =
                ResponseParser.parse_value(response)
     end
   end
@@ -45,7 +45,7 @@ defmodule WebDriverClient.W3CWireProtocolClient.ResponseParserTest do
     end
   end
 
-  property "parse_url/1 returns {:error, %UnexpectedResponseFormatError{}} on an invalid response" do
+  property "parse_url/1 returns {:error, %UnexpectedResponseError{}} on an invalid response" do
     check all response <-
                 one_of([
                   constant(%{}),
@@ -62,7 +62,7 @@ defmodule WebDriverClient.W3CWireProtocolClient.ResponseParserTest do
                       ])
                   })
                 ]) do
-      assert {:error, %UnexpectedResponseFormatError{response_body: ^response}} =
+      assert {:error, %UnexpectedResponseError{response_body: ^response}} =
                ResponseParser.parse_url(response)
     end
   end
@@ -79,7 +79,7 @@ defmodule WebDriverClient.W3CWireProtocolClient.ResponseParserTest do
     end
   end
 
-  property "parse_rect/1 returns {:error, %UnexpectedResponseFormatError{}} on an invalid response" do
+  property "parse_rect/1 returns {:error, %UnexpectedResponseError{}} on an invalid response" do
     check all response <-
                 one_of([
                   constant(%{}),
@@ -93,7 +93,7 @@ defmodule WebDriverClient.W3CWireProtocolClient.ResponseParserTest do
                       })
                   })
                 ]) do
-      assert {:error, %UnexpectedResponseFormatError{response_body: ^response}} =
+      assert {:error, %UnexpectedResponseError{response_body: ^response}} =
                ResponseParser.parse_rect(response)
     end
   end
@@ -119,7 +119,7 @@ defmodule WebDriverClient.W3CWireProtocolClient.ResponseParserTest do
     end
   end
 
-  property "parse_log_entries/1 returns {:error, %UnexpectedResponseFormatError{}} on an invalid response" do
+  property "parse_log_entries/1 returns {:error, %UnexpectedResponseError{}} on an invalid response" do
     check all response <-
                 one_of([
                   constant(%{}),
@@ -127,7 +127,7 @@ defmodule WebDriverClient.W3CWireProtocolClient.ResponseParserTest do
                     "value" => log_entries_with_invalid_responses()
                   })
                 ]) do
-      assert {:error, %UnexpectedResponseFormatError{response_body: ^response}} =
+      assert {:error, %UnexpectedResponseError{response_body: ^response}} =
                ResponseParser.parse_log_entries(response)
     end
   end
@@ -149,7 +149,7 @@ defmodule WebDriverClient.W3CWireProtocolClient.ResponseParserTest do
     end
   end
 
-  property "parse_elements/1 returns {:error, %UnexpectedResponseFormatError{}} on an invalid response" do
+  property "parse_elements/1 returns {:error, %UnexpectedResponseError{}} on an invalid response" do
     check all response <-
                 one_of([
                   constant(%{}),
@@ -157,7 +157,7 @@ defmodule WebDriverClient.W3CWireProtocolClient.ResponseParserTest do
                     "value" => elements_with_invalid_responses()
                   })
                 ]) do
-      assert {:error, %UnexpectedResponseFormatError{response_body: ^response}} =
+      assert {:error, %UnexpectedResponseError{response_body: ^response}} =
                ResponseParser.parse_elements(response)
     end
   end
@@ -176,11 +176,11 @@ defmodule WebDriverClient.W3CWireProtocolClient.ResponseParserTest do
              ResponseParser.parse_fetch_sessions_response(resp, config)
   end
 
-  test "parse_fetch_sessions_response/2 returns {:error, %UnexpectedResponseFormatError{}} on an invalid response" do
+  test "parse_fetch_sessions_response/2 returns {:error, %UnexpectedResponseError{}} on an invalid response" do
     config = TestData.config() |> pick()
     response = %{}
 
-    assert {:error, %UnexpectedResponseFormatError{response_body: ^response}} =
+    assert {:error, %UnexpectedResponseError{response_body: ^response}} =
              ResponseParser.parse_fetch_sessions_response(response, config)
   end
 
@@ -193,11 +193,11 @@ defmodule WebDriverClient.W3CWireProtocolClient.ResponseParserTest do
              ResponseParser.parse_start_session_response(resp, config)
   end
 
-  test "parse_start_session_response/2 returns {:error, %UnexpectedResponseFormatError{}} on an invalid response" do
+  test "parse_start_session_response/2 returns {:error, %UnexpectedResponseError{}} on an invalid response" do
     config = TestData.config() |> pick()
     response = %{}
 
-    assert {:error, %UnexpectedResponseFormatError{response_body: ^response}} =
+    assert {:error, %UnexpectedResponseError{response_body: ^response}} =
              ResponseParser.parse_start_session_response(response, config)
   end
 

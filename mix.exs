@@ -66,7 +66,7 @@ defmodule WebDriverClient.MixProject do
           WebDriverClient.Size,
           WebDriverClient.HTTPClientError,
           WebDriverClient.LogEntry,
-          WebDriverClient.UnexpectedResponseFormatError,
+          WebDriverClient.UnexpectedResponseError,
           WebDriverClient.WebDriverError
         ],
         "Low-level JWP API": [

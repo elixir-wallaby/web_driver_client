@@ -13,7 +13,7 @@ defmodule WebDriverClient.JSONWireProtocolClient.TeslaClientBuilderTest do
   alias WebDriverClient.JSONWireProtocolClient.TeslaClientBuilder
   alias WebDriverClient.JSONWireProtocolClient.TestResponses
   alias WebDriverClient.JSONWireProtocolClient.WebDriverError
-  alias WebDriverClient.UnexpectedResponseFormatError
+  alias WebDriverClient.UnexpectedResponseError
 
   @moduletag :bypass
   @moduletag :capture_log
@@ -103,7 +103,7 @@ defmodule WebDriverClient.JSONWireProtocolClient.TeslaClientBuilderTest do
         %TestState{
           communication_error: nil
         } ->
-          assert {:error, %UnexpectedResponseFormatError{}} = Tesla.get(client, path)
+          assert {:error, %UnexpectedResponseError{}} = Tesla.get(client, path)
       end
     end
   end

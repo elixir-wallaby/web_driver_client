@@ -10,11 +10,11 @@ defmodule WebDriverClient.JSONWireProtocolClient.ResponseParser do
   alias WebDriverClient.JSONWireProtocolClient.Response
   alias WebDriverClient.Session
   alias WebDriverClient.Size
-  alias WebDriverClient.UnexpectedResponseFormatError
+  alias WebDriverClient.UnexpectedResponseError
 
   defguardp is_status(term) when is_integer(term) and term >= 0
 
-  @spec parse_response(term) :: {:ok, Response.t()} | {:error, UnexpectedResponseFormatError.t()}
+  @spec parse_response(term) :: {:ok, Response.t()} | {:error, UnexpectedResponseError.t()}
   def parse_response(term) do
     with %{"value" => value, "status" => status} when is_status(status) <- term,
          session_id when is_session_id(session_id) or is_nil(session_id) <-
@@ -22,7 +22,7 @@ defmodule WebDriverClient.JSONWireProtocolClient.ResponseParser do
       {:ok, %Response{session_id: session_id, status: status, value: value, original_body: term}}
     else
       _ ->
-        {:error, UnexpectedResponseFormatError.exception(response_body: term)}
+        {:error, UnexpectedResponseError.exception(response_body: term)}
     end
   end
 
@@ -32,24 +32,24 @@ defmodule WebDriverClient.JSONWireProtocolClient.ResponseParser do
   end
 
   @spec parse_url(Response.t()) ::
-          {:ok, JSONWireProtocolClient.url()} | {:error, UnexpectedResponseFormatError.t()}
+          {:ok, JSONWireProtocolClient.url()} | {:error, UnexpectedResponseError.t()}
   def parse_url(%Response{value: url}) when is_binary(url) do
     {:ok, url}
   end
 
   def parse_url(%Response{original_body: original_body}) do
-    {:error, UnexpectedResponseFormatError.exception(response_body: original_body)}
+    {:error, UnexpectedResponseError.exception(response_body: original_body)}
   end
 
   @spec parse_log_entries(Response.t()) ::
-          {:ok, [LogEntry.t()]} | {:error, UnexpectedResponseFormatError.t()}
+          {:ok, [LogEntry.t()]} | {:error, UnexpectedResponseError.t()}
   def parse_log_entries(%Response{value: value, original_body: original_body}) do
     with values when is_list(values) <- value,
          log_entries when is_list(log_entries) <- do_parse_log_entries(values) do
       {:ok, log_entries}
     else
       _ ->
-        {:error, UnexpectedResponseFormatError.exception(response_body: original_body)}
+        {:error, UnexpectedResponseError.exception(response_body: original_body)}
     end
   end
 
@@ -77,14 +77,14 @@ defmodule WebDriverClient.JSONWireProtocolClient.ResponseParser do
   end
 
   @spec parse_elements(Response.t()) ::
-          {:ok, [Element.t()]} | {:error, UnexpectedResponseFormatError.t()}
+          {:ok, [Element.t()]} | {:error, UnexpectedResponseError.t()}
   def parse_elements(%Response{value: value, original_body: original_body}) do
     with values when is_list(values) <- value,
          elements when is_list(elements) <- do_parse_elements(values) do
       {:ok, elements}
     else
       _ ->
-        {:error, UnexpectedResponseFormatError.exception(response_body: original_body)}
+        {:error, UnexpectedResponseError.exception(response_body: original_body)}
     end
   end
 
@@ -109,7 +109,7 @@ defmodule WebDriverClient.JSONWireProtocolClient.ResponseParser do
   end
 
   @spec parse_fetch_sessions_response(Response.t(), Config.t()) ::
-          {:ok, [Session.t()]} | {:error, UnexpectedResponseFormatError.t()}
+          {:ok, [Session.t()]} | {:error, UnexpectedResponseError.t()}
   def parse_fetch_sessions_response(
         %Response{value: value, original_body: original_body},
         %Config{} = config
@@ -119,7 +119,7 @@ defmodule WebDriverClient.JSONWireProtocolClient.ResponseParser do
       {:ok, sessions}
     else
       _ ->
-        {:error, UnexpectedResponseFormatError.exception(response_body: original_body)}
+        {:error, UnexpectedResponseError.exception(response_body: original_body)}
     end
   end
 
@@ -149,13 +149,13 @@ defmodule WebDriverClient.JSONWireProtocolClient.ResponseParser do
     end
   end
 
-  @spec parse_size(Response.t()) :: {:ok, Size.t()} | {:error, UnexpectedResponseFormatError.t()}
+  @spec parse_size(Response.t()) :: {:ok, Size.t()} | {:error, UnexpectedResponseError.t()}
   def parse_size(%Response{value: %{"width" => width, "height" => height}})
       when is_integer(width) and is_integer(height) do
     {:ok, %Size{width: width, height: height}}
   end
 
   def parse_size(%Response{original_body: original_body}) do
-    {:error, UnexpectedResponseFormatError.exception(response_body: original_body)}
+    {:error, UnexpectedResponseError.exception(response_body: original_body)}
   end
 end
