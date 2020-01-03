@@ -251,6 +251,30 @@ defmodule WebDriverClient.W3CWireProtocolClient do
     end
   end
 
+  @doc """
+  Sends a request to the server to see if an element
+  is displayed
+
+  Specification: https://w3c.github.io/webdriver/#element-displayedness
+  """
+  doc_metadata subject: :elements
+
+  @spec fetch_element_displayed(Session.t(), Element.t()) ::
+          {:ok, boolean} | {:error, basic_reason}
+
+  def fetch_element_displayed(
+        %Session{id: session_id, config: %Config{} = config},
+        %Element{id: element_id}
+      ) do
+    client = TeslaClientBuilder.build(config)
+    url = "/session/#{session_id}/element/#{element_id}/displayed"
+
+    with {:ok, %Env{body: body}} <- Tesla.get(client, url),
+         {:ok, boolean} <- ResponseParser.parse_boolean(body) do
+      {:ok, boolean}
+    end
+  end
+
   @spec element_location_strategy_to_string(element_location_strategy) :: String.t()
   defp element_location_strategy_to_string(:css_selector), do: "css selector"
   defp element_location_strategy_to_string(:xpath), do: "xpath"

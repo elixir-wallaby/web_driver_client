@@ -18,6 +18,11 @@ defmodule WebDriverClient.IntegrationTesting.TestPages.ElementsPage do
     "does not exist"
   end
 
+  @spec css_selector_for_non_visible_element :: String.t()
+  def css_selector_for_non_visible_element do
+    "#hidden-element"
+  end
+
   @spec css_selector_for_sample_list :: String.t()
   def css_selector_for_sample_list do
     "ul#sample-list"

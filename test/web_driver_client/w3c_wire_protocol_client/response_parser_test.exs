@@ -67,6 +67,36 @@ defmodule WebDriverClient.W3CWireProtocolClient.ResponseParserTest do
     end
   end
 
+  property "parse_boolean/1 returns {:ok, boolean} when result is a boolean" do
+    check all boolean <- boolean() do
+      response = %{"value" => boolean}
+
+      assert {:ok, ^boolean} = ResponseParser.parse_boolean(response)
+    end
+  end
+
+  property "parse_boolean/1 returns {:error, %UnexpectedResponseError{}} on an invalid response" do
+    check all response <-
+                one_of([
+                  constant(%{}),
+                  fixed_map(%{
+                    "value" =>
+                      one_of([
+                        integer(),
+                        member_of(["true", "false"]),
+                        map_of(
+                          string(:alphanumeric, max_length: 10),
+                          string(:alphanumeric, max_length: 10),
+                          max_length: 3
+                        )
+                      ])
+                  })
+                ]) do
+      assert {:error, %UnexpectedResponseError{response_body: ^response}} =
+               ResponseParser.parse_boolean(response)
+    end
+  end
+
   property "parse_rect/1 returns {:ok, %Rect{}} on valid response" do
     check all x <- integer(),
               y <- integer(),

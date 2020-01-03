@@ -372,6 +372,40 @@ defmodule WebDriverClient do
     end
   end
 
+  @doc """
+  Sends a request to the server to see if an element
+  is displayed
+  """
+  doc_metadata subject: :elements
+
+  @spec fetch_element_displayed(Session.t(), Element.t()) ::
+          {:ok, boolean} | {:error, basic_reason}
+  def fetch_element_displayed(
+        %Session{config: %Config{protocol: :jwp}} = session,
+        %Element{} = element
+      ) do
+    case JSONWireProtocolClient.fetch_element_displayed(session, element) do
+      {:ok, displayed?} ->
+        {:ok, displayed?}
+
+      {:error, error} ->
+        {:error, to_error(error)}
+    end
+  end
+
+  def fetch_element_displayed(
+        %Session{config: %Config{protocol: :w3c}} = session,
+        %Element{} = element
+      ) do
+    case W3CWireProtocolClient.fetch_element_displayed(session, element) do
+      {:ok, displayed?} ->
+        {:ok, displayed?}
+
+      {:error, error} ->
+        {:error, to_error(error)}
+    end
+  end
+
   @spec to_log_entry(JSONWireProtocolClient.LogEntry.t()) :: LogEntry.t()
   defp to_log_entry(%JSONWireProtocolClient.LogEntry{} = log_entry) do
     log_entry

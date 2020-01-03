@@ -31,6 +31,15 @@ defmodule WebDriverClient.JSONWireProtocolClient.ResponseParser do
     {:ok, value}
   end
 
+  @spec parse_boolean(Response.t()) :: {:ok, boolean} | {:error, UnexpectedResponseError.t()}
+  def parse_boolean(%Response{value: boolean}) when is_boolean(boolean) do
+    {:ok, boolean}
+  end
+
+  def parse_boolean(%Response{original_body: original_body}) do
+    {:error, UnexpectedResponseError.exception(response_body: original_body)}
+  end
+
   @spec parse_url(Response.t()) ::
           {:ok, JSONWireProtocolClient.url()} | {:error, UnexpectedResponseError.t()}
   def parse_url(%Response{value: url}) when is_binary(url) do

@@ -29,6 +29,13 @@ defmodule WebDriverClient.W3CWireProtocolClient.ResponseParser do
     {:error, UnexpectedResponseError.exception(response_body: body)}
   end
 
+  @spec parse_boolean(term) :: {:ok, boolean} | {:error, UnexpectedResponseError.t()}
+  def parse_boolean(%{"value" => boolean}) when is_boolean(boolean), do: {:ok, boolean}
+
+  def parse_boolean(body) do
+    {:error, UnexpectedResponseError.exception(response_body: body)}
+  end
+
   @spec parse_log_entries(term) :: {:ok, [LogEntry.t()]} | {:error, UnexpectedResponseError.t()}
   def parse_log_entries(response) do
     with %{"value" => values} when is_list(values) <- response,

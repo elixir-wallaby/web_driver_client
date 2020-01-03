@@ -130,6 +130,12 @@ defmodule WebDriverClient.W3CWireProtocolClient.TestResponses do
     |> map(&Jason.encode!/1)
   end
 
+  def fetch_element_displayed_response do
+    %{"value" => boolean()}
+    |> fixed_map()
+    |> map(&Jason.encode!/1)
+  end
+
   def log_entry do
     fixed_map(%{
       "timestamp" => recent_timestamp(),

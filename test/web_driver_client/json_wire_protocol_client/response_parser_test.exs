@@ -88,6 +88,35 @@ defmodule WebDriverClient.JSONWireProtocolClient.ResponseParserTest do
     end
   end
 
+  property "parse_boolean/1 returns {:ok, boolean} when result is a boolean" do
+    for boolean <- [true, false] do
+      response = TestResponses.jwp_response(constant(boolean)) |> pick()
+      {:ok, parsed_response} = ResponseParser.parse_response(response)
+
+      assert {:ok, ^boolean} = ResponseParser.parse_boolean(parsed_response)
+    end
+  end
+
+  property "parse_boolean/1 returns {:error, %UnexpectedResponseError{}} on an invalid response" do
+    check all response <-
+                [
+                  integer(),
+                  member_of(["true", "false"]),
+                  map_of(
+                    string(:alphanumeric, max_length: 10),
+                    string(:alphanumeric, max_length: 10),
+                    max_length: 3
+                  )
+                ]
+                |> one_of()
+                |> TestResponses.jwp_response() do
+      {:ok, parsed_response} = ResponseParser.parse_response(response)
+
+      assert {:error, %UnexpectedResponseError{response_body: ^response}} =
+               ResponseParser.parse_boolean(parsed_response)
+    end
+  end
+
   property "parse_size/1 returns {:ok, %Size{}} on valid response" do
     check all %{"width" => width, "height" => height} = value <-
                 fixed_map(%{
