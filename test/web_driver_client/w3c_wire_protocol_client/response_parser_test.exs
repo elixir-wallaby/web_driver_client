@@ -162,6 +162,27 @@ defmodule WebDriverClient.W3CWireProtocolClient.ResponseParserTest do
     end
   end
 
+  property "parse_element/1 returns {:ok, %Element{}} on a valid response" do
+    check all %{@web_element_identifier => element_id} = value <- TestResponses.element() do
+      response = %{"value" => value}
+
+      assert {:ok, %Element{id: ^element_id}} = ResponseParser.parse_element(response)
+    end
+  end
+
+  property "parse_element/1 returns {:error, %UnexpectedResponseError{}} on an invalid response" do
+    check all value <-
+                %{
+                  @web_element_identifier => member_of([1, %{}, []])
+                }
+                |> fixed_map() do
+      response = %{"value" => value}
+
+      assert {:error, %UnexpectedResponseError{response_body: ^response}} =
+               ResponseParser.parse_element(response)
+    end
+  end
+
   property "parse_elements/1 returns {:ok [%Element{}]} when all log entries are valid" do
     check all unparsed_elements <- list_of(TestResponses.element(), max_length: 10) do
       response = %{"value" => unparsed_elements}

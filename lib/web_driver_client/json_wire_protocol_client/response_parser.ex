@@ -117,6 +117,15 @@ defmodule WebDriverClient.JSONWireProtocolClient.ResponseParser do
     end
   end
 
+  @spec parse_element(Response.t()) :: {:ok, Element.t()} | {:error, UnexpectedResponseError.t()}
+  def parse_element(%Response{value: %{"ELEMENT" => element_id}}) when is_binary(element_id) do
+    {:ok, %Element{id: element_id}}
+  end
+
+  def parse_element(%Response{original_body: original_body}) do
+    {:error, UnexpectedResponseError.exception(response_body: original_body)}
+  end
+
   @spec parse_fetch_sessions_response(Response.t(), Config.t()) ::
           {:ok, [Session.t()]} | {:error, UnexpectedResponseError.t()}
   def parse_fetch_sessions_response(

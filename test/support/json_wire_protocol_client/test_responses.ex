@@ -93,6 +93,12 @@ defmodule WebDriverClient.JSONWireProtocolClient.TestResponses do
     |> map(&Jason.encode!/1)
   end
 
+  def find_element_response do
+    element()
+    |> jwp_response()
+    |> map(&Jason.encode!/1)
+  end
+
   def find_elements_response do
     element()
     |> list_of(max_length: 10)

@@ -112,6 +112,12 @@ defmodule WebDriverClient.W3CWireProtocolClient.TestResponses do
     fixed_map(%{"value" => url()}) |> map(&Jason.encode!/1)
   end
 
+  def find_element_response do
+    %{"value" => element()}
+    |> fixed_map()
+    |> map(&Jason.encode!/1)
+  end
+
   def find_elements_response do
     %{"value" => list_of(element(), max_length: 10)}
     |> fixed_map()

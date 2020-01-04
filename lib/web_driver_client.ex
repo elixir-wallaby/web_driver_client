@@ -187,6 +187,52 @@ defmodule WebDriverClient do
   @type element_selector :: String.t()
 
   @doc """
+  Finds the first element using the given search strategy
+
+  If no element is found, a `WebDriverClient.WebDriverError`
+  is returned
+  """
+  doc_metadata subject: :elements
+
+  @spec find_element(Session.t(), element_location_strategy, element_selector) ::
+          {:ok, Element.t()} | {:error, basic_reason}
+  def find_element(
+        %Session{config: %Config{protocol: :jwp}} = session,
+        element_location_strategy,
+        element_selector
+      )
+      when is_element_location_strategy(element_location_strategy) and
+             is_element_selector(element_selector) do
+    case JSONWireProtocolClient.find_element(
+           session,
+           element_location_strategy,
+           element_selector
+         ) do
+      {:ok, element} ->
+        {:ok, element}
+
+      {:error, error} ->
+        {:error, to_error(error)}
+    end
+  end
+
+  def find_element(
+        %Session{config: %Config{protocol: :w3c}} = session,
+        element_location_strategy,
+        element_selector
+      )
+      when is_element_location_strategy(element_location_strategy) and
+             is_element_selector(element_selector) do
+    case W3CWireProtocolClient.find_element(session, element_location_strategy, element_selector) do
+      {:ok, element} ->
+        {:ok, element}
+
+      {:error, error} ->
+        {:error, to_error(error)}
+    end
+  end
+
+  @doc """
   Finds the elements using the given search strategy
   """
   doc_metadata subject: :elements

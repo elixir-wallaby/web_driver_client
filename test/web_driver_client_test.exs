@@ -433,6 +433,55 @@ defmodule WebDriverClientTest do
   end
 
   @tag protocol: :jwp
+  test "find_element/3 with JWP session returns {:ok, element} on valid response", %{
+    config: config,
+    bypass: bypass
+  } do
+    session = TestData.session(config: constant(config)) |> pick()
+    resp = JWPTestResponses.find_element_response() |> pick()
+
+    stub_bypass_response(bypass, resp)
+
+    Enum.each([:css_selector, :xpath], fn strategy ->
+      assert {:ok, %Element{}} = WebDriverClient.find_element(session, strategy, "foo")
+    end)
+  end
+
+  @tag protocol: :w3c
+  test "find_element/3 with W3C session returns {:ok, element} on valid response", %{
+    config: config,
+    bypass: bypass
+  } do
+    session = TestData.session(config: constant(config)) |> pick()
+    resp = W3CTestResponses.find_element_response() |> pick()
+
+    stub_bypass_response(bypass, resp)
+
+    Enum.each([:css_selector, :xpath], fn strategy ->
+      assert {:ok, %Element{}} = WebDriverClient.find_element(session, strategy, "foo")
+    end)
+  end
+
+  for protocol <- @protocols do
+    @tag protocol: protocol
+    test "find_element/3 with #{protocol} session returns appropriate errors on various server responses",
+         %{config: config, bypass: bypass, protocol: protocol} do
+      scenario_server = set_up_error_scenario_tests(protocol, bypass)
+
+      for error_scenario <- basic_error_scenarios(protocol) do
+        session =
+          build_session_for_scenario(protocol, scenario_server, bypass, config, error_scenario)
+
+        assert_expected_response(
+          protocol,
+          WebDriverClient.find_element(session, :css_selector, "foo"),
+          error_scenario
+        )
+      end
+    end
+  end
+
+  @tag protocol: :jwp
   test "find_elements/3 with JWP session returns {:ok, elements} on valid response", %{
     config: config,
     bypass: bypass

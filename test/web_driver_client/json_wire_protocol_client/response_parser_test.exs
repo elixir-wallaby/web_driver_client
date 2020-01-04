@@ -178,6 +178,29 @@ defmodule WebDriverClient.JSONWireProtocolClient.ResponseParserTest do
     end
   end
 
+  property "parse_element/1 returns {:ok, %Element{}} on a valid response" do
+    check all %{"ELEMENT" => element_id} = value <- TestResponses.element(),
+              response <- TestResponses.jwp_response(constant(value)) do
+      {:ok, parsed_response} = ResponseParser.parse_response(response)
+
+      assert {:ok, %Element{id: ^element_id}} = ResponseParser.parse_element(parsed_response)
+    end
+  end
+
+  property "parse_element/1 returns {:error, %UnexpectedResponseError{}} on an invalid response" do
+    check all response <-
+                %{
+                  "ELEMENT" => member_of([1, %{}, []])
+                }
+                |> fixed_map()
+                |> TestResponses.jwp_response() do
+      {:ok, parsed_response} = ResponseParser.parse_response(response)
+
+      assert {:error, %UnexpectedResponseError{response_body: ^response}} =
+               ResponseParser.parse_element(parsed_response)
+    end
+  end
+
   property "parse_elements/1 returns {:ok [%Element{}]} when all log entries are valid" do
     check all unparsed_elements <- list_of(TestResponses.element(), max_length: 10),
               response <- TestResponses.jwp_response(constant(unparsed_elements)) do

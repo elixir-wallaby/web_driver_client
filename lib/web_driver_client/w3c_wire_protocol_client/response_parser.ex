@@ -57,6 +57,16 @@ defmodule WebDriverClient.W3CWireProtocolClient.ResponseParser do
     {:error, UnexpectedResponseError.exception(response_body: body)}
   end
 
+  @spec parse_element(term) :: {:ok, Element.t()} | {:error, UnexpectedResponseError.t()}
+  def parse_element(%{"value" => %{@web_element_identifier => element_id}})
+      when is_binary(element_id) do
+    {:ok, %Element{id: element_id}}
+  end
+
+  def parse_element(body) do
+    {:error, UnexpectedResponseError.exception(response_body: body)}
+  end
+
   @spec parse_elements(term) :: {:ok, [Element.t()]} | {:error, UnexpectedResponseError.t()}
   def parse_elements(response) do
     with %{"value" => values} when is_list(values) <- response,

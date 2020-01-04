@@ -81,6 +81,36 @@ defmodule WebDriverClient.Integration.FindingElementsTest do
       # For some reason PhantomJS returns :invalid_element_state
       assert reason in [:invalid_selector, :invalid_element_state]
     end
+
+    test "finding a singular element", %{scenario: scenario} do
+      config = Scenarios.get_config(scenario)
+      payload = Scenarios.get_start_session_payload(scenario)
+
+      {:ok, session} = WebDriverClient.start_session(payload, config: config)
+
+      ensure_session_is_closed(session)
+
+      :ok = WebDriverClient.navigate_to(session, ElementsPage.url())
+
+      assert {:ok, %Element{}} =
+               WebDriverClient.find_element(
+                 session,
+                 :css_selector,
+                 ElementsPage.css_selector_for_singular_element()
+               )
+    end
+
+    test "finding a singular element that doesn't exist", %{scenario: scenario} do
+      config = Scenarios.get_config(scenario)
+      payload = Scenarios.get_start_session_payload(scenario)
+
+      {:ok, session} = WebDriverClient.start_session(payload, config: config)
+
+      ensure_session_is_closed(session)
+
+      assert {:error, %WebDriverError{reason: :no_such_element}} =
+               WebDriverClient.find_element(session, :css_selector, "#does-not-exist")
+    end
   end
 
   @spec ensure_session_is_closed(Session.t()) :: :ok

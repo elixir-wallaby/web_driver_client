@@ -164,6 +164,38 @@ defmodule WebDriverClient.JSONWireProtocolClient do
   @type element_selector :: String.t()
 
   @doc """
+  Finds the first element using the given search strategy.
+
+  If no elements are found, a `WebDriverError` is returned.
+
+  Specification: https://github.com/SeleniumHQ/selenium/wiki/JsonWireProtocol#post-sessionsessionidelement
+  """
+  doc_metadata subject: :elements
+
+  @spec find_element(Session.t(), element_location_strategy, element_selector) ::
+          {:ok, Element.t()} | {:error, basic_reason}
+  def find_element(
+        %Session{id: id, config: %Config{} = config},
+        element_location_strategy,
+        element_selector
+      )
+      when is_element_location_strategy(element_location_strategy) and
+             is_element_selector(element_selector) do
+    client = TeslaClientBuilder.build(config)
+    url = "/session/#{id}/element"
+
+    request_body = %{
+      "using" => element_location_strategy_to_string(element_location_strategy),
+      "value" => element_selector
+    }
+
+    with {:ok, %Env{body: body}} <- Tesla.post(client, url, request_body),
+         {:ok, element} <- ResponseParser.parse_element(body) do
+      {:ok, element}
+    end
+  end
+
+  @doc """
   Finds the elements using the given search strategy
 
   Specification: https://github.com/SeleniumHQ/selenium/wiki/JsonWireProtocol#post-sessionsessionidelements

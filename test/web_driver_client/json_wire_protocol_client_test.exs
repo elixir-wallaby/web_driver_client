@@ -398,6 +398,106 @@ defmodule WebDriverClient.JSONWireProtocolClientTest do
     end
   end
 
+  property "find_element/3 sends the appropriate HTTP request", %{
+    bypass: bypass,
+    config: config
+  } do
+    check all element_location_strategy <- member_of([:css_selector, :xpath]),
+              element_selector <- string(:ascii) do
+      {config, prefix} = prefix_base_url_for_multiple_runs(config)
+
+      %Session{id: session_id} = session = TestData.session(config: constant(config)) |> pick()
+
+      Bypass.expect_once(
+        bypass,
+        "POST",
+        "/#{prefix}/session/#{session_id}/element",
+        fn conn ->
+          conn = parse_params(conn)
+
+          expected_using_value =
+            case element_location_strategy do
+              :css_selector -> "css selector"
+              :xpath -> "xpath"
+            end
+
+          assert %{"using" => expected_using_value, "value" => element_selector} == conn.params
+
+          conn
+          |> put_resp_content_type("application/json")
+          |> send_resp(200, "")
+        end
+      )
+
+      JSONWireProtocolClient.find_element(session, element_location_strategy, element_selector)
+    end
+  end
+
+  property "find_element/3 returns {:ok, %Element{}} on valid response", %{
+    bypass: bypass,
+    config: config
+  } do
+    check all resp <- TestResponses.find_element_response() do
+      {config, prefix} = prefix_base_url_for_multiple_runs(config)
+
+      %Session{id: session_id} = session = TestData.session(config: constant(config)) |> pick()
+
+      Bypass.expect_once(
+        bypass,
+        "POST",
+        "/#{prefix}/session/#{session_id}/element",
+        fn conn ->
+          conn
+          |> put_resp_content_type("application/json")
+          |> send_resp(200, resp)
+        end
+      )
+
+      parsed_response = Jason.decode!(resp)
+      element_id = get_in(parsed_response, ["value", "ELEMENT"])
+
+      assert {:ok, %Element{id: ^element_id}} =
+               JSONWireProtocolClient.find_element(session, :css_selector, "selector")
+    end
+  end
+
+  test "find_element/3 returns {:error, %UnexpectedResponseError{}} on invalid response",
+       %{bypass: bypass, config: config} do
+    %Session{id: session_id} = session = TestData.session(config: constant(config)) |> pick()
+
+    parsed_response = %{}
+
+    Bypass.expect_once(
+      bypass,
+      "POST",
+      "/session/#{session_id}/element",
+      fn conn ->
+        conn
+        |> put_resp_content_type("application/json")
+        |> send_resp(200, Jason.encode!(parsed_response))
+      end
+    )
+
+    assert {:error, %UnexpectedResponseError{response_body: ^parsed_response}} =
+             JSONWireProtocolClient.find_element(session, :css_selector, "selector")
+  end
+
+  test "find_element/3 returns appropriate errors on various server responses", %{
+    bypass: bypass,
+    config: config
+  } do
+    scenario_server = set_up_error_scenario_tests(bypass)
+
+    for error_scenario <- error_scenarios() do
+      session = build_session_for_scenario(scenario_server, bypass, config, error_scenario)
+
+      assert_expected_response(
+        JSONWireProtocolClient.find_element(session, :css_selector, "selector"),
+        error_scenario
+      )
+    end
+  end
+
   property "find_elements/3 sends the appropriate HTTP request", %{
     bypass: bypass,
     config: config
