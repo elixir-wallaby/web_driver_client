@@ -72,7 +72,8 @@ defmodule WebDriverClient.MixProject do
         "Low-level JWP API": [
           WebDriverClient.JSONWireProtocolClient,
           WebDriverClient.JSONWireProtocolClient.LogEntry,
-          WebDriverClient.JSONWireProtocolClient.WebDriverError
+          WebDriverClient.JSONWireProtocolClient.WebDriverError,
+          WebDriverClient.JSONWireProtocolClient.UnexpectedResponseError
         ],
         "Low-level W3C API": [
           WebDriverClient.W3CWireProtocolClient,
