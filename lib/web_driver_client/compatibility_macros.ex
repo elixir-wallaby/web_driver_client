@@ -8,4 +8,16 @@ defmodule WebDriverClient.CompatibilityMacros do
       end
     end
   end
+
+  defmacro prerelease_moduledoc(opts) do
+    if Application.get_env(:web_driver_client, :include_prerelease_docs) do
+      quote do
+        @moduledoc unquote(opts)
+      end
+    else
+      quote do
+        @moduledoc false
+      end
+    end
+  end
 end

@@ -1,5 +1,8 @@
+# credo:disable-for-this-file Credo.Check.Readability.ModuleDoc
+import WebDriverClient.CompatibilityMacros
+
 defmodule WebDriverClient.W3CWireProtocolClient.LogEntry do
-  @moduledoc """
+  prerelease_moduledoc """
   A log entry
   """
 

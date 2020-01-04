@@ -1,5 +1,8 @@
+# credo:disable-for-this-file Credo.Check.Readability.ModuleDoc
+import WebDriverClient.CompatibilityMacros
+
 defmodule WebDriverClient.JSONWireProtocolClient.UnexpectedResponseError do
-  @moduledoc """
+  prerelease_moduledoc """
   Indicates an unexpected response was received from
   the server.
   """
@@ -23,7 +26,7 @@ defmodule WebDriverClient.JSONWireProtocolClient.UnexpectedResponseError do
 end
 
 defmodule WebDriverClient.JSONWireProtocolClient.WebDriverError do
-  @moduledoc """
+  prerelease_moduledoc """
   Indicates a known WebDriver error was returned from
   the server
   """

@@ -166,4 +166,22 @@ Documentation can be generated with [ExDoc](https://github.com/elixir-lang/ex_do
 and published on [HexDocs](https://hexdocs.pm). Once published, the docs can
 be found at [https://hexdocs.pm/web_driver_client](https://hexdocs.pm/web_driver_client).
 
+## Documentation
+
+Documentation can be built locally with the following command.
+
+```sh
+$ mix docs
+```
+
+To view documentation for pre-release APIs, docs can be built
+with:
+
+```sh
+$ MIX_ENV=docs_prerelease mix docs
+```
+
+It's important to note the pre-release APIs aren't public and
+may change at any time.
+
 [WebDriver]: https://w3c.github.io/webdriver/

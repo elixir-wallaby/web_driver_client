@@ -1,5 +1,8 @@
+# credo:disable-for-this-file Credo.Check.Readability.ModuleDoc
+import WebDriverClient.CompatibilityMacros
+
 defmodule WebDriverClient.JSONWireProtocolClient do
-  @moduledoc """
+  prerelease_moduledoc """
   Low-level client for JSON wire protocol (JWP).
 
   Use `WebDriverClient` if you'd like to support both JWP
@@ -9,7 +12,6 @@ defmodule WebDriverClient.JSONWireProtocolClient do
   Specification: https://github.com/SeleniumHQ/selenium/wiki/JsonWireProtocol
   """
 
-  import WebDriverClient.CompatibilityMacros
   import WebDriverClient.JSONWireProtocolClient.Guards
 
   alias Tesla.Env

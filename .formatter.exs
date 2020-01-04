@@ -4,6 +4,7 @@
   import_deps: [:stream_data],
   locals_without_parens: [
     # Wallaby.CompatabilityMacros
-    doc_metadata: 1
+    doc_metadata: 1,
+    prerelease_moduledoc: 1
   ]
 ]

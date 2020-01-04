@@ -1,5 +1,8 @@
+# credo:disable-for-this-file Credo.Check.Readability.ModuleDoc
+import WebDriverClient.CompatibilityMacros
+
 defmodule WebDriverClient.W3CWireProtocolClient do
-  @moduledoc """
+  prerelease_moduledoc """
   Low-level client for W3C wire protocol.
 
   Use `WebDriverClient` if you'd like to support both JWP
@@ -9,7 +12,6 @@ defmodule WebDriverClient.W3CWireProtocolClient do
   Specification: https://w3c.github.io/webdriver/
   """
 
-  import WebDriverClient.CompatibilityMacros
   import WebDriverClient.W3CWireProtocolClient.Guards
 
   alias Tesla.Env
