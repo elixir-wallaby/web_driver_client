@@ -19,13 +19,9 @@ defmodule WebDriverClient.Integration.SessionManagementTest do
 
       payload = Scenarios.get_start_session_payload(scenario)
 
-      {:ok, %Session{} = session} =
-        WebDriverClient.start_session(
-          payload,
-          config: config
-        )
+      {:ok, %Session{} = session} = WebDriverClient.start_session(config, payload)
 
-      assert {:ok, [^session]} = WebDriverClient.fetch_sessions(config: config)
+      assert {:ok, [^session]} = WebDriverClient.fetch_sessions(config)
 
       assert :ok = WebDriverClient.end_session(session)
 
@@ -34,14 +30,14 @@ defmodule WebDriverClient.Integration.SessionManagementTest do
         Process.sleep(100)
       end
 
-      assert {:ok, []} = WebDriverClient.fetch_sessions(config: config)
+      assert {:ok, []} = WebDriverClient.fetch_sessions(config)
     end
   end
 
   defp close_existing_sessions(%{scenario: scenario}) do
     config = Scenarios.get_config(scenario)
 
-    {:ok, sessions} = WebDriverClient.fetch_sessions(config: config)
+    {:ok, sessions} = WebDriverClient.fetch_sessions(config)
 
     Enum.each(sessions, fn session ->
       :ok = WebDriverClient.end_session(session)

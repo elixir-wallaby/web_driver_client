@@ -32,7 +32,7 @@ defmodule WebDriverClientTest do
     stub_bypass_response(bypass, resp)
 
     assert {:ok, %Session{config: ^config}} =
-             WebDriverClient.start_session(build_start_session_payload(), config: config)
+             WebDriverClient.start_session(config, build_start_session_payload())
   end
 
   @tag protocol: :w3c
@@ -45,7 +45,7 @@ defmodule WebDriverClientTest do
     stub_bypass_response(bypass, resp)
 
     assert {:ok, %Session{config: ^config}} =
-             WebDriverClient.start_session(build_start_session_payload(), config: config)
+             WebDriverClient.start_session(config, build_start_session_payload())
   end
 
   for protocol <- @protocols do
@@ -60,7 +60,7 @@ defmodule WebDriverClientTest do
 
         assert_expected_response(
           protocol,
-          WebDriverClient.start_session(build_start_session_payload(), config: config),
+          WebDriverClient.start_session(config, build_start_session_payload()),
           error_scenario
         )
       end
@@ -76,7 +76,7 @@ defmodule WebDriverClientTest do
 
     stub_bypass_response(bypass, resp)
 
-    assert {:ok, sessions} = WebDriverClient.fetch_sessions(config: config)
+    assert {:ok, sessions} = WebDriverClient.fetch_sessions(config)
     assert Enum.all?(sessions, &match?(%Session{config: ^config}, &1))
   end
 
@@ -89,7 +89,7 @@ defmodule WebDriverClientTest do
 
     stub_bypass_response(bypass, resp)
 
-    assert {:ok, sessions} = WebDriverClient.fetch_sessions(config: config)
+    assert {:ok, sessions} = WebDriverClient.fetch_sessions(config)
     assert Enum.all?(sessions, &match?(%Session{config: ^config}, &1))
   end
 
@@ -105,7 +105,7 @@ defmodule WebDriverClientTest do
 
         assert_expected_response(
           protocol,
-          WebDriverClient.fetch_sessions(config: config),
+          WebDriverClient.fetch_sessions(config),
           error_scenario
         )
       end

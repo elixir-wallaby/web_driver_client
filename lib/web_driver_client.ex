@@ -17,7 +17,6 @@ defmodule WebDriverClient do
   alias WebDriverClient.W3CWireProtocolClient
   alias WebDriverClient.WebDriverError
 
-  @type config_opt :: {:config, Config.t()}
   @type url :: String.t()
   @type basic_reason ::
           HTTPClientError.t()
@@ -27,28 +26,25 @@ defmodule WebDriverClient do
   @doc """
   Starts a new session
   """
-  @spec start_session(map(), [config_opt]) :: {:ok, Session.t()} | {:error, basic_reason}
-  def start_session(payload, opts) when is_list(opts) and is_map(payload) do
-    config = Keyword.fetch!(opts, :config)
+  doc_metadata subject: :sessions
+  @spec start_session(Config.t(), map()) :: {:ok, Session.t()} | {:error, basic_reason}
+  def start_session(%Config{protocol: :jwp} = config, payload) when is_map(payload) do
+    case JSONWireProtocolClient.start_session(payload, config) do
+      {:ok, session} ->
+        {:ok, session}
 
-    case config do
-      %Config{protocol: :jwp} ->
-        case JSONWireProtocolClient.start_session(payload, config) do
-          {:ok, session} ->
-            {:ok, session}
+      {:error, error} ->
+        {:error, to_error(error)}
+    end
+  end
 
-          {:error, error} ->
-            {:error, to_error(error)}
-        end
+  def start_session(%Config{protocol: :w3c} = config, payload) when is_map(payload) do
+    case W3CWireProtocolClient.start_session(payload, config) do
+      {:ok, session} ->
+        {:ok, session}
 
-      %Config{protocol: :w3c} ->
-        case W3CWireProtocolClient.start_session(payload, config) do
-          {:ok, session} ->
-            {:ok, session}
-
-          {:error, error} ->
-            {:error, to_error(error)}
-        end
+      {:error, error} ->
+        {:error, to_error(error)}
     end
   end
 
@@ -56,28 +52,24 @@ defmodule WebDriverClient do
   Returns the list of sessions
   """
   doc_metadata subject: :sessions
-  @spec fetch_sessions([config_opt]) :: {:ok, [Session.t()]} | {:error, basic_reason}
-  def fetch_sessions(opts) when is_list(opts) do
-    config = Keyword.fetch!(opts, :config)
+  @spec fetch_sessions(Config.t()) :: {:ok, [Session.t()]} | {:error, basic_reason}
+  def fetch_sessions(%Config{protocol: :jwp} = config) do
+    case JSONWireProtocolClient.fetch_sessions(config) do
+      {:ok, sessions} ->
+        {:ok, sessions}
 
-    case config do
-      %Config{protocol: :jwp} ->
-        case JSONWireProtocolClient.fetch_sessions(config) do
-          {:ok, sessions} ->
-            {:ok, sessions}
+      {:error, error} ->
+        {:error, to_error(error)}
+    end
+  end
 
-          {:error, error} ->
-            {:error, to_error(error)}
-        end
+  def fetch_sessions(%Config{protocol: :w3c} = config) do
+    case W3CWireProtocolClient.fetch_sessions(config) do
+      {:ok, session} ->
+        {:ok, session}
 
-      %Config{protocol: :w3c} ->
-        case W3CWireProtocolClient.fetch_sessions(config) do
-          {:ok, session} ->
-            {:ok, session}
-
-          {:error, error} ->
-            {:error, to_error(error)}
-        end
+      {:error, error} ->
+        {:error, to_error(error)}
     end
   end
 

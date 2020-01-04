@@ -17,7 +17,7 @@ defmodule WebDriverClient.Integration.WindowTest do
       config = Scenarios.get_config(scenario)
       payload = Scenarios.get_start_session_payload(scenario)
 
-      {:ok, session} = WebDriverClient.start_session(payload, config: config)
+      {:ok, session} = WebDriverClient.start_session(config, payload)
 
       ensure_session_is_closed(session)
 
