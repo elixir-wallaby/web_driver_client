@@ -1,20 +1,56 @@
-defmodule WebDriverClient.W3CWireProtocolClient.Middleware.ErrorResponseHandler do
+defmodule WebDriverClient.W3CWireProtocolClient.Middleware.ParseResponse do
   @moduledoc false
 
   alias Tesla.Env
+  alias WebDriverClient.HTTPResponse
   alias WebDriverClient.W3CWireProtocolClient.UnexpectedResponseError
   alias WebDriverClient.W3CWireProtocolClient.WebDriverError
 
   @behaviour Tesla.Middleware
 
+  @type status :: non_neg_integer()
+
   @impl true
   def call(env, next, _opts) do
-    case Tesla.run(env, next) do
-      {:ok, %Env{} = env} ->
-        parse_error(env)
+    with {:ok, %Env{body: %HTTPResponse{} = http_response} = env} <- Tesla.run(env, next),
+         {:ok, response} <- parse(http_response) do
+      {:ok, %Env{env | body: response}}
+    else
+      {:error, error} ->
+        {:error, error}
+    end
+  end
 
-      {:error, reason} ->
-        {:error, reason}
+  @spec parse(HTTPResponse.t()) ::
+          {:ok, map}
+          | {:error, WebDriverError.t() | UnexpectedResponseError.t()}
+  defp parse(%HTTPResponse{} = http_response) do
+    %HTTPResponse{status: status, body: body} = http_response
+
+    with {:ok, parsed_body} <- parse_json_body(http_response),
+         :ok <- ensure_valid_w3c_status(status, parsed_body) do
+      {:ok, parsed_body}
+    else
+      {:error, :unexpected_response} ->
+        body =
+          case Jason.decode(body) do
+            {:ok, body} -> body
+            {:error, _} -> body
+          end
+
+        error = UnexpectedResponseError.exception(response_body: body)
+        {:error, error}
+
+      {:error, %WebDriverError{} = error} ->
+        {:error, error}
+    end
+  end
+
+  @spec parse_json_body(HTTPResponse.t()) :: {:ok, term} | {:error, :unexpected_response}
+  defp parse_json_body(%HTTPResponse{body: body}) do
+    case Jason.decode(body) do
+      {:ok, parsed_json} -> {:ok, parsed_json}
+      {:error, _} -> {:error, :unexpected_response}
     end
   end
 
@@ -48,15 +84,15 @@ defmodule WebDriverClient.W3CWireProtocolClient.Middleware.ErrorResponseHandler 
     {500, "unsupported operation", :unsupported_operation}
   ]
 
-  @spec parse_error(Env.t()) ::
-          {:ok, Env.t()} | {:error, WebDriverError.t() | UnexpectedResponseError.t()}
-  defp parse_error(env)
+  @spec ensure_valid_w3c_status(status, term) ::
+          :ok | {:error, WebDriverError.t() | :unexpected_response}
+  defp ensure_valid_w3c_status(status, body)
 
   for {status_code, error_text, error_atom} <- errors do
-    defp parse_error(%Env{
-           status: unquote(status_code),
-           body: %{"value" => %{"error" => unquote(error_text)} = value}
-         }) do
+    defp ensure_valid_w3c_status(
+           unquote(status_code),
+           %{"value" => %{"error" => unquote(error_text)} = value}
+         ) do
       stacktrace = Map.get(value, "stacktrace")
       message = Map.get(value, "message")
 
@@ -70,11 +106,11 @@ defmodule WebDriverClient.W3CWireProtocolClient.Middleware.ErrorResponseHandler 
     end
   end
 
-  defp parse_error(%Env{status: 200, body: body} = env) when is_map(body) do
-    {:ok, env}
+  defp ensure_valid_w3c_status(200, parsed_body) when is_map(parsed_body) do
+    :ok
   end
 
-  defp parse_error(%Env{body: body}) do
-    {:error, UnexpectedResponseError.exception(response_body: body)}
+  defp ensure_valid_w3c_status(_status, _parsed_body) do
+    {:error, :unexpected_response}
   end
 end
