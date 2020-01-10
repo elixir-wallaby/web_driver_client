@@ -14,14 +14,11 @@ defmodule WebDriverClient.JSONWireProtocolClient do
 
   import WebDriverClient.JSONWireProtocolClient.Guards
 
-  alias Tesla.Env
   alias WebDriverClient.Config
   alias WebDriverClient.Element
   alias WebDriverClient.HTTPClientError
   alias WebDriverClient.JSONWireProtocolClient.Commands
   alias WebDriverClient.JSONWireProtocolClient.LogEntry
-  alias WebDriverClient.JSONWireProtocolClient.ResponseParser
-  alias WebDriverClient.JSONWireProtocolClient.TeslaClientBuilder
   alias WebDriverClient.JSONWireProtocolClient.UnexpectedResponseError
   alias WebDriverClient.JSONWireProtocolClient.WebDriverError
   alias WebDriverClient.Session
@@ -42,10 +39,8 @@ defmodule WebDriverClient.JSONWireProtocolClient do
   doc_metadata subject: :sessions
   @spec start_session(map, Config.t()) :: {:ok, Session.t()} | {:error, basic_reason}
   def start_session(payload, %Config{} = config) when is_map(payload) do
-    client = TeslaClientBuilder.build(config)
-
-    with {:ok, %Env{body: body}} <- Tesla.post(client, "/session", payload),
-         {:ok, session} <- ResponseParser.parse_start_session_response(body, config) do
+    with {:ok, http_response} <- Commands.StartSession.send_request(config, payload),
+         {:ok, session} <- Commands.StartSession.parse_response(http_response, config) do
       {:ok, session}
     end
   end
@@ -71,17 +66,11 @@ defmodule WebDriverClient.JSONWireProtocolClient do
   """
   doc_metadata subject: :sessions
   @spec end_session(Session.t()) :: :ok | {:error, basic_reason}
-  def end_session(%Session{id: id, config: %Config{} = config})
+  def end_session(%Session{id: id} = session)
       when is_session_id(id) do
-    config
-    |> TeslaClientBuilder.build()
-    |> Tesla.delete("/session/#{id}")
-    |> case do
-      {:ok, %Env{}} ->
-        :ok
-
-      {:error, reason} ->
-        {:error, reason}
+    with {:ok, http_response} <- Commands.EndSession.send_request(session),
+         :ok <- Commands.EndSession.parse_response(http_response) do
+      :ok
     end
   end
 
@@ -92,18 +81,10 @@ defmodule WebDriverClient.JSONWireProtocolClient do
   """
   doc_metadata subject: :navigation
   @spec navigate_to(Session.t(), url) :: :ok | {:error, basic_reason}
-  def navigate_to(%Session{id: id, config: %Config{} = config}, url) when is_url(url) do
-    request_body = %{"url" => url}
-
-    config
-    |> TeslaClientBuilder.build()
-    |> Tesla.post("/session/#{id}/url", request_body)
-    |> case do
-      {:ok, %Env{}} ->
-        :ok
-
-      {:error, reason} ->
-        {:error, reason}
+  def navigate_to(%Session{} = session, url) when is_url(url) do
+    with {:ok, http_response} <- Commands.NavigateTo.send_request(session, url),
+         :ok <- Commands.NavigateTo.parse_response(http_response) do
+      :ok
     end
   end
 
@@ -114,27 +95,18 @@ defmodule WebDriverClient.JSONWireProtocolClient do
   """
   doc_metadata subject: :navigation
   @spec fetch_current_url(Session.t()) :: {:ok, url} | {:error, basic_reason}
-  def fetch_current_url(%Session{id: id, config: %Config{} = config}) when is_session_id(id) do
-    client = TeslaClientBuilder.build(config)
-
-    url = "/session/#{id}/url"
-
-    with {:ok, %Env{body: body}} <- Tesla.get(client, url),
-         {:ok, url} <- ResponseParser.parse_url(body) do
+  def fetch_current_url(%Session{id: id} = session) when is_session_id(id) do
+    with {:ok, http_response} <- Commands.FetchCurrentURL.send_request(session),
+         {:ok, url} <- Commands.FetchCurrentURL.parse_response(http_response) do
       {:ok, url}
     end
   end
 
   @spec fetch_window_size(Session.t()) :: {:ok, Size.t()} | {:error, basic_reason}
-  def fetch_window_size(%Session{id: id, config: %Config{} = config})
+  def fetch_window_size(%Session{id: id} = session)
       when is_session_id(id) do
-    client = TeslaClientBuilder.build(config)
-    window_handle = "current"
-
-    url = "/session/#{id}/window/#{window_handle}/size"
-
-    with {:ok, %Env{body: body}} <- Tesla.get(client, url),
-         {:ok, size} <- ResponseParser.parse_size(body) do
+    with {:ok, http_response} <- Commands.FetchWindowSize.send_request(session),
+         {:ok, size} <- Commands.FetchWindowSize.parse_response(http_response) do
       {:ok, size}
     end
   end
@@ -142,22 +114,11 @@ defmodule WebDriverClient.JSONWireProtocolClient do
   @type size_opt :: {:width, pos_integer} | {:height, pos_integer}
 
   @spec set_window_size(Session.t(), [size_opt]) :: :ok | {:error, basic_reason}
-  def set_window_size(%Session{id: id, config: %Config{} = config}, opts \\ [])
+  def set_window_size(%Session{} = session, opts \\ [])
       when is_list(opts) do
-    window_handle = "current"
-    url = "/session/#{id}/window/#{window_handle}/size"
-
-    request_body = opts |> Keyword.take([:height, :width]) |> Map.new()
-
-    config
-    |> TeslaClientBuilder.build()
-    |> Tesla.post(url, request_body)
-    |> case do
-      {:ok, %Env{}} ->
-        :ok
-
-      {:error, reason} ->
-        {:error, reason}
+    with {:ok, http_response} <- Commands.SetWindowSize.send_request(session, opts),
+         :ok <- Commands.SetWindowSize.parse_response(http_response) do
+      :ok
     end
   end
 
@@ -176,22 +137,15 @@ defmodule WebDriverClient.JSONWireProtocolClient do
   @spec find_element(Session.t(), element_location_strategy, element_selector) ::
           {:ok, Element.t()} | {:error, basic_reason}
   def find_element(
-        %Session{id: id, config: %Config{} = config},
+        %Session{} = session,
         element_location_strategy,
         element_selector
       )
       when is_element_location_strategy(element_location_strategy) and
              is_element_selector(element_selector) do
-    client = TeslaClientBuilder.build(config)
-    url = "/session/#{id}/element"
-
-    request_body = %{
-      "using" => element_location_strategy_to_string(element_location_strategy),
-      "value" => element_selector
-    }
-
-    with {:ok, %Env{body: body}} <- Tesla.post(client, url, request_body),
-         {:ok, element} <- ResponseParser.parse_element(body) do
+    with {:ok, http_response} <-
+           Commands.FindElement.send_request(session, element_location_strategy, element_selector),
+         {:ok, element} <- Commands.FindElement.parse_response(http_response) do
       {:ok, element}
     end
   end
@@ -206,22 +160,19 @@ defmodule WebDriverClient.JSONWireProtocolClient do
   @spec find_elements(Session.t(), element_location_strategy, element_selector) ::
           {:ok, [Element.t()]} | {:error, basic_reason}
   def find_elements(
-        %Session{id: id, config: %Config{} = config},
+        %Session{} = session,
         element_location_strategy,
         element_selector
       )
       when is_element_location_strategy(element_location_strategy) and
              is_element_selector(element_selector) do
-    client = TeslaClientBuilder.build(config)
-    url = "/session/#{id}/elements"
-
-    request_body = %{
-      "using" => element_location_strategy_to_string(element_location_strategy),
-      "value" => element_selector
-    }
-
-    with {:ok, %Env{body: body}} <- Tesla.post(client, url, request_body),
-         {:ok, elements} <- ResponseParser.parse_elements(body) do
+    with {:ok, http_response} <-
+           Commands.FindElements.send_request(
+             session,
+             element_location_strategy,
+             element_selector
+           ),
+         {:ok, elements} <- Commands.FindElements.parse_response(http_response) do
       {:ok, elements}
     end
   end
@@ -240,23 +191,21 @@ defmodule WebDriverClient.JSONWireProtocolClient do
           element_selector
         ) :: {:ok, [Element.t()]} | {:error, basic_reason}
   def find_elements_from_element(
-        %Session{id: session_id, config: %Config{} = config},
-        %Element{id: element_id},
+        %Session{} = session,
+        %Element{} = element,
         element_location_strategy,
         element_selector
       )
       when is_element_location_strategy(element_location_strategy) and
              is_element_selector(element_selector) do
-    client = TeslaClientBuilder.build(config)
-    url = "/session/#{session_id}/element/#{element_id}/elements"
-
-    request_body = %{
-      "using" => element_location_strategy_to_string(element_location_strategy),
-      "value" => element_selector
-    }
-
-    with {:ok, %Env{body: body}} <- Tesla.post(client, url, request_body),
-         {:ok, elements} <- ResponseParser.parse_elements(body) do
+    with {:ok, http_response} <-
+           Commands.FindElementsFromElement.send_request(
+             session,
+             element,
+             element_location_strategy,
+             element_selector
+           ),
+         {:ok, elements} <- Commands.FindElementsFromElement.parse_response(http_response) do
       {:ok, elements}
     end
   end
@@ -270,12 +219,9 @@ defmodule WebDriverClient.JSONWireProtocolClient do
   """
   doc_metadata subject: :logging
   @spec fetch_log_types(Session.t()) :: {:ok, [log_type]} | {:error, basic_reason()}
-  def fetch_log_types(%Session{id: id, config: %Config{} = config}) do
-    client = TeslaClientBuilder.build(config)
-    url = "/session/#{id}/log/types"
-
-    with {:ok, %Env{body: body}} <- Tesla.get(client, url),
-         {:ok, log_types} <- ResponseParser.parse_value(body) do
+  def fetch_log_types(%Session{} = session) do
+    with {:ok, http_response} <- Commands.FetchLogTypes.send_request(session),
+         {:ok, log_types} <- Commands.FetchLogTypes.parse_response(http_response) do
       {:ok, log_types}
     end
   end
@@ -287,14 +233,10 @@ defmodule WebDriverClient.JSONWireProtocolClient do
   """
   doc_metadata subject: :logging
   @spec fetch_logs(Session.t(), log_type) :: {:ok, [LogEntry.t()]} | {:error, basic_reason()}
-  def fetch_logs(%Session{id: id, config: %Config{} = config}, log_type) do
-    client = TeslaClientBuilder.build(config)
-    url = "/session/#{id}/log"
-    request_body = %{type: log_type}
-
-    with {:ok, %Env{body: body}} <- Tesla.post(client, url, request_body),
-         {:ok, logs} <- ResponseParser.parse_log_entries(body) do
-      {:ok, logs}
+  def fetch_logs(%Session{} = session, log_type) do
+    with {:ok, http_response} <- Commands.FetchLogs.send_request(session, log_type),
+         {:ok, log_entries} <- Commands.FetchLogs.parse_response(http_response) do
+      {:ok, log_entries}
     end
   end
 
@@ -310,19 +252,12 @@ defmodule WebDriverClient.JSONWireProtocolClient do
           {:ok, boolean} | {:error, basic_reason}
 
   def fetch_element_displayed(
-        %Session{id: session_id, config: %Config{} = config},
-        %Element{id: element_id}
+        %Session{} = session,
+        %Element{} = element
       ) do
-    client = TeslaClientBuilder.build(config)
-    url = "/session/#{session_id}/element/#{element_id}/displayed"
-
-    with {:ok, %Env{body: body}} <- Tesla.get(client, url),
-         {:ok, boolean} <- ResponseParser.parse_boolean(body) do
+    with {:ok, http_response} <- Commands.FetchElementDisplayed.send_request(session, element),
+         {:ok, boolean} <- Commands.FetchElementDisplayed.parse_response(http_response) do
       {:ok, boolean}
     end
   end
-
-  @spec element_location_strategy_to_string(element_location_strategy) :: String.t()
-  defp element_location_strategy_to_string(:css_selector), do: "css selector"
-  defp element_location_strategy_to_string(:xpath), do: "xpath"
 end
