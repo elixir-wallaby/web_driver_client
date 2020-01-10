@@ -102,14 +102,16 @@ defmodule WebDriverClient.JSONWireProtocolClientTest do
   test "fetch_sessions/1 returns {:error, %UnexpectedResponseError{}} with an unexpected response",
        %{bypass: bypass, config: config} do
     parsed_response = %{}
+    status = 200
 
     Bypass.expect_once(bypass, "GET", "/sessions", fn conn ->
       conn
       |> put_resp_content_type("application/json")
-      |> send_resp(200, Jason.encode!(parsed_response))
+      |> send_resp(status, Jason.encode!(parsed_response))
     end)
 
-    assert {:error, %UnexpectedResponseError{response_body: ^parsed_response}} =
+    assert {:error,
+            %UnexpectedResponseError{response_body: ^parsed_response, http_status_code: ^status}} =
              JSONWireProtocolClient.fetch_sessions(config)
   end
 

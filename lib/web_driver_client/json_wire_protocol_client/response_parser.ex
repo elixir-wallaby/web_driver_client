@@ -5,6 +5,7 @@ defmodule WebDriverClient.JSONWireProtocolClient.ResponseParser do
 
   alias WebDriverClient.Config
   alias WebDriverClient.Element
+  alias WebDriverClient.HTTPResponse
   alias WebDriverClient.JSONWireProtocolClient
   alias WebDriverClient.JSONWireProtocolClient.LogEntry
   alias WebDriverClient.JSONWireProtocolClient.Response
@@ -14,15 +15,22 @@ defmodule WebDriverClient.JSONWireProtocolClient.ResponseParser do
 
   defguardp is_status(term) when is_integer(term) and term >= 0
 
-  @spec parse_response(term) :: {:ok, Response.t()} | {:error, UnexpectedResponseError.t()}
-  def parse_response(term) do
-    with %{"value" => value, "status" => status} when is_status(status) <- term,
+  @spec parse_response(HTTPResponse.t()) ::
+          {:ok, Response.t()} | {:error, UnexpectedResponseError.t()}
+  def parse_response(%HTTPResponse{body: body} = http_response) do
+    with %{"value" => value, "status" => status} when is_status(status) <- body,
          session_id when is_session_id(session_id) or is_nil(session_id) <-
-           Map.get(term, "sessionId") do
-      {:ok, %Response{session_id: session_id, status: status, value: value, original_body: term}}
+           Map.get(body, "sessionId") do
+      {:ok,
+       %Response{
+         session_id: session_id,
+         status: status,
+         value: value,
+         http_response: http_response
+       }}
     else
       _ ->
-        {:error, UnexpectedResponseError.exception(response_body: term)}
+        {:error, build_unexpected_response_error(http_response)}
     end
   end
 
@@ -36,8 +44,8 @@ defmodule WebDriverClient.JSONWireProtocolClient.ResponseParser do
     {:ok, boolean}
   end
 
-  def parse_boolean(%Response{original_body: original_body}) do
-    {:error, UnexpectedResponseError.exception(response_body: original_body)}
+  def parse_boolean(%Response{http_response: http_response}) do
+    {:error, build_unexpected_response_error(http_response)}
   end
 
   @spec parse_url(Response.t()) ::
@@ -46,19 +54,19 @@ defmodule WebDriverClient.JSONWireProtocolClient.ResponseParser do
     {:ok, url}
   end
 
-  def parse_url(%Response{original_body: original_body}) do
-    {:error, UnexpectedResponseError.exception(response_body: original_body)}
+  def parse_url(%Response{http_response: http_response}) do
+    {:error, build_unexpected_response_error(http_response)}
   end
 
   @spec parse_log_entries(Response.t()) ::
           {:ok, [LogEntry.t()]} | {:error, UnexpectedResponseError.t()}
-  def parse_log_entries(%Response{value: value, original_body: original_body}) do
+  def parse_log_entries(%Response{value: value, http_response: http_response}) do
     with values when is_list(values) <- value,
          log_entries when is_list(log_entries) <- do_parse_log_entries(values) do
       {:ok, log_entries}
     else
       _ ->
-        {:error, UnexpectedResponseError.exception(response_body: original_body)}
+        {:error, build_unexpected_response_error(http_response)}
     end
   end
 
@@ -87,13 +95,13 @@ defmodule WebDriverClient.JSONWireProtocolClient.ResponseParser do
 
   @spec parse_elements(Response.t()) ::
           {:ok, [Element.t()]} | {:error, UnexpectedResponseError.t()}
-  def parse_elements(%Response{value: value, original_body: original_body}) do
+  def parse_elements(%Response{value: value, http_response: http_response}) do
     with values when is_list(values) <- value,
          elements when is_list(elements) <- do_parse_elements(values) do
       {:ok, elements}
     else
       _ ->
-        {:error, UnexpectedResponseError.exception(response_body: original_body)}
+        {:error, build_unexpected_response_error(http_response)}
     end
   end
 
@@ -122,14 +130,14 @@ defmodule WebDriverClient.JSONWireProtocolClient.ResponseParser do
     {:ok, %Element{id: element_id}}
   end
 
-  def parse_element(%Response{original_body: original_body}) do
-    {:error, UnexpectedResponseError.exception(response_body: original_body)}
+  def parse_element(%Response{http_response: http_response}) do
+    {:error, build_unexpected_response_error(http_response)}
   end
 
   @spec parse_fetch_sessions_response(Response.t(), Config.t()) ::
           {:ok, [Session.t()]} | {:error, UnexpectedResponseError.t()}
   def parse_fetch_sessions_response(
-        %Response{value: value, original_body: original_body},
+        %Response{value: value, http_response: http_response},
         %Config{} = config
       ) do
     with values when is_list(values) <- value,
@@ -137,7 +145,7 @@ defmodule WebDriverClient.JSONWireProtocolClient.ResponseParser do
       {:ok, sessions}
     else
       _ ->
-        {:error, UnexpectedResponseError.exception(response_body: original_body)}
+        {:error, build_unexpected_response_error(http_response)}
     end
   end
 
@@ -173,7 +181,12 @@ defmodule WebDriverClient.JSONWireProtocolClient.ResponseParser do
     {:ok, %Size{width: width, height: height}}
   end
 
-  def parse_size(%Response{original_body: original_body}) do
-    {:error, UnexpectedResponseError.exception(response_body: original_body)}
+  def parse_size(%Response{http_response: http_response}) do
+    {:error, build_unexpected_response_error(http_response)}
+  end
+
+  @spec build_unexpected_response_error(HTTPResponse.t()) :: UnexpectedResponseError.t()
+  defp build_unexpected_response_error(%HTTPResponse{status: status, body: body}) do
+    UnexpectedResponseError.exception(response_body: body, http_status_code: status)
   end
 end

@@ -16,13 +16,18 @@ defmodule WebDriverClient.JSONWireProtocolClient.Middleware.ParseJSON do
     end
   end
 
-  defp parse_json(%Env{body: body} = env) do
+  defp parse_json(%Env{body: body, status: status} = env) do
     with :ok <- ensure_json_content_type(env),
          {:ok, json} <- Jason.decode(body) do
       {:ok, json}
     else
       {:error, reason} ->
-        {:error, UnexpectedResponseError.exception(reason: reason, response_body: body)}
+        {:error,
+         UnexpectedResponseError.exception(
+           reason: reason,
+           response_body: body,
+           http_status_code: status
+         )}
     end
   end
 

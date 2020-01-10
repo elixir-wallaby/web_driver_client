@@ -1,7 +1,9 @@
 defmodule WebDriverClient.JSONWireProtocolClient.Response do
   @moduledoc false
 
-  defstruct [:session_id, :status, :value, :original_body]
+  alias WebDriverClient.HTTPResponse
+
+  defstruct [:session_id, :status, :value, :http_response]
 
   @type session_id :: String.t()
   @type status :: non_neg_integer()
@@ -10,6 +12,6 @@ defmodule WebDriverClient.JSONWireProtocolClient.Response do
           session_id: session_id | nil,
           status: status,
           value: term,
-          original_body: map
+          http_response: HTTPResponse.t()
         }
 end

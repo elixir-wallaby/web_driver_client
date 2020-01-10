@@ -208,7 +208,12 @@ defmodule WebDriverClient.JSONWireProtocolClient.ErrorScenarios do
        )
        when not is_no_content_http_status_code(http_status_code) do
     response_body = get_decoded_response_body(error_scenario)
-    assert {:error, %UnexpectedResponseError{response_body: ^response_body}} = response
+
+    assert {:error,
+            %UnexpectedResponseError{
+              response_body: ^response_body,
+              http_status_code: ^http_status_code
+            }} = response
   end
 
   defp get_decoded_response_body(%ErrorScenario{
