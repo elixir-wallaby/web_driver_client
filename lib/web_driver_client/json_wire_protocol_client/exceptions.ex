@@ -16,7 +16,7 @@ defmodule WebDriverClient.JSONWireProtocolClient.UnexpectedResponseError do
         }
 
   def exception(opts) when is_list(opts) do
-    response_body = Keyword.get(opts, :response_body)
+    response_body = Keyword.fetch!(opts, :response_body)
     reason = Keyword.get(opts, :reason)
 
     message = "unexpected response"
