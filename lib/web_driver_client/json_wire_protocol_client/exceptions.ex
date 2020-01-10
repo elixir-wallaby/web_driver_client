@@ -23,6 +23,16 @@ defmodule WebDriverClient.JSONWireProtocolClient.UnexpectedResponseError do
     reason = Keyword.get(opts, :reason)
     http_status_code = Keyword.fetch!(opts, :http_status_code)
 
+    # Temporary workaround until we can update tests to
+    # no longer require response_body to be parsed
+    response_body =
+      with true <- is_binary(response_body),
+           {:ok, parsed} <- Jason.decode(response_body) do
+        parsed
+      else
+        _ -> response_body
+      end
+
     message = "unexpected response"
 
     %__MODULE__{

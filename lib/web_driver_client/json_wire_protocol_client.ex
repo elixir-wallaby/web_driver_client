@@ -18,6 +18,7 @@ defmodule WebDriverClient.JSONWireProtocolClient do
   alias WebDriverClient.Config
   alias WebDriverClient.Element
   alias WebDriverClient.HTTPClientError
+  alias WebDriverClient.JSONWireProtocolClient.Commands
   alias WebDriverClient.JSONWireProtocolClient.LogEntry
   alias WebDriverClient.JSONWireProtocolClient.ResponseParser
   alias WebDriverClient.JSONWireProtocolClient.TeslaClientBuilder
@@ -57,10 +58,8 @@ defmodule WebDriverClient.JSONWireProtocolClient do
   doc_metadata subject: :sessions
   @spec fetch_sessions(Config.t()) :: {:ok, [Session.t()]} | {:error, basic_reason}
   def fetch_sessions(%Config{} = config) do
-    client = TeslaClientBuilder.build(config)
-
-    with {:ok, %Env{body: body}} <- Tesla.get(client, "/sessions"),
-         {:ok, sessions} <- ResponseParser.parse_fetch_sessions_response(body, config) do
+    with {:ok, http_response} <- Commands.FetchSessions.send_request(config),
+         {:ok, sessions} <- Commands.FetchSessions.parse_response(http_response, config) do
       {:ok, sessions}
     end
   end

@@ -9,7 +9,9 @@ defmodule WebDriverClient.JSONWireProtocolClient.ResponseParser do
   alias WebDriverClient.JSONWireProtocolClient
   alias WebDriverClient.JSONWireProtocolClient.LogEntry
   alias WebDriverClient.JSONWireProtocolClient.Response
+  alias WebDriverClient.JSONWireProtocolClient.Response.Status
   alias WebDriverClient.JSONWireProtocolClient.UnexpectedResponseError
+  alias WebDriverClient.JSONWireProtocolClient.WebDriverError
   alias WebDriverClient.Session
   alias WebDriverClient.Size
 
@@ -17,6 +19,26 @@ defmodule WebDriverClient.JSONWireProtocolClient.ResponseParser do
 
   @spec parse_response(HTTPResponse.t()) ::
           {:ok, Response.t()} | {:error, UnexpectedResponseError.t()}
+  def parse_response(%HTTPResponse{body: body} = http_response) when is_binary(body) do
+    with {:ok, %{"value" => value, "status" => status} = body} when is_status(status) <-
+           parse_json(http_response),
+         session_id when is_session_id(session_id) or is_nil(session_id) <-
+           Map.get(body, "sessionId") do
+      {:ok,
+       %Response{
+         session_id: session_id,
+         status: status,
+         value: value,
+         http_response: http_response
+       }}
+    else
+      _ ->
+        {:error, build_unexpected_response_error(http_response)}
+    end
+  end
+
+  # This clause will eventually go away once everything is
+  # migrate to the command pattern
   def parse_response(%HTTPResponse{body: body} = http_response) do
     with %{"value" => value, "status" => status} when is_status(status) <- body,
          session_id when is_session_id(session_id) or is_nil(session_id) <-
@@ -32,6 +54,22 @@ defmodule WebDriverClient.JSONWireProtocolClient.ResponseParser do
       _ ->
         {:error, build_unexpected_response_error(http_response)}
     end
+  end
+
+  @spec ensure_successful_jwp_status(Response.t()) :: :ok | {:error, WebDriverError.t()}
+  def ensure_successful_jwp_status(%Response{status: 0}), do: :ok
+
+  def ensure_successful_jwp_status(%Response{} = response) do
+    %Response{
+      status: status,
+      http_response: %HTTPResponse{
+        status: http_status_code
+      }
+    } = response
+
+    reason = Status.reason_atom(status)
+
+    {:error, WebDriverError.exception(http_status_code: http_status_code, reason: reason)}
   end
 
   @spec parse_value(Response.t()) :: {:ok, term}
@@ -188,5 +226,41 @@ defmodule WebDriverClient.JSONWireProtocolClient.ResponseParser do
   @spec build_unexpected_response_error(HTTPResponse.t()) :: UnexpectedResponseError.t()
   defp build_unexpected_response_error(%HTTPResponse{status: status, body: body}) do
     UnexpectedResponseError.exception(response_body: body, http_status_code: status)
+  end
+
+  @json_content_type "application/json"
+
+  defp parse_json(%HTTPResponse{body: body, status: status} = http_response) do
+    with :ok <- ensure_json_content_type(http_response),
+         {:ok, json} <- Jason.decode(body) do
+      {:ok, json}
+    else
+      {:error, reason} ->
+        {:error,
+         UnexpectedResponseError.exception(
+           reason: reason,
+           response_body: body,
+           http_status_code: status
+         )}
+    end
+  end
+
+  @spec ensure_json_content_type(HTTPResponse.t()) :: :ok | {:error, :no_json_content_type}
+  defp ensure_json_content_type(%HTTPResponse{} = http_response) do
+    with content_type when is_binary(content_type) <- get_header(http_response, "content-type"),
+         true <- String.starts_with?(content_type, @json_content_type) do
+      :ok
+    else
+      _ ->
+        {:error, :no_json_content_type}
+    end
+  end
+
+  @spec get_header(HTTPResponse.t(), binary) :: binary | nil
+  defp get_header(%HTTPResponse{headers: headers}, key) do
+    case List.keyfind(headers, key, 0) do
+      {_, value} -> value
+      _ -> nil
+    end
   end
 end
