@@ -227,9 +227,34 @@ defmodule WebDriverClient.W3CWireProtocolClient.ErrorScenarios do
 
   defp do_assert_expected_response(
          response,
-         %ErrorScenario{}
+         %ErrorScenario{} = error_scenario
        ) do
-    assert {:error, %UnexpectedResponseError{}} = response
+    response_body = get_decoded_response_body(error_scenario)
+
+    assert {:error, %UnexpectedResponseError{response_body: ^response_body}} = response
+  end
+
+  defp get_decoded_response_body(%ErrorScenario{status_code: status_code})
+       when is_no_content_status_code(status_code),
+       do: ""
+
+  defp get_decoded_response_body(%ErrorScenario{
+         content_type: @json_content_type,
+         response_body: {:valid_json, response_body}
+       }) do
+    response_body
+  end
+
+  defp get_decoded_response_body(%ErrorScenario{
+         response_body: {:valid_json, response_body}
+       }) do
+    Jason.encode!(response_body)
+  end
+
+  defp get_decoded_response_body(%ErrorScenario{
+         response_body: {:other, response_body}
+       }) do
+    response_body
   end
 
   @known_status_codes Enum.flat_map(100..599, fn status_code ->

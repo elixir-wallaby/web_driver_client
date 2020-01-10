@@ -203,23 +203,31 @@ defmodule WebDriverClient.JSONWireProtocolClient.ErrorScenarios do
   defp do_assert_expected_response(
          response,
          %ErrorScenario{
-           content_type: @json_content_type,
-           response_body: {:valid_json, response_body},
            http_status_code: http_status_code
-         }
+         } = error_scenario
        )
        when not is_no_content_http_status_code(http_status_code) do
+    response_body = get_decoded_response_body(error_scenario)
     assert {:error, %UnexpectedResponseError{response_body: ^response_body}} = response
   end
 
-  defp do_assert_expected_response(
-         response,
-         %ErrorScenario{
-           http_status_code: http_status_code
-         }
-       )
-       when not is_no_content_http_status_code(http_status_code) do
-    assert {:error, %UnexpectedResponseError{}} = response
+  defp get_decoded_response_body(%ErrorScenario{
+         content_type: @json_content_type,
+         response_body: {:valid_json, response_body}
+       }) do
+    response_body
+  end
+
+  defp get_decoded_response_body(%ErrorScenario{
+         response_body: {:valid_json, response_body}
+       }) do
+    Jason.encode!(response_body)
+  end
+
+  defp get_decoded_response_body(%ErrorScenario{
+         response_body: {:other, response_body}
+       }) do
+    response_body
   end
 
   @known_http_status_codes Enum.flat_map(100..599, fn http_status_code ->
