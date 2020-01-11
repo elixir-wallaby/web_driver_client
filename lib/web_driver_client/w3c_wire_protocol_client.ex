@@ -19,6 +19,7 @@ defmodule WebDriverClient.W3CWireProtocolClient do
   alias WebDriverClient.Element
   alias WebDriverClient.HTTPClientError
   alias WebDriverClient.Session
+  alias WebDriverClient.W3CWireProtocolClient.Commands
   alias WebDriverClient.W3CWireProtocolClient.LogEntry
   alias WebDriverClient.W3CWireProtocolClient.Rect
   alias WebDriverClient.W3CWireProtocolClient.ResponseParser
@@ -230,22 +231,19 @@ defmodule WebDriverClient.W3CWireProtocolClient do
   @spec find_elements(Session.t(), element_location_strategy, element_selector) ::
           {:ok, [Element.t()]} | {:error, basic_reason}
   def find_elements(
-        %Session{id: id, config: %Config{} = config},
+        %Session{} = session,
         element_location_strategy,
         element_selector
       )
       when is_element_location_strategy(element_location_strategy) and
              is_element_selector(element_selector) do
-    client = TeslaClientBuilder.build(config)
-    url = "/session/#{id}/elements"
-
-    request_body = %{
-      "using" => element_location_strategy_to_string(element_location_strategy),
-      "value" => element_selector
-    }
-
-    with {:ok, %Env{body: body}} <- Tesla.post(client, url, request_body),
-         {:ok, elements} <- ResponseParser.parse_elements(body) do
+    with {:ok, http_response} <-
+           Commands.FindElements.send_request(
+             session,
+             element_location_strategy,
+             element_selector
+           ),
+         {:ok, elements} <- Commands.FindElements.parse_response(http_response) do
       {:ok, elements}
     end
   end
@@ -264,23 +262,21 @@ defmodule WebDriverClient.W3CWireProtocolClient do
           element_selector
         ) :: {:ok, [Element.t()]} | {:error, basic_reason}
   def find_elements_from_element(
-        %Session{id: session_id, config: %Config{} = config},
-        %Element{id: element_id},
+        %Session{} = session,
+        %Element{} = element,
         element_location_strategy,
         element_selector
       )
       when is_element_location_strategy(element_location_strategy) and
              is_element_selector(element_selector) do
-    client = TeslaClientBuilder.build(config)
-    url = "/session/#{session_id}/element/#{element_id}/elements"
-
-    request_body = %{
-      "using" => element_location_strategy_to_string(element_location_strategy),
-      "value" => element_selector
-    }
-
-    with {:ok, %Env{body: body}} <- Tesla.post(client, url, request_body),
-         {:ok, elements} <- ResponseParser.parse_elements(body) do
+    with {:ok, http_response} <-
+           Commands.FindElementsFromElement.send_request(
+             session,
+             element,
+             element_location_strategy,
+             element_selector
+           ),
+         {:ok, elements} <- Commands.FindElementsFromElement.parse_response(http_response) do
       {:ok, elements}
     end
   end

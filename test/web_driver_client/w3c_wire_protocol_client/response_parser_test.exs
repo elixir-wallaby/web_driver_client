@@ -3,10 +3,12 @@ defmodule WebDriverClient.W3CWireProtocolClient.ResponseParserTest do
   use ExUnitProperties
 
   alias WebDriverClient.Element
+  alias WebDriverClient.HTTPResponse
   alias WebDriverClient.Session
   alias WebDriverClient.TestData
   alias WebDriverClient.W3CWireProtocolClient.LogEntry
   alias WebDriverClient.W3CWireProtocolClient.Rect
+  alias WebDriverClient.W3CWireProtocolClient.Response
   alias WebDriverClient.W3CWireProtocolClient.ResponseParser
   alias WebDriverClient.W3CWireProtocolClient.TestResponses
   alias WebDriverClient.W3CWireProtocolClient.UnexpectedResponseError
@@ -186,6 +188,7 @@ defmodule WebDriverClient.W3CWireProtocolClient.ResponseParserTest do
   property "parse_elements/1 returns {:ok [%Element{}]} when all log entries are valid" do
     check all unparsed_elements <- list_of(TestResponses.element(), max_length: 10) do
       response = %{"value" => unparsed_elements}
+      w3c_response = build_w3c_response(response)
 
       expected_elements =
         Enum.map(unparsed_elements, fn %{
@@ -196,7 +199,7 @@ defmodule WebDriverClient.W3CWireProtocolClient.ResponseParserTest do
           }
         end)
 
-      assert {:ok, ^expected_elements} = ResponseParser.parse_elements(response)
+      assert {:ok, ^expected_elements} = ResponseParser.parse_elements(w3c_response)
     end
   end
 
@@ -208,8 +211,10 @@ defmodule WebDriverClient.W3CWireProtocolClient.ResponseParserTest do
                     "value" => elements_with_invalid_responses()
                   })
                 ]) do
+      w3c_response = build_w3c_response(response)
+
       assert {:error, %UnexpectedResponseError{response_body: ^response}} =
-               ResponseParser.parse_elements(response)
+               ResponseParser.parse_elements(w3c_response)
     end
   end
 
@@ -272,5 +277,16 @@ defmodule WebDriverClient.W3CWireProtocolClient.ResponseParserTest do
 
   defp url do
     string(:alphanumeric)
+  end
+
+  defp build_w3c_response(parsed_body) do
+    %Response{
+      body: parsed_body,
+      http_response: %HTTPResponse{
+        status: 200,
+        headers: [],
+        body: Jason.encode!(parsed_body)
+      }
+    }
   end
 end
