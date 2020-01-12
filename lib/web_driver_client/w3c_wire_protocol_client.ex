@@ -14,7 +14,6 @@ defmodule WebDriverClient.W3CWireProtocolClient do
 
   import WebDriverClient.W3CWireProtocolClient.Guards
 
-  alias Tesla.Env
   alias WebDriverClient.Config
   alias WebDriverClient.Element
   alias WebDriverClient.HTTPClientError
@@ -22,8 +21,6 @@ defmodule WebDriverClient.W3CWireProtocolClient do
   alias WebDriverClient.W3CWireProtocolClient.Commands
   alias WebDriverClient.W3CWireProtocolClient.LogEntry
   alias WebDriverClient.W3CWireProtocolClient.Rect
-  alias WebDriverClient.W3CWireProtocolClient.ResponseParser
-  alias WebDriverClient.W3CWireProtocolClient.TeslaClientBuilder
   alias WebDriverClient.W3CWireProtocolClient.UnexpectedResponseError
   alias WebDriverClient.W3CWireProtocolClient.WebDriverError
 
@@ -42,10 +39,8 @@ defmodule WebDriverClient.W3CWireProtocolClient do
   doc_metadata subject: :sessions
   @spec start_session(map, Config.t()) :: {:ok, Session.t()} | {:error, basic_reason}
   def start_session(payload, %Config{} = config) when is_map(payload) do
-    client = TeslaClientBuilder.build(config)
-
-    with {:ok, %Env{body: body}} <- Tesla.post(client, "/session", payload),
-         {:ok, session} <- ResponseParser.parse_start_session_response(body, config) do
+    with {:ok, http_response} <- Commands.StartSession.send_request(config, payload),
+         {:ok, session} <- Commands.StartSession.parse_response(http_response, config) do
       {:ok, session}
     end
   end
@@ -58,10 +53,8 @@ defmodule WebDriverClient.W3CWireProtocolClient do
   doc_metadata subject: :sessions
   @spec fetch_sessions(Config.t()) :: {:ok, [Session.t()]} | {:error, basic_reason}
   def fetch_sessions(%Config{} = config) do
-    client = TeslaClientBuilder.build(config)
-
-    with {:ok, %Env{body: body}} <- Tesla.get(client, "/sessions"),
-         {:ok, sessions} <- ResponseParser.parse_fetch_sessions_response(body, config) do
+    with {:ok, http_response} <- Commands.FetchSessions.send_request(config),
+         {:ok, sessions} <- Commands.FetchSessions.parse_response(http_response, config) do
       {:ok, sessions}
     end
   end
@@ -73,17 +66,10 @@ defmodule WebDriverClient.W3CWireProtocolClient do
   """
   doc_metadata subject: :sessions
   @spec end_session(Session.t()) :: :ok | {:error, basic_reason}
-  def end_session(%Session{id: id, config: %Config{} = config})
-      when is_session_id(id) do
-    config
-    |> TeslaClientBuilder.build()
-    |> Tesla.delete("/session/#{id}")
-    |> case do
-      {:ok, %Env{}} ->
-        :ok
-
-      {:error, reason} ->
-        {:error, reason}
+  def end_session(%Session{id: id} = session) when is_session_id(id) do
+    with {:ok, http_response} <- Commands.EndSession.send_request(session),
+         :ok <- Commands.EndSession.parse_response(http_response) do
+      :ok
     end
   end
 
@@ -94,18 +80,10 @@ defmodule WebDriverClient.W3CWireProtocolClient do
   """
   doc_metadata subject: :navigation
   @spec navigate_to(Session.t(), url) :: :ok | {:error, basic_reason}
-  def navigate_to(%Session{id: id, config: %Config{} = config}, url) when is_url(url) do
-    request_body = %{"url" => url}
-
-    config
-    |> TeslaClientBuilder.build()
-    |> Tesla.post("/session/#{id}/url", request_body)
-    |> case do
-      {:ok, %Env{}} ->
-        :ok
-
-      {:error, reason} ->
-        {:error, reason}
+  def navigate_to(%Session{} = session, url) when is_url(url) do
+    with {:ok, http_response} <- Commands.NavigateTo.send_request(session, url),
+         :ok <- Commands.NavigateTo.parse_response(http_response) do
+      :ok
     end
   end
 
@@ -116,39 +94,28 @@ defmodule WebDriverClient.W3CWireProtocolClient do
   """
   doc_metadata subject: :navigation
   @spec fetch_current_url(Session.t()) :: {:ok, url} | {:error, basic_reason}
-  def fetch_current_url(%Session{id: id, config: %Config{} = config}) when is_session_id(id) do
-    client = TeslaClientBuilder.build(config)
-    url = "/session/#{id}/url"
-
-    with {:ok, %Env{body: body}} <- Tesla.get(client, url),
-         {:ok, url} <- ResponseParser.parse_url(body) do
+  def fetch_current_url(%Session{id: id} = session) when is_session_id(id) do
+    with {:ok, http_response} <- Commands.FetchCurrentURL.send_request(session),
+         {:ok, url} <- Commands.FetchCurrentURL.parse_response(http_response) do
       {:ok, url}
     end
   end
 
   @spec fetch_window_rect(Session.t()) :: {:ok, Rect.t()} | {:error, basic_reason}
-  def fetch_window_rect(%Session{id: id, config: %Config{} = config})
-      when is_session_id(id) do
-    client = TeslaClientBuilder.build(config)
-    url = "/session/#{id}/window/rect"
-
-    with {:ok, %Env{body: body}} <- Tesla.get(client, url),
-         {:ok, rect} <- ResponseParser.parse_rect(body) do
-      {:ok, rect}
+  def fetch_window_rect(%Session{id: id} = session) when is_session_id(id) do
+    with {:ok, http_response} <- Commands.FetchWindowRect.send_request(session),
+         {:ok, url} <- Commands.FetchWindowRect.parse_response(http_response) do
+      {:ok, url}
     end
   end
 
   @type rect_opt :: {:width, pos_integer} | {:height, pos_integer} | {:x, integer} | {:y, integer}
 
   @spec set_window_rect(Session.t(), [rect_opt]) :: :ok | {:error, basic_reason}
-  def set_window_rect(%Session{id: id, config: %Config{} = config}, opts \\ [])
+  def set_window_rect(%Session{} = session, opts \\ [])
       when is_list(opts) do
-    client = TeslaClientBuilder.build(config)
-    url = "/session/#{id}/window/rect"
-    request_body = opts |> Keyword.take([:height, :width, :x, :y]) |> Map.new()
-
-    with {:ok, %Env{body: body}} <- Tesla.post(client, url, request_body),
-         {:ok, _} <- ResponseParser.parse_value(body) do
+    with {:ok, http_response} <- Commands.SetWindowRect.send_request(session, opts),
+         :ok <- Commands.SetWindowRect.parse_response(http_response) do
       :ok
     end
   end
@@ -157,12 +124,9 @@ defmodule WebDriverClient.W3CWireProtocolClient do
 
   doc_metadata subject: :logging
   @spec fetch_log_types(Session.t()) :: {:ok, [log_type]} | {:error, basic_reason()}
-  def fetch_log_types(%Session{id: id, config: %Config{} = config}) do
-    client = TeslaClientBuilder.build(config)
-    url = "/session/#{id}/log/types"
-
-    with {:ok, %Env{body: body}} <- Tesla.get(client, url),
-         {:ok, log_types} <- ResponseParser.parse_value(body) do
+  def fetch_log_types(%Session{} = session) do
+    with {:ok, http_response} <- Commands.FetchLogTypes.send_request(session),
+         {:ok, log_types} <- Commands.FetchLogTypes.parse_response(http_response) do
       {:ok, log_types}
     end
   end
@@ -175,14 +139,10 @@ defmodule WebDriverClient.W3CWireProtocolClient do
   """
   doc_metadata subject: :logging
   @spec fetch_logs(Session.t(), log_type) :: {:ok, [LogEntry.t()]} | {:error, basic_reason()}
-  def fetch_logs(%Session{id: id, config: %Config{} = config}, log_type) do
-    client = TeslaClientBuilder.build(config)
-    url = "/session/#{id}/log"
-    request_body = %{type: log_type}
-
-    with {:ok, %Env{body: body}} <- Tesla.post(client, url, request_body),
-         {:ok, logs} <- ResponseParser.parse_log_entries(body) do
-      {:ok, logs}
+  def fetch_logs(%Session{} = session, log_type) do
+    with {:ok, http_response} <- Commands.FetchLogs.send_request(session, log_type),
+         {:ok, log_entries} <- Commands.FetchLogs.parse_response(http_response) do
+      {:ok, log_entries}
     end
   end
 
@@ -201,22 +161,19 @@ defmodule WebDriverClient.W3CWireProtocolClient do
   @spec find_element(Session.t(), element_location_strategy, element_selector) ::
           {:ok, Element.t()} | {:error, basic_reason}
   def find_element(
-        %Session{id: id, config: %Config{} = config},
+        %Session{} = session,
         element_location_strategy,
         element_selector
       )
       when is_element_location_strategy(element_location_strategy) and
              is_element_selector(element_selector) do
-    client = TeslaClientBuilder.build(config)
-    url = "/session/#{id}/element"
-
-    request_body = %{
-      "using" => element_location_strategy_to_string(element_location_strategy),
-      "value" => element_selector
-    }
-
-    with {:ok, %Env{body: body}} <- Tesla.post(client, url, request_body),
-         {:ok, element} <- ResponseParser.parse_element(body) do
+    with {:ok, http_response} <-
+           Commands.FindElement.send_request(
+             session,
+             element_location_strategy,
+             element_selector
+           ),
+         {:ok, element} <- Commands.FindElement.parse_response(http_response) do
       {:ok, element}
     end
   end
@@ -292,20 +249,10 @@ defmodule WebDriverClient.W3CWireProtocolClient do
   @spec fetch_element_displayed(Session.t(), Element.t()) ::
           {:ok, boolean} | {:error, basic_reason}
 
-  def fetch_element_displayed(
-        %Session{id: session_id, config: %Config{} = config},
-        %Element{id: element_id}
-      ) do
-    client = TeslaClientBuilder.build(config)
-    url = "/session/#{session_id}/element/#{element_id}/displayed"
-
-    with {:ok, %Env{body: body}} <- Tesla.get(client, url),
-         {:ok, boolean} <- ResponseParser.parse_boolean(body) do
+  def fetch_element_displayed(%Session{} = session, %Element{} = element) do
+    with {:ok, http_response} <- Commands.FetchElementDisplayed.send_request(session, element),
+         {:ok, boolean} <- Commands.FetchElementDisplayed.parse_response(http_response) do
       {:ok, boolean}
     end
   end
-
-  @spec element_location_strategy_to_string(element_location_strategy) :: String.t()
-  defp element_location_strategy_to_string(:css_selector), do: "css selector"
-  defp element_location_strategy_to_string(:xpath), do: "xpath"
 end

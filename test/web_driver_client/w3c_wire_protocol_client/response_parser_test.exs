@@ -27,23 +27,27 @@ defmodule WebDriverClient.W3CWireProtocolClient.ResponseParserTest do
                   )
                 ]) do
       response = %{"value" => value}
+      w3c_response = build_w3c_response(response)
 
-      assert {:ok, ^value} = ResponseParser.parse_value(response)
+      assert {:ok, ^value} = ResponseParser.parse_value(w3c_response)
     end
   end
 
   test "parse_value/1 returns {:error, %UnexpectedResponseError{}} on an invalid response" do
     for response <- [[], %{}] do
+      w3c_response = build_w3c_response(response)
+
       assert {:error, %UnexpectedResponseError{response_body: ^response}} =
-               ResponseParser.parse_value(response)
+               ResponseParser.parse_value(w3c_response)
     end
   end
 
   property "parse_url/1 returns {:ok, url} when result is a string" do
     check all url <- url() do
       response = %{"value" => url}
+      w3c_response = build_w3c_response(response)
 
-      assert {:ok, ^url} = ResponseParser.parse_url(response)
+      assert {:ok, ^url} = ResponseParser.parse_url(w3c_response)
     end
   end
 
@@ -64,16 +68,19 @@ defmodule WebDriverClient.W3CWireProtocolClient.ResponseParserTest do
                       ])
                   })
                 ]) do
+      w3c_response = build_w3c_response(response)
+
       assert {:error, %UnexpectedResponseError{response_body: ^response}} =
-               ResponseParser.parse_url(response)
+               ResponseParser.parse_url(w3c_response)
     end
   end
 
   property "parse_boolean/1 returns {:ok, boolean} when result is a boolean" do
     check all boolean <- boolean() do
       response = %{"value" => boolean}
+      w3c_response = build_w3c_response(response)
 
-      assert {:ok, ^boolean} = ResponseParser.parse_boolean(response)
+      assert {:ok, ^boolean} = ResponseParser.parse_boolean(w3c_response)
     end
   end
 
@@ -94,8 +101,10 @@ defmodule WebDriverClient.W3CWireProtocolClient.ResponseParserTest do
                       ])
                   })
                 ]) do
+      w3c_response = build_w3c_response(response)
+
       assert {:error, %UnexpectedResponseError{response_body: ^response}} =
-               ResponseParser.parse_boolean(response)
+               ResponseParser.parse_boolean(w3c_response)
     end
   end
 
@@ -105,9 +114,10 @@ defmodule WebDriverClient.W3CWireProtocolClient.ResponseParserTest do
               width <- integer(0..1000),
               height <- integer(0..1000) do
       response = %{"value" => %{"x" => x, "y" => y, "width" => width, "height" => height}}
+      w3c_response = build_w3c_response(response)
 
       assert {:ok, %Rect{x: ^x, y: ^y, width: ^width, height: ^height}} =
-               ResponseParser.parse_rect(response)
+               ResponseParser.parse_rect(w3c_response)
     end
   end
 
@@ -125,14 +135,17 @@ defmodule WebDriverClient.W3CWireProtocolClient.ResponseParserTest do
                       })
                   })
                 ]) do
+      w3c_response = build_w3c_response(response)
+
       assert {:error, %UnexpectedResponseError{response_body: ^response}} =
-               ResponseParser.parse_rect(response)
+               ResponseParser.parse_rect(w3c_response)
     end
   end
 
   property "parse_log_entries/1 returns {:ok [%LogEntry{}]} when all log entries are valid" do
     check all unparsed_log_entries <- list_of(TestResponses.log_entry(), max_length: 10) do
       response = %{"value" => unparsed_log_entries}
+      w3c_response = build_w3c_response(response)
 
       expected_log_entries =
         Enum.map(unparsed_log_entries, fn %{
@@ -147,7 +160,7 @@ defmodule WebDriverClient.W3CWireProtocolClient.ResponseParserTest do
           }
         end)
 
-      assert {:ok, ^expected_log_entries} = ResponseParser.parse_log_entries(response)
+      assert {:ok, ^expected_log_entries} = ResponseParser.parse_log_entries(w3c_response)
     end
   end
 
@@ -159,16 +172,19 @@ defmodule WebDriverClient.W3CWireProtocolClient.ResponseParserTest do
                     "value" => log_entries_with_invalid_responses()
                   })
                 ]) do
+      w3c_response = build_w3c_response(response)
+
       assert {:error, %UnexpectedResponseError{response_body: ^response}} =
-               ResponseParser.parse_log_entries(response)
+               ResponseParser.parse_log_entries(w3c_response)
     end
   end
 
   property "parse_element/1 returns {:ok, %Element{}} on a valid response" do
     check all %{@web_element_identifier => element_id} = value <- TestResponses.element() do
       response = %{"value" => value}
+      w3c_response = build_w3c_response(response)
 
-      assert {:ok, %Element{id: ^element_id}} = ResponseParser.parse_element(response)
+      assert {:ok, %Element{id: ^element_id}} = ResponseParser.parse_element(w3c_response)
     end
   end
 
@@ -179,9 +195,10 @@ defmodule WebDriverClient.W3CWireProtocolClient.ResponseParserTest do
                 }
                 |> fixed_map() do
       response = %{"value" => value}
+      w3c_response = build_w3c_response(response)
 
       assert {:error, %UnexpectedResponseError{response_body: ^response}} =
-               ResponseParser.parse_element(response)
+               ResponseParser.parse_element(w3c_response)
     end
   end
 
@@ -221,6 +238,7 @@ defmodule WebDriverClient.W3CWireProtocolClient.ResponseParserTest do
   test "parse_fetch_sessions_response/2 returns {:ok [%Session{}]} when all sessions are valid" do
     config = TestData.config() |> pick()
     resp = TestResponses.fetch_sessions_response() |> pick() |> Jason.decode!()
+    w3c_response = build_w3c_response(resp)
 
     session_id =
       resp
@@ -229,32 +247,35 @@ defmodule WebDriverClient.W3CWireProtocolClient.ResponseParserTest do
       |> Map.fetch!("id")
 
     assert {:ok, [%Session{id: ^session_id, config: ^config}]} =
-             ResponseParser.parse_fetch_sessions_response(resp, config)
+             ResponseParser.parse_fetch_sessions_response(w3c_response, config)
   end
 
   test "parse_fetch_sessions_response/2 returns {:error, %UnexpectedResponseError{}} on an invalid response" do
     config = TestData.config() |> pick()
     response = %{}
+    w3c_response = build_w3c_response(response)
 
     assert {:error, %UnexpectedResponseError{response_body: ^response}} =
-             ResponseParser.parse_fetch_sessions_response(response, config)
+             ResponseParser.parse_fetch_sessions_response(w3c_response, config)
   end
 
-  test "parse_start_session_response/2 returns {:ok, Session.t()} on know response" do
+  test "parse_start_session_response/2 returns {:ok, Session.t()} on known response" do
     config = TestData.config() |> pick()
     resp = TestResponses.start_session_response() |> pick() |> Jason.decode!()
     session_id = get_in(resp, ["value", "sessionId"])
+    w3c_response = build_w3c_response(resp)
 
     assert {:ok, %Session{id: ^session_id, config: ^config}} =
-             ResponseParser.parse_start_session_response(resp, config)
+             ResponseParser.parse_start_session_response(w3c_response, config)
   end
 
   test "parse_start_session_response/2 returns {:error, %UnexpectedResponseError{}} on an invalid response" do
     config = TestData.config() |> pick()
     response = %{}
+    w3c_response = build_w3c_response(response)
 
     assert {:error, %UnexpectedResponseError{response_body: ^response}} =
-             ResponseParser.parse_start_session_response(response, config)
+             ResponseParser.parse_start_session_response(w3c_response, config)
   end
 
   defp elements_with_invalid_responses do

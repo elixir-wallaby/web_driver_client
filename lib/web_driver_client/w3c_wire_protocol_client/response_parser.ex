@@ -87,55 +87,63 @@ defmodule WebDriverClient.W3CWireProtocolClient.ResponseParser do
     {:error, UnexpectedResponseError.exception(response_body: body)}
   end
 
-  @spec parse_value(term) :: {:ok, term} | {:error, UnexpectedResponseError.t()}
-  def parse_value(%{"value" => value}), do: {:ok, value}
+  @spec parse_value(Response.t()) :: {:ok, term} | {:error, UnexpectedResponseError.t()}
+  def parse_value(%Response{body: %{"value" => value}}), do: {:ok, value}
 
-  def parse_value(body) do
+  def parse_value(%Response{body: body}) do
     {:error, UnexpectedResponseError.exception(response_body: body)}
   end
 
-  @spec parse_url(term) :: {:ok, url} | {:error, UnexpectedResponseError.t()}
-  def parse_url(%{"value" => url}) when is_binary(url), do: {:ok, url}
+  @spec parse_url(Response.t()) :: {:ok, url} | {:error, UnexpectedResponseError.t()}
+  def parse_url(%Response{body: body}) do
+    case body do
+      %{"value" => url} when is_binary(url) ->
+        {:ok, url}
 
-  def parse_url(body) do
+      _ ->
+        {:error, UnexpectedResponseError.exception(response_body: body)}
+    end
+  end
+
+  @spec parse_boolean(Response.t()) :: {:ok, boolean} | {:error, UnexpectedResponseError.t()}
+  def parse_boolean(%Response{body: %{"value" => boolean}}) when is_boolean(boolean),
+    do: {:ok, boolean}
+
+  def parse_boolean(%Response{body: body}) do
     {:error, UnexpectedResponseError.exception(response_body: body)}
   end
 
-  @spec parse_boolean(term) :: {:ok, boolean} | {:error, UnexpectedResponseError.t()}
-  def parse_boolean(%{"value" => boolean}) when is_boolean(boolean), do: {:ok, boolean}
-
-  def parse_boolean(body) do
-    {:error, UnexpectedResponseError.exception(response_body: body)}
-  end
-
-  @spec parse_log_entries(term) :: {:ok, [LogEntry.t()]} | {:error, UnexpectedResponseError.t()}
-  def parse_log_entries(response) do
-    with %{"value" => values} when is_list(values) <- response,
+  @spec parse_log_entries(Response.t()) ::
+          {:ok, [LogEntry.t()]} | {:error, UnexpectedResponseError.t()}
+  def parse_log_entries(%Response{body: body}) do
+    with %{"value" => values} when is_list(values) <- body,
          log_entries when is_list(log_entries) <- do_parse_log_entries(values) do
       {:ok, log_entries}
     else
       _ ->
-        {:error, UnexpectedResponseError.exception(response_body: response)}
+        {:error, UnexpectedResponseError.exception(response_body: body)}
     end
   end
 
-  @spec parse_rect(term) :: {:ok, Rect.t()} | {:error, UnexpectedResponseError.t()}
-  def parse_rect(%{"value" => %{"width" => width, "height" => height, "x" => x, "y" => y}})
+  @spec parse_rect(Response.t()) :: {:ok, Rect.t()} | {:error, UnexpectedResponseError.t()}
+  def parse_rect(%Response{
+        body: %{"value" => %{"width" => width, "height" => height, "x" => x, "y" => y}}
+      })
       when is_integer(width) and is_integer(height) and is_integer(x) and is_integer(y) do
     {:ok, %Rect{width: width, height: height, x: x, y: y}}
   end
 
-  def parse_rect(body) do
+  def parse_rect(%Response{body: body}) do
     {:error, UnexpectedResponseError.exception(response_body: body)}
   end
 
-  @spec parse_element(term) :: {:ok, Element.t()} | {:error, UnexpectedResponseError.t()}
-  def parse_element(%{"value" => %{@web_element_identifier => element_id}})
+  @spec parse_element(Response.t()) :: {:ok, Element.t()} | {:error, UnexpectedResponseError.t()}
+  def parse_element(%Response{body: %{"value" => %{@web_element_identifier => element_id}}})
       when is_binary(element_id) do
     {:ok, %Element{id: element_id}}
   end
 
-  def parse_element(body) do
+  def parse_element(%Response{body: body}) do
     {:error, UnexpectedResponseError.exception(response_body: body)}
   end
 
@@ -193,27 +201,27 @@ defmodule WebDriverClient.W3CWireProtocolClient.ResponseParser do
     end
   end
 
-  @spec parse_fetch_sessions_response(term, Config.t()) ::
+  @spec parse_fetch_sessions_response(Response.t(), Config.t()) ::
           {:ok, [Session.t()]} | {:error, UnexpectedResponseError.t()}
-  def parse_fetch_sessions_response(response, %Config{} = config) do
-    with %{"value" => values} when is_list(values) <- response,
+  def parse_fetch_sessions_response(%Response{body: body}, %Config{} = config) do
+    with %{"value" => values} when is_list(values) <- body,
          sessions when is_list(sessions) <- do_parse_sessions(values, config) do
       {:ok, sessions}
     else
       _ ->
-        {:error, UnexpectedResponseError.exception(response_body: response)}
+        {:error, UnexpectedResponseError.exception(response_body: body)}
     end
   end
 
-  @spec parse_start_session_response(term, Config.t()) ::
+  @spec parse_start_session_response(Response.t(), Config.t()) ::
           {:ok, Session.t()} | {:error, UnexpectedResponseError.t()}
-  def parse_start_session_response(response, %Config{} = config) do
-    case response do
+  def parse_start_session_response(%Response{body: body}, %Config{} = config) do
+    case body do
       %{"value" => %{"sessionId" => session_id}} when is_session_id(session_id) ->
         {:ok, Session.build(session_id, config)}
 
       _ ->
-        {:error, UnexpectedResponseError.exception(response_body: response)}
+        {:error, UnexpectedResponseError.exception(response_body: body)}
     end
   end
 
