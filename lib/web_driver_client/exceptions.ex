@@ -51,6 +51,49 @@ defmodule WebDriverClient.UnexpectedResponseError do
   end
 end
 
+defmodule WebDriverClient.ProtocolMismatchError do
+  @moduledoc """
+  Indicates the server returned a parsable response, but
+  not for the requested protocol.
+  """
+
+  defexception [:response, :expected_protocol, :actual_protocol]
+
+  @type t :: %{
+          response: {:ok, term} | {:error, WebDriverClient.basic_reason()},
+          expected_protocol: WebDriverClient.Config.protocol(),
+          actual_protocol: WebDriverClient.Config.protocol()
+        }
+
+  def exception(opts) when is_list(opts) do
+    response = Keyword.fetch!(opts, :response)
+    expected_protocol = Keyword.fetch!(opts, :expected_protocol)
+    actual_protocol = Keyword.fetch!(opts, :actual_protocol)
+
+    %__MODULE__{
+      response: response,
+      actual_protocol: actual_protocol,
+      expected_protocol: expected_protocol
+    }
+  end
+
+  def message(error) do
+    %__MODULE__{
+      expected_protocol: expected_protocol,
+      actual_protocol: actual_protocol
+    } = error
+
+    """
+    protocol of server response did not match expected protocol
+
+        expected_protocol: #{inspect(expected_protocol)}
+        actual_protocol: #{inspect(actual_protocol)}
+
+    Please check your server's configuration as this may lead to unexpected behavior.
+    """
+  end
+end
+
 defmodule WebDriverClient.WebDriverError do
   @moduledoc """
   Indicates a known WebDriver error occurred

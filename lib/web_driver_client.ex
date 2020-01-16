@@ -9,15 +9,21 @@ defmodule WebDriverClient do
   alias WebDriverClient.Config
   alias WebDriverClient.Element
   alias WebDriverClient.HTTPClientError
+  alias WebDriverClient.HTTPResponse
   alias WebDriverClient.JSONWireProtocolClient
+  alias WebDriverClient.JSONWireProtocolClient.Commands, as: JWPCommands
   alias WebDriverClient.LogEntry
+  alias WebDriverClient.ProtocolMismatchError
   alias WebDriverClient.Session
   alias WebDriverClient.Size
   alias WebDriverClient.UnexpectedResponseError
   alias WebDriverClient.W3CWireProtocolClient
+  alias WebDriverClient.W3CWireProtocolClient.Commands, as: W3CCommands
   alias WebDriverClient.WebDriverError
 
+  @type protocol :: Config.protocol()
   @type url :: String.t()
+  @type reason :: ProtocolMismatchError.t() | basic_reason
   @type basic_reason ::
           HTTPClientError.t()
           | UnexpectedResponseError.t()
@@ -154,24 +160,31 @@ defmodule WebDriverClient do
   @doc """
   Returns the size of the current window
   """
-  @spec fetch_window_size(Session.t()) :: {:ok, Size.t()} | {:error, basic_reason}
-  def fetch_window_size(%Session{config: %Config{protocol: :jwp}} = session) do
-    case JSONWireProtocolClient.fetch_window_size(session) do
-      {:ok, size} ->
-        {:ok, size}
+  @spec fetch_window_size(Session.t()) :: {:ok, Size.t()} | {:error, reason}
+  def fetch_window_size(%Session{config: %Config{protocol: protocol}} = session) do
+    with {:ok, http_response} <-
+           send_request_for_protocol(protocol,
+             jwp: fn -> JWPCommands.FetchWindowSize.send_request(session) end,
+             w3c: fn -> W3CCommands.FetchWindowRect.send_request(session) end
+           ) do
+      parse_with_fallbacks(
+        http_response,
+        protocol,
+        [
+          jwp: &JWPCommands.FetchWindowSize.parse_response/1,
+          w3c: &W3CCommands.FetchWindowRect.parse_response/1
+        ],
+        fn
+          {:ok, %Size{} = size} ->
+            {:ok, size}
 
-      {:error, error} ->
-        {:error, to_error(error)}
-    end
-  end
+          {:ok, %W3CWireProtocolClient.Rect{width: width, height: height}} ->
+            {:ok, %Size{width: width, height: height}}
 
-  def fetch_window_size(%Session{config: %Config{protocol: :w3c}} = session) do
-    case W3CWireProtocolClient.fetch_window_rect(session) do
-      {:ok, %W3CWireProtocolClient.Rect{width: width, height: height}} ->
-        {:ok, %Size{width: width, height: height}}
-
-      {:error, error} ->
-        {:error, to_error(error)}
+          {:error, error} ->
+            {:error, to_error(error)}
+        end
+      )
     end
   end
 
@@ -230,40 +243,37 @@ defmodule WebDriverClient do
   doc_metadata subject: :elements
 
   @spec find_elements(Session.t(), element_location_strategy, element_selector) ::
-          {:ok, [Element.t()]} | {:error, basic_reason}
+          {:ok, [Element.t()]} | {:error, reason}
   def find_elements(
-        %Session{config: %Config{protocol: :jwp}} = session,
+        %Session{config: %Config{protocol: protocol}} = session,
         element_location_strategy,
         element_selector
       )
       when is_element_location_strategy(element_location_strategy) and
              is_element_selector(element_selector) do
-    case JSONWireProtocolClient.find_elements(
-           session,
-           element_location_strategy,
-           element_selector
-         ) do
-      {:ok, elements} ->
-        {:ok, elements}
-
-      {:error, error} ->
-        {:error, to_error(error)}
-    end
-  end
-
-  def find_elements(
-        %Session{config: %Config{protocol: :w3c}} = session,
-        element_location_strategy,
-        element_selector
+    with {:ok, http_response} <-
+           send_request_for_protocol(protocol,
+             jwp: fn ->
+               JWPCommands.FindElements.send_request(
+                 session,
+                 element_location_strategy,
+                 element_selector
+               )
+             end,
+             w3c: fn ->
+               W3CCommands.FindElements.send_request(
+                 session,
+                 element_location_strategy,
+                 element_selector
+               )
+             end
+           ) do
+      parse_with_fallbacks(
+        http_response,
+        protocol,
+        jwp: &JWPCommands.FindElements.parse_response/1,
+        w3c: &W3CCommands.FindElements.parse_response/1
       )
-      when is_element_location_strategy(element_location_strategy) and
-             is_element_selector(element_selector) do
-    case W3CWireProtocolClient.find_elements(session, element_location_strategy, element_selector) do
-      {:ok, elements} ->
-        {:ok, elements}
-
-      {:error, error} ->
-        {:error, to_error(error)}
     end
   end
 
@@ -489,4 +499,54 @@ defmodule WebDriverClient do
       protocol: :jwp
     )
   end
+
+  @spec send_request_for_protocol(protocol, [
+          {protocol, (() -> {:ok, HTTPResponse.t()} | {:error, HTTPClientError.t()})}
+        ]) :: {:ok, HTTPResponse.t()} | {:error, HTTPClientError.t()}
+  defp send_request_for_protocol(protocol, send_request_fns)
+       when is_list(send_request_fns) and is_atom(protocol) do
+    send_request_fns
+    |> Keyword.fetch!(protocol)
+    |> apply([])
+  end
+
+  defp parse_with_fallbacks(
+         http_response,
+         requested_protocol,
+         parse_fns,
+         normalize_fn \\ &default_normalize_response/1
+       )
+       when is_list(parse_fns) and is_atom(requested_protocol) and is_function(normalize_fn, 1) do
+    {parse_fn, additional_parse_fns} = Keyword.pop(parse_fns, requested_protocol)
+
+    initial_response =
+      http_response
+      |> parse_fn.()
+      |> normalize_fn.()
+
+    with {:error, %UnexpectedResponseError{}} <- initial_response do
+      Enum.reduce_while(additional_parse_fns, initial_response, fn {protocol, parse_fn}, acc ->
+        http_response
+        |> parse_fn.()
+        |> normalize_fn.()
+        |> case do
+          {:error, %UnexpectedResponseError{}} ->
+            {:cont, acc}
+
+          response ->
+            {:halt,
+             {:error,
+              ProtocolMismatchError.exception(
+                expected_protocol: requested_protocol,
+                actual_protocol: protocol,
+                response: response
+              )}}
+        end
+      end)
+    end
+  end
+
+  defp default_normalize_response(response)
+  defp default_normalize_response({:error, error}), do: {:error, to_error(error)}
+  defp default_normalize_response({:ok, result}), do: {:ok, result}
 end

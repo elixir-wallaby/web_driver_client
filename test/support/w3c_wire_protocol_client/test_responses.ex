@@ -118,8 +118,8 @@ defmodule WebDriverClient.W3CWireProtocolClient.TestResponses do
     |> map(&Jason.encode!/1)
   end
 
-  def find_elements_response do
-    %{"value" => list_of(element(), max_length: 10)}
+  def find_elements_response(list_opts \\ [max_length: 10]) do
+    %{"value" => list_of(element(), list_opts)}
     |> fixed_map()
     |> map(&Jason.encode!/1)
   end

@@ -9,6 +9,7 @@ defmodule WebDriverClientTest do
   alias WebDriverClient.JSONWireProtocolClient.ErrorScenarios, as: JWPErrorScenarios
   alias WebDriverClient.JSONWireProtocolClient.TestResponses, as: JWPTestResponses
   alias WebDriverClient.LogEntry
+  alias WebDriverClient.ProtocolMismatchError
   alias WebDriverClient.Session
   alias WebDriverClient.Size
   alias WebDriverClient.TestData
@@ -261,6 +262,24 @@ defmodule WebDriverClientTest do
     assert {:ok, %Size{}} = WebDriverClient.fetch_window_size(session)
   end
 
+  @tag protocol: :jwp
+  test "fetch_window_size/1 with JWP session returns {:error, %ProtocolMismatchError{}} on W3C response",
+       %{
+         config: config,
+         bypass: bypass
+       } do
+    session = TestData.session(config: constant(config)) |> pick()
+    resp = W3CTestResponses.fetch_window_rect_response() |> pick()
+    stub_bypass_response(bypass, resp)
+
+    assert {:error,
+            %ProtocolMismatchError{
+              response: {:ok, %Size{}},
+              expected_protocol: :jwp,
+              actual_protocol: :w3c
+            }} = WebDriverClient.fetch_window_size(session)
+  end
+
   @tag protocol: :w3c
   test "fetch_window_size/1 with w3c session returns {:ok, %Size{}} on success", %{
     config: config,
@@ -272,6 +291,25 @@ defmodule WebDriverClientTest do
     stub_bypass_response(bypass, resp)
 
     assert {:ok, %Size{}} = WebDriverClient.fetch_window_size(session)
+  end
+
+  @tag protocol: :w3c
+  test "fetch_window_size/1 with w3c session returns {:error, %ProtocolMismatchError{}} on jwp response",
+       %{
+         config: config,
+         bypass: bypass
+       } do
+    session = TestData.session(config: constant(config)) |> pick()
+    resp = JWPTestResponses.fetch_window_size_response() |> pick()
+
+    stub_bypass_response(bypass, resp)
+
+    assert {:error,
+            %ProtocolMismatchError{
+              response: {:ok, %Size{}},
+              expected_protocol: :w3c,
+              actual_protocol: :jwp
+            }} = WebDriverClient.fetch_window_size(session)
   end
 
   for protocol <- @protocols do
@@ -497,6 +535,29 @@ defmodule WebDriverClientTest do
     end)
   end
 
+  @tag protocol: :jwp
+  test "find_elements/3 with JWP session returns {:error, %ProtocolMismatchError{}} on valid W3C response",
+       %{
+         config: config,
+         bypass: bypass
+       } do
+    session = TestData.session(config: constant(config)) |> pick()
+    resp = W3CTestResponses.find_elements_response(length: 1) |> pick()
+
+    stub_bypass_response(bypass, resp)
+
+    Enum.each([:css_selector, :xpath], fn strategy ->
+      assert {:error,
+              %ProtocolMismatchError{
+                response: {:ok, elements},
+                expected_protocol: :jwp,
+                actual_protocol: :w3c
+              }} = WebDriverClient.find_elements(session, strategy, "foo")
+
+      assert Enum.all?(elements, &match?(%Element{}, &1))
+    end)
+  end
+
   @tag protocol: :w3c
   test "find_elements/3 with W3C session returns {:ok, elements} on valid response", %{
     config: config,
@@ -509,6 +570,29 @@ defmodule WebDriverClientTest do
 
     Enum.each([:css_selector, :xpath], fn strategy ->
       assert {:ok, elements} = WebDriverClient.find_elements(session, strategy, "foo")
+      assert Enum.all?(elements, &match?(%Element{}, &1))
+    end)
+  end
+
+  @tag protocol: :w3c
+  test "find_elements/3 with W3C session returns {:error, %ProtocolMismatchError{}} on valid JWP response",
+       %{
+         config: config,
+         bypass: bypass
+       } do
+    session = TestData.session(config: constant(config)) |> pick()
+    resp = JWPTestResponses.find_elements_response(length: 1) |> pick()
+
+    stub_bypass_response(bypass, resp)
+
+    Enum.each([:css_selector, :xpath], fn strategy ->
+      assert {:error,
+              %ProtocolMismatchError{
+                response: {:ok, elements},
+                expected_protocol: :w3c,
+                actual_protocol: :jwp
+              }} = WebDriverClient.find_elements(session, strategy, "foo")
+
       assert Enum.all?(elements, &match?(%Element{}, &1))
     end)
   end

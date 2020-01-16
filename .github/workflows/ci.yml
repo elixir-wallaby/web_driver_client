@@ -20,12 +20,16 @@ jobs:
         include:
           - elixir: "1.9.4"
             otp: "22.1.7"
+            check_formatting: true
           - elixir: "1.8.2"
             otp: "22.1.7"
+            check_formatting: false
           - elixir: "1.7.4"
             otp: "22.1.7"
+            check_formatting: false
           - elixir: "1.6.6"
             otp: "20.3.8.24"
+            check_formatting: false
     steps:
       - uses: actions/checkout@v1
       - uses: actions/setup-elixir@v1.0.0
@@ -50,6 +54,7 @@ jobs:
       - name: Upload results to CodeCov
         run: bash <(curl -s https://codecov.io/bash) -F UnitTest -e ELIXIR_VERSION,OTP_VERSION || echo "Codecov did not collect coverage reports"
       - run: mix format --check-formatted
+        if: matrix.check_formatting
       - run: mix credo --strict
       - name: Check for unused dependencies
         run: mix deps.unlock --unused && git diff --exit-code
