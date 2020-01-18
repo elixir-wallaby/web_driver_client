@@ -24,6 +24,14 @@ defmodule WebDriverClient.JSONWireProtocolClient.ErrorScenarios do
     %ErrorScenario{communication_error: :server_down}
   end
 
+  def get_named_scenario(:protocol_mismatch_error_web_driver_error) do
+    %ErrorScenario{
+      http_status_code: 400,
+      content_type: @json_content_type,
+      response_body: {:valid_json, %{"value" => %{"error" => "invalid selector"}}}
+    }
+  end
+
   def get_named_scenario(:unexpected_response_format) do
     %ErrorScenario{
       http_status_code: 200,

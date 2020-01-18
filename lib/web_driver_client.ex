@@ -33,24 +33,17 @@ defmodule WebDriverClient do
   Starts a new session
   """
   doc_metadata subject: :sessions
-  @spec start_session(Config.t(), map()) :: {:ok, Session.t()} | {:error, basic_reason}
-  def start_session(%Config{protocol: :jwp} = config, payload) when is_map(payload) do
-    case JSONWireProtocolClient.start_session(payload, config) do
-      {:ok, session} ->
-        {:ok, session}
-
-      {:error, error} ->
-        {:error, to_error(error)}
-    end
-  end
-
-  def start_session(%Config{protocol: :w3c} = config, payload) when is_map(payload) do
-    case W3CWireProtocolClient.start_session(payload, config) do
-      {:ok, session} ->
-        {:ok, session}
-
-      {:error, error} ->
-        {:error, to_error(error)}
+  @spec start_session(Config.t(), map()) :: {:ok, Session.t()} | {:error, reason}
+  def start_session(%Config{protocol: protocol} = config, payload) when is_map(payload) do
+    with {:ok, http_response} <-
+           send_request_for_protocol(protocol,
+             jwp: fn -> JWPCommands.StartSession.send_request(config, payload) end,
+             w3c: fn -> W3CCommands.StartSession.send_request(config, payload) end
+           ) do
+      parse_with_fallbacks(http_response, protocol,
+        jwp: &JWPCommands.StartSession.parse_response(&1, config),
+        w3c: &W3CCommands.StartSession.parse_response(&1, config)
+      )
     end
   end
 
@@ -58,24 +51,17 @@ defmodule WebDriverClient do
   Returns the list of sessions
   """
   doc_metadata subject: :sessions
-  @spec fetch_sessions(Config.t()) :: {:ok, [Session.t()]} | {:error, basic_reason}
-  def fetch_sessions(%Config{protocol: :jwp} = config) do
-    case JSONWireProtocolClient.fetch_sessions(config) do
-      {:ok, sessions} ->
-        {:ok, sessions}
-
-      {:error, error} ->
-        {:error, to_error(error)}
-    end
-  end
-
-  def fetch_sessions(%Config{protocol: :w3c} = config) do
-    case W3CWireProtocolClient.fetch_sessions(config) do
-      {:ok, session} ->
-        {:ok, session}
-
-      {:error, error} ->
-        {:error, to_error(error)}
+  @spec fetch_sessions(Config.t()) :: {:ok, [Session.t()]} | {:error, reason}
+  def fetch_sessions(%Config{protocol: protocol} = config) do
+    with {:ok, http_response} <-
+           send_request_for_protocol(protocol,
+             jwp: fn -> JWPCommands.FetchSessions.send_request(config) end,
+             w3c: fn -> W3CCommands.FetchSessions.send_request(config) end
+           ) do
+      parse_with_fallbacks(http_response, protocol,
+        jwp: &JWPCommands.FetchSessions.parse_response(&1, config),
+        w3c: &W3CCommands.FetchSessions.parse_response(&1, config)
+      )
     end
   end
 
@@ -83,24 +69,17 @@ defmodule WebDriverClient do
   Ends a session
   """
   doc_metadata subject: :sessions
-  @spec end_session(Session.t()) :: :ok | {:error, basic_reason}
-  def end_session(%Session{config: %Config{protocol: :jwp}} = session) do
-    case JSONWireProtocolClient.end_session(session) do
-      :ok ->
-        :ok
-
-      {:error, error} ->
-        {:error, to_error(error)}
-    end
-  end
-
-  def end_session(%Session{config: %Config{protocol: :w3c}} = session) do
-    case W3CWireProtocolClient.end_session(session) do
-      :ok ->
-        :ok
-
-      {:error, error} ->
-        {:error, to_error(error)}
+  @spec end_session(Session.t()) :: :ok | {:error, reason}
+  def end_session(%Session{config: %Config{protocol: protocol}} = session) do
+    with {:ok, http_response} <-
+           send_request_for_protocol(protocol,
+             jwp: fn -> JWPCommands.EndSession.send_request(session) end,
+             w3c: fn -> W3CCommands.EndSession.send_request(session) end
+           ) do
+      parse_with_fallbacks(http_response, protocol,
+        jwp: &JWPCommands.EndSession.parse_response/1,
+        w3c: &W3CCommands.EndSession.parse_response/1
+      )
     end
   end
 
@@ -108,27 +87,19 @@ defmodule WebDriverClient do
   Navigates the browser to the given url
   """
   doc_metadata subject: :navigation
-  @spec navigate_to(Session.t(), url) :: :ok | {:error, basic_reason}
+  @spec navigate_to(Session.t(), url) :: :ok | {:error, reason}
 
-  def navigate_to(%Session{config: %Config{protocol: :jwp}} = session, url)
+  def navigate_to(%Session{config: %Config{protocol: protocol}} = session, url)
       when is_url(url) do
-    case JSONWireProtocolClient.navigate_to(session, url) do
-      :ok ->
-        :ok
-
-      {:error, error} ->
-        {:error, to_error(error)}
-    end
-  end
-
-  def navigate_to(%Session{config: %Config{protocol: :w3c}} = session, url)
-      when is_url(url) do
-    case W3CWireProtocolClient.navigate_to(session, url) do
-      :ok ->
-        :ok
-
-      {:error, error} ->
-        {:error, to_error(error)}
+    with {:ok, http_response} <-
+           send_request_for_protocol(protocol,
+             jwp: fn -> JWPCommands.NavigateTo.send_request(session, url) end,
+             w3c: fn -> W3CCommands.NavigateTo.send_request(session, url) end
+           ) do
+      parse_with_fallbacks(http_response, protocol,
+        jwp: &JWPCommands.NavigateTo.parse_response/1,
+        w3c: &W3CCommands.NavigateTo.parse_response/1
+      )
     end
   end
 
@@ -136,24 +107,17 @@ defmodule WebDriverClient do
   Returns the web browsers current url
   """
   doc_metadata subject: :navigation
-  @spec fetch_current_url(Session.t()) :: {:ok, url} | {:error, basic_reason}
-  def fetch_current_url(%Session{config: %Config{protocol: :jwp}} = session) do
-    case JSONWireProtocolClient.fetch_current_url(session) do
-      {:ok, current_url} ->
-        {:ok, current_url}
-
-      {:error, error} ->
-        {:error, to_error(error)}
-    end
-  end
-
-  def fetch_current_url(%Session{config: %Config{protocol: :w3c}} = session) do
-    case W3CWireProtocolClient.fetch_current_url(session) do
-      {:ok, current_url} ->
-        {:ok, current_url}
-
-      {:error, error} ->
-        {:error, to_error(error)}
+  @spec fetch_current_url(Session.t()) :: {:ok, url} | {:error, reason}
+  def fetch_current_url(%Session{config: %Config{protocol: protocol}} = session) do
+    with {:ok, http_response} <-
+           send_request_for_protocol(protocol,
+             jwp: fn -> JWPCommands.FetchCurrentURL.send_request(session) end,
+             w3c: fn -> W3CCommands.FetchCurrentURL.send_request(session) end
+           ) do
+      parse_with_fallbacks(http_response, protocol,
+        jwp: &JWPCommands.FetchCurrentURL.parse_response/1,
+        w3c: &W3CCommands.FetchCurrentURL.parse_response/1
+      )
     end
   end
 
@@ -200,40 +164,35 @@ defmodule WebDriverClient do
   doc_metadata subject: :elements
 
   @spec find_element(Session.t(), element_location_strategy, element_selector) ::
-          {:ok, Element.t()} | {:error, basic_reason}
+          {:ok, Element.t()} | {:error, reason}
   def find_element(
-        %Session{config: %Config{protocol: :jwp}} = session,
+        %Session{config: %Config{protocol: protocol}} = session,
         element_location_strategy,
         element_selector
       )
       when is_element_location_strategy(element_location_strategy) and
              is_element_selector(element_selector) do
-    case JSONWireProtocolClient.find_element(
-           session,
-           element_location_strategy,
-           element_selector
-         ) do
-      {:ok, element} ->
-        {:ok, element}
-
-      {:error, error} ->
-        {:error, to_error(error)}
-    end
-  end
-
-  def find_element(
-        %Session{config: %Config{protocol: :w3c}} = session,
-        element_location_strategy,
-        element_selector
+    with {:ok, http_response} <-
+           send_request_for_protocol(protocol,
+             jwp: fn ->
+               JWPCommands.FindElement.send_request(
+                 session,
+                 element_location_strategy,
+                 element_selector
+               )
+             end,
+             w3c: fn ->
+               W3CCommands.FindElement.send_request(
+                 session,
+                 element_location_strategy,
+                 element_selector
+               )
+             end
+           ) do
+      parse_with_fallbacks(http_response, protocol,
+        jwp: &JWPCommands.FindElement.parse_response/1,
+        w3c: &W3CCommands.FindElement.parse_response/1
       )
-      when is_element_location_strategy(element_location_strategy) and
-             is_element_selector(element_selector) do
-    case W3CWireProtocolClient.find_element(session, element_location_strategy, element_selector) do
-      {:ok, element} ->
-        {:ok, element}
-
-      {:error, error} ->
-        {:error, to_error(error)}
     end
   end
 
@@ -287,48 +246,38 @@ defmodule WebDriverClient do
           Element.t(),
           element_location_strategy,
           element_selector
-        ) :: {:ok, [Element.t()] | {:error, basic_reason}}
+        ) :: {:ok, [Element.t()] | {:error, reason}}
   def find_elements_from_element(
-        %Session{config: %Config{protocol: :jwp}} = session,
+        %Session{config: %Config{protocol: protocol}} = session,
         %Element{} = element,
         element_location_strategy,
         element_selector
       )
       when is_element_location_strategy(element_location_strategy) and
              is_element_selector(element_selector) do
-    case JSONWireProtocolClient.find_elements_from_element(
-           session,
-           element,
-           element_location_strategy,
-           element_selector
-         ) do
-      {:ok, elements} ->
-        {:ok, elements}
-
-      {:error, error} ->
-        {:error, to_error(error)}
-    end
-  end
-
-  def find_elements_from_element(
-        %Session{config: %Config{protocol: :w3c}} = session,
-        %Element{} = element,
-        element_location_strategy,
-        element_selector
+    with {:ok, http_response} <-
+           send_request_for_protocol(protocol,
+             jwp: fn ->
+               JWPCommands.FindElementsFromElement.send_request(
+                 session,
+                 element,
+                 element_location_strategy,
+                 element_selector
+               )
+             end,
+             w3c: fn ->
+               W3CCommands.FindElementsFromElement.send_request(
+                 session,
+                 element,
+                 element_location_strategy,
+                 element_selector
+               )
+             end
+           ) do
+      parse_with_fallbacks(http_response, protocol,
+        jwp: &JWPCommands.FindElementsFromElement.parse_response/1,
+        w3c: &W3CCommands.FindElementsFromElement.parse_response/1
       )
-      when is_element_location_strategy(element_location_strategy) and
-             is_element_selector(element_selector) do
-    case W3CWireProtocolClient.find_elements_from_element(
-           session,
-           element,
-           element_location_strategy,
-           element_selector
-         ) do
-      {:ok, elements} ->
-        {:ok, elements}
-
-      {:error, error} ->
-        {:error, to_error(error)}
     end
   end
 
@@ -337,28 +286,17 @@ defmodule WebDriverClient do
   @doc """
   Sets the size of the window
   """
-  @spec set_window_size(Session.t(), [size_opt]) :: :ok | {:error, basic_reason}
-  def set_window_size(session, opts \\ [])
-
-  def set_window_size(%Session{config: %Config{protocol: :jwp}} = session, opts)
-      when is_list(opts) do
-    case JSONWireProtocolClient.set_window_size(session, opts) do
-      :ok ->
-        :ok
-
-      {:error, error} ->
-        {:error, to_error(error)}
-    end
-  end
-
-  def set_window_size(%Session{config: %Config{protocol: :w3c}} = session, opts)
-      when is_list(opts) do
-    case W3CWireProtocolClient.set_window_rect(session, opts) do
-      :ok ->
-        :ok
-
-      {:error, error} ->
-        {:error, to_error(error)}
+  @spec set_window_size(Session.t(), [size_opt]) :: :ok | {:error, reason}
+  def set_window_size(%Session{config: %Config{protocol: protocol}} = session, opts \\ []) do
+    with {:ok, http_response} <-
+           send_request_for_protocol(protocol,
+             jwp: fn -> JWPCommands.SetWindowSize.send_request(session, opts) end,
+             w3c: fn -> W3CCommands.SetWindowRect.send_request(session, opts) end
+           ) do
+      parse_with_fallbacks(http_response, protocol,
+        jwp: &JWPCommands.SetWindowSize.parse_response/1,
+        w3c: &W3CCommands.SetWindowRect.parse_response/1
+      )
     end
   end
 
@@ -368,24 +306,19 @@ defmodule WebDriverClient do
   Fetches the log types from the server
   """
   doc_metadata subject: :logging
-  @spec fetch_log_types(Session.t()) :: {:ok, [log_type]} | {:error, basic_reason()}
-  def fetch_log_types(%Session{config: %Config{protocol: :jwp}} = session) do
-    case JSONWireProtocolClient.fetch_log_types(session) do
-      {:ok, log_types} ->
-        {:ok, log_types}
-
-      {:error, error} ->
-        {:error, to_error(error)}
-    end
-  end
-
-  def fetch_log_types(%Session{config: %Config{protocol: :w3c}} = session) do
-    case W3CWireProtocolClient.fetch_log_types(session) do
-      {:ok, log_types} ->
-        {:ok, log_types}
-
-      {:error, error} ->
-        {:error, to_error(error)}
+  @spec fetch_log_types(Session.t()) :: {:ok, [log_type]} | {:error, reason()}
+  def fetch_log_types(%Session{config: %Config{protocol: protocol}} = session) do
+    with {:ok, http_response} <-
+           send_request_for_protocol(protocol,
+             jwp: fn -> JWPCommands.FetchLogTypes.send_request(session) end,
+             w3c: fn -> W3CCommands.FetchLogTypes.send_request(session) end
+           ) do
+      parse_with_fallbacks(
+        http_response,
+        protocol,
+        jwp: &JWPCommands.FetchLogTypes.parse_response/1,
+        w3c: &W3CCommands.FetchLogTypes.parse_response/1
+      )
     end
   end
 
@@ -393,30 +326,28 @@ defmodule WebDriverClient do
   Fetches log entries for the requested log type.
   """
   doc_metadata subject: :logging
-  @spec fetch_logs(Session.t(), log_type) :: {:ok, [LogEntry.t()]} | {:error, basic_reason()}
+  @spec fetch_logs(Session.t(), log_type) :: {:ok, [LogEntry.t()]} | {:error, reason()}
   def fetch_logs(session, log_type)
 
-  def fetch_logs(%Session{config: %Config{protocol: :jwp}} = session, log_type)
+  def fetch_logs(%Session{config: %Config{protocol: protocol}} = session, log_type)
       when is_binary(log_type) do
-    case JSONWireProtocolClient.fetch_logs(session, log_type) do
-      {:ok, log_entries} ->
-        log_entries = Enum.map(log_entries, &to_log_entry/1)
-        {:ok, log_entries}
-
-      {:error, error} ->
-        {:error, to_error(error)}
-    end
-  end
-
-  def fetch_logs(%Session{config: %Config{protocol: :w3c}} = session, log_type)
-      when is_binary(log_type) do
-    case W3CWireProtocolClient.fetch_logs(session, log_type) do
-      {:ok, log_entries} ->
-        log_entries = Enum.map(log_entries, &to_log_entry/1)
-        {:ok, log_entries}
-
-      {:error, error} ->
-        {:error, to_error(error)}
+    with {:ok, http_response} <-
+           send_request_for_protocol(protocol,
+             jwp: fn -> JWPCommands.FetchLogs.send_request(session, log_type) end,
+             w3c: fn -> W3CCommands.FetchLogs.send_request(session, log_type) end
+           ) do
+      parse_with_fallbacks(
+        http_response,
+        protocol,
+        [
+          jwp: &JWPCommands.FetchLogs.parse_response/1,
+          w3c: &W3CCommands.FetchLogs.parse_response/1
+        ],
+        fn
+          {:ok, log_entries} -> {:ok, Enum.map(log_entries, &to_log_entry/1)}
+          {:error, error} -> {:error, to_error(error)}
+        end
+      )
     end
   end
 
@@ -426,31 +357,20 @@ defmodule WebDriverClient do
   """
   doc_metadata subject: :elements
 
-  @spec fetch_element_displayed(Session.t(), Element.t()) ::
-          {:ok, boolean} | {:error, basic_reason}
+  @spec fetch_element_displayed(Session.t(), Element.t()) :: {:ok, boolean} | {:error, reason}
   def fetch_element_displayed(
-        %Session{config: %Config{protocol: :jwp}} = session,
+        %Session{config: %Config{protocol: protocol}} = session,
         %Element{} = element
       ) do
-    case JSONWireProtocolClient.fetch_element_displayed(session, element) do
-      {:ok, displayed?} ->
-        {:ok, displayed?}
-
-      {:error, error} ->
-        {:error, to_error(error)}
-    end
-  end
-
-  def fetch_element_displayed(
-        %Session{config: %Config{protocol: :w3c}} = session,
-        %Element{} = element
-      ) do
-    case W3CWireProtocolClient.fetch_element_displayed(session, element) do
-      {:ok, displayed?} ->
-        {:ok, displayed?}
-
-      {:error, error} ->
-        {:error, to_error(error)}
+    with {:ok, http_response} <-
+           send_request_for_protocol(protocol,
+             jwp: fn -> JWPCommands.FetchElementDisplayed.send_request(session, element) end,
+             w3c: fn -> W3CCommands.FetchElementDisplayed.send_request(session, element) end
+           ) do
+      parse_with_fallbacks(http_response, protocol,
+        jwp: &JWPCommands.FetchElementDisplayed.parse_response/1,
+        w3c: &W3CCommands.FetchElementDisplayed.parse_response/1
+      )
     end
   end
 
@@ -549,4 +469,5 @@ defmodule WebDriverClient do
   defp default_normalize_response(response)
   defp default_normalize_response({:error, error}), do: {:error, to_error(error)}
   defp default_normalize_response({:ok, result}), do: {:ok, result}
+  defp default_normalize_response(:ok), do: :ok
 end

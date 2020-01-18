@@ -344,6 +344,22 @@ defmodule WebDriverClientTest do
     assert :ok = WebDriverClient.set_window_size(session)
   end
 
+  @tag protocol: :jwp
+  test "set_window_size/2 with JWP session returns {:error, %ProtocolMismatchError{}} on valid W3C response",
+       %{
+         config: config,
+         bypass: bypass
+       } do
+    session = TestData.session(config: constant(config)) |> pick()
+    resp = W3CTestResponses.set_window_rect_response() |> pick()
+
+    stub_bypass_response(bypass, resp)
+
+    assert {:error,
+            %ProtocolMismatchError{response: :ok, expected_protocol: :jwp, actual_protocol: :w3c}} =
+             WebDriverClient.set_window_size(session)
+  end
+
   @tag protocol: :w3c
   test "set_window_size/2 with w3c session returns :ok on valid response", %{
     config: config,
@@ -739,11 +755,21 @@ defmodule WebDriverClientTest do
   end
 
   defp basic_error_scenarios(:w3c) do
-    [:http_client_error, :unexpected_response_format, :web_driver_error]
+    [
+      :http_client_error,
+      :unexpected_response_format,
+      :web_driver_error,
+      :protocol_mismatch_error_web_driver_error
+    ]
   end
 
   defp basic_error_scenarios(:jwp) do
-    [:http_client_error, :unexpected_response_format, :web_driver_error]
+    [
+      :http_client_error,
+      :unexpected_response_format,
+      :web_driver_error,
+      :protocol_mismatch_error_web_driver_error
+    ]
   end
 
   defp build_session_for_scenario(:jwp, scenario_server, bypass, config, error_scenario) do
@@ -761,6 +787,15 @@ defmodule WebDriverClientTest do
   defp assert_expected_response(protocol, response, :http_client_error)
        when protocol in [:w3c, :jwp] do
     assert {:error, %HTTPClientError{}} = response
+  end
+
+  defp assert_expected_response(protocol, response, :protocol_mismatch_error_web_driver_error)
+       when protocol in [:w3c, :jwp] do
+    assert {:error,
+            %ProtocolMismatchError{
+              response: {:error, %WebDriverError{}},
+              expected_protocol: ^protocol
+            }} = response
   end
 
   defp assert_expected_response(protocol, response, :unexpected_response_format)

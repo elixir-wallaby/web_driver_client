@@ -7,6 +7,7 @@ defmodule WebDriverClient.W3CWireProtocolClient.ErrorScenarios do
   alias ExUnit.AssertionError
   alias WebDriverClient.Config
   alias WebDriverClient.HTTPClientError
+  alias WebDriverClient.JSONWireProtocolClient.TestResponses, as: JWPTestResponses
   alias WebDriverClient.TestData
   alias WebDriverClient.W3CWireProtocolClient.ErrorScenarios.ErrorScenario
   alias WebDriverClient.W3CWireProtocolClient.ErrorScenarios.ScenarioServer
@@ -23,6 +24,15 @@ defmodule WebDriverClient.W3CWireProtocolClient.ErrorScenarios do
 
   def get_named_scenario(:http_client_error) do
     %ErrorScenario{communication_error: :server_down}
+  end
+
+  def get_named_scenario(:protocol_mismatch_error_web_driver_error) do
+    %ErrorScenario{
+      status_code: 400,
+      content_type: @json_content_type,
+      response_body:
+        {:valid_json, JWPTestResponses.jwp_response(nil, status: constant(6)) |> pick()}
+    }
   end
 
   def get_named_scenario(:web_driver_error) do
