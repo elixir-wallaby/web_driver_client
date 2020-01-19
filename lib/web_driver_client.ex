@@ -396,8 +396,6 @@ defmodule WebDriverClient do
     WebDriverError.exception(reason: reason)
   end
 
-  defp to_error(%HTTPClientError{} = error), do: error
-
   defp to_error(%W3CWireProtocolClient.UnexpectedResponseError{
          reason: reason,
          response_body: response_body
