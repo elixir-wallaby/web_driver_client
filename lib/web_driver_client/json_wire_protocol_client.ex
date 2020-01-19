@@ -15,8 +15,8 @@ defmodule WebDriverClient.JSONWireProtocolClient do
   import WebDriverClient.JSONWireProtocolClient.Guards
 
   alias WebDriverClient.Config
+  alias WebDriverClient.ConnectionError
   alias WebDriverClient.Element
-  alias WebDriverClient.HTTPClientError
   alias WebDriverClient.JSONWireProtocolClient.Commands
   alias WebDriverClient.JSONWireProtocolClient.LogEntry
   alias WebDriverClient.JSONWireProtocolClient.UnexpectedResponseError
@@ -27,7 +27,7 @@ defmodule WebDriverClient.JSONWireProtocolClient do
   @type url :: String.t()
 
   @type basic_reason ::
-          HTTPClientError.t()
+          ConnectionError.t()
           | UnexpectedResponseError.t()
           | WebDriverError.t()
 

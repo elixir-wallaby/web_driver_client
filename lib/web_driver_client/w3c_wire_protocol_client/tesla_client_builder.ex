@@ -11,7 +11,7 @@ defmodule WebDriverClient.W3CWireProtocolClient.TeslaClientBuilder do
       [
         {Tesla.Middleware.BaseUrl, base_url},
         Tesla.Middleware.EncodeJson,
-        WebDriverClient.Middleware.HTTPClientErrorHandler,
+        WebDriverClient.Middleware.ConnectionErrorHandler,
         Tesla.Middleware.Logger
       ]
       |> Enum.reject(fn

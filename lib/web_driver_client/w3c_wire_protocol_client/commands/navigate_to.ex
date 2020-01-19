@@ -4,7 +4,7 @@ defmodule WebDriverClient.W3CWireProtocolClient.Commands.NavigateTo do
   import WebDriverClient.W3CWireProtocolClient.Guards
 
   alias WebDriverClient.Config
-  alias WebDriverClient.HTTPClientError
+  alias WebDriverClient.ConnectionError
   alias WebDriverClient.HTTPResponse
   alias WebDriverClient.Session
   alias WebDriverClient.W3CWireProtocolClient.ResponseParser
@@ -13,7 +13,7 @@ defmodule WebDriverClient.W3CWireProtocolClient.Commands.NavigateTo do
   alias WebDriverClient.W3CWireProtocolClient.WebDriverError
 
   @spec send_request(Session.t(), String.t()) ::
-          {:ok, HTTPResponse.t()} | {:error, HTTPClientError.t()}
+          {:ok, HTTPResponse.t()} | {:error, ConnectionError.t()}
   def send_request(%Session{id: id, config: %Config{} = config}, url) when is_url(url) do
     client = TeslaClientBuilder.build_simple(config)
     request_body = %{"url" => url}

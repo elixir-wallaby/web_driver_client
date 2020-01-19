@@ -4,8 +4,8 @@ defmodule WebDriverClient.W3CWireProtocolClient.Commands.FindElementsFromElement
   import WebDriverClient.W3CWireProtocolClient.Guards
 
   alias WebDriverClient.Config
+  alias WebDriverClient.ConnectionError
   alias WebDriverClient.Element
-  alias WebDriverClient.HTTPClientError
   alias WebDriverClient.HTTPResponse
   alias WebDriverClient.Session
   alias WebDriverClient.W3CWireProtocolClient
@@ -18,7 +18,7 @@ defmodule WebDriverClient.W3CWireProtocolClient.Commands.FindElementsFromElement
   @type element_selector :: W3CWireProtocolClient.element_selector()
 
   @spec send_request(Session.t(), Element.t(), element_location_strategy, element_selector) ::
-          {:ok, HTTPResponse.t()} | {:error, HTTPClientError.t()}
+          {:ok, HTTPResponse.t()} | {:error, ConnectionError.t()}
 
   def send_request(
         %Session{id: session_id, config: %Config{} = config},

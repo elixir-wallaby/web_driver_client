@@ -4,8 +4,8 @@ defmodule WebDriverClientTest do
 
   import Plug.Conn
 
+  alias WebDriverClient.ConnectionError
   alias WebDriverClient.Element
-  alias WebDriverClient.HTTPClientError
   alias WebDriverClient.JSONWireProtocolClient.ErrorScenarios, as: JWPErrorScenarios
   alias WebDriverClient.JSONWireProtocolClient.TestResponses, as: JWPTestResponses
   alias WebDriverClient.LogEntry
@@ -786,7 +786,7 @@ defmodule WebDriverClientTest do
 
   defp assert_expected_response(protocol, response, :http_client_error)
        when protocol in [:w3c, :jwp] do
-    assert {:error, %HTTPClientError{}} = response
+    assert {:error, %ConnectionError{}} = response
   end
 
   defp assert_expected_response(protocol, response, :protocol_mismatch_error_web_driver_error)

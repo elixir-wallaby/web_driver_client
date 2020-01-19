@@ -4,8 +4,8 @@ defmodule WebDriverClient.JSONWireProtocolClient.Commands.FindElement do
   import WebDriverClient.JSONWireProtocolClient.Guards
 
   alias WebDriverClient.Config
+  alias WebDriverClient.ConnectionError
   alias WebDriverClient.Element
-  alias WebDriverClient.HTTPClientError
   alias WebDriverClient.HTTPResponse
   alias WebDriverClient.JSONWireProtocolClient
   alias WebDriverClient.JSONWireProtocolClient.ResponseParser
@@ -18,7 +18,7 @@ defmodule WebDriverClient.JSONWireProtocolClient.Commands.FindElement do
   @type element_selector :: JSONWireProtocolClient.element_selector()
 
   @spec send_request(Session.t(), element_location_strategy, element_selector) ::
-          {:ok, HTTPResponse.t()} | {:error, HTTPClientError.t()}
+          {:ok, HTTPResponse.t()} | {:error, ConnectionError.t()}
   def send_request(
         %Session{id: id, config: %Config{} = config},
         element_location_strategy,

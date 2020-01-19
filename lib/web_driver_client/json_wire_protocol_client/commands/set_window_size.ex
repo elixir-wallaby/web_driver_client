@@ -2,7 +2,7 @@ defmodule WebDriverClient.JSONWireProtocolClient.Commands.SetWindowSize do
   @moduledoc false
 
   alias WebDriverClient.Config
-  alias WebDriverClient.HTTPClientError
+  alias WebDriverClient.ConnectionError
   alias WebDriverClient.HTTPResponse
   alias WebDriverClient.JSONWireProtocolClient
   alias WebDriverClient.JSONWireProtocolClient.ResponseParser
@@ -14,7 +14,7 @@ defmodule WebDriverClient.JSONWireProtocolClient.Commands.SetWindowSize do
   @type size_opt :: JSONWireProtocolClient.size_opt()
 
   @spec send_request(Session.t(), [size_opt]) ::
-          {:ok, HTTPResponse.t()} | {:error, HTTPClientError.t()}
+          {:ok, HTTPResponse.t()} | {:error, ConnectionError.t()}
   def send_request(%Session{id: id, config: %Config{} = config}, opts) when is_list(opts) do
     window_handle = "current"
     client = TeslaClientBuilder.build_simple(config)

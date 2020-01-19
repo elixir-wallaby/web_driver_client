@@ -2,7 +2,7 @@ defmodule WebDriverClient.W3CWireProtocolClient.Commands.SetWindowRect do
   @moduledoc false
 
   alias WebDriverClient.Config
-  alias WebDriverClient.HTTPClientError
+  alias WebDriverClient.ConnectionError
   alias WebDriverClient.HTTPResponse
   alias WebDriverClient.Session
   alias WebDriverClient.W3CWireProtocolClient
@@ -14,7 +14,7 @@ defmodule WebDriverClient.W3CWireProtocolClient.Commands.SetWindowRect do
   @type rect_opt :: W3CWireProtocolClient.rect_opt()
 
   @spec send_request(Session.t(), [rect_opt]) ::
-          {:ok, HTTPResponse.t()} | {:error, HTTPClientError.t()}
+          {:ok, HTTPResponse.t()} | {:error, ConnectionError.t()}
   def send_request(%Session{id: id, config: %Config{} = config}, opts) when is_list(opts) do
     client = TeslaClientBuilder.build_simple(config)
     request_body = opts |> Keyword.take([:height, :width, :x, :y]) |> Map.new()

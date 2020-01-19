@@ -61,10 +61,10 @@ defmodule WebDriverClient.MixProject do
         "Main API": [
           WebDriverClient,
           WebDriverClient.Config,
+          WebDriverClient.ConnectionError,
           WebDriverClient.Element,
           WebDriverClient.Session,
           WebDriverClient.Size,
-          WebDriverClient.HTTPClientError,
           WebDriverClient.LogEntry,
           WebDriverClient.UnexpectedResponseError,
           WebDriverClient.WebDriverError

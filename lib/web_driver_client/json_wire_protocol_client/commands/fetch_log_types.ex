@@ -2,7 +2,7 @@ defmodule WebDriverClient.JSONWireProtocolClient.Commands.FetchLogTypes do
   @moduledoc false
 
   alias WebDriverClient.Config
-  alias WebDriverClient.HTTPClientError
+  alias WebDriverClient.ConnectionError
   alias WebDriverClient.HTTPResponse
   alias WebDriverClient.JSONWireProtocolClient
   alias WebDriverClient.JSONWireProtocolClient.ResponseParser
@@ -13,7 +13,7 @@ defmodule WebDriverClient.JSONWireProtocolClient.Commands.FetchLogTypes do
 
   @type log_type :: JSONWireProtocolClient.log_type()
 
-  @spec send_request(Session.t()) :: {:ok, HTTPResponse.t()} | {:error, HTTPClientError.t()}
+  @spec send_request(Session.t()) :: {:ok, HTTPResponse.t()} | {:error, ConnectionError.t()}
   def send_request(%Session{id: id, config: %Config{} = config}) do
     client = TeslaClientBuilder.build_simple(config)
     url = "/session/#{id}/log/types"

@@ -2,7 +2,7 @@ defmodule WebDriverClient.JSONWireProtocolClient.Commands.FetchLogs do
   @moduledoc false
 
   alias WebDriverClient.Config
-  alias WebDriverClient.HTTPClientError
+  alias WebDriverClient.ConnectionError
   alias WebDriverClient.HTTPResponse
   alias WebDriverClient.JSONWireProtocolClient
   alias WebDriverClient.JSONWireProtocolClient.LogEntry
@@ -15,7 +15,7 @@ defmodule WebDriverClient.JSONWireProtocolClient.Commands.FetchLogs do
   @type log_type :: JSONWireProtocolClient.log_type()
 
   @spec send_request(Session.t(), log_type) ::
-          {:ok, HTTPResponse.t()} | {:error, HTTPClientError.t()}
+          {:ok, HTTPResponse.t()} | {:error, ConnectionError.t()}
   def send_request(
         %Session{id: id, config: %Config{} = config},
         log_type

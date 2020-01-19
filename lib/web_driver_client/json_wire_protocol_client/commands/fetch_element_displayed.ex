@@ -2,8 +2,8 @@ defmodule WebDriverClient.JSONWireProtocolClient.Commands.FetchElementDisplayed 
   @moduledoc false
 
   alias WebDriverClient.Config
+  alias WebDriverClient.ConnectionError
   alias WebDriverClient.Element
-  alias WebDriverClient.HTTPClientError
   alias WebDriverClient.HTTPResponse
   alias WebDriverClient.JSONWireProtocolClient.ResponseParser
   alias WebDriverClient.JSONWireProtocolClient.TeslaClientBuilder
@@ -12,7 +12,7 @@ defmodule WebDriverClient.JSONWireProtocolClient.Commands.FetchElementDisplayed 
   alias WebDriverClient.Session
 
   @spec send_request(Session.t(), Element.t()) ::
-          {:ok, HTTPResponse.t()} | {:error, HTTPClientError.t()}
+          {:ok, HTTPResponse.t()} | {:error, ConnectionError.t()}
   def send_request(
         %Session{id: session_id, config: %Config{} = config},
         %Element{id: element_id}

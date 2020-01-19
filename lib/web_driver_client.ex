@@ -7,8 +7,8 @@ defmodule WebDriverClient do
   import WebDriverClient.Guards
 
   alias WebDriverClient.Config
+  alias WebDriverClient.ConnectionError
   alias WebDriverClient.Element
-  alias WebDriverClient.HTTPClientError
   alias WebDriverClient.HTTPResponse
   alias WebDriverClient.JSONWireProtocolClient
   alias WebDriverClient.JSONWireProtocolClient.Commands, as: JWPCommands
@@ -25,7 +25,7 @@ defmodule WebDriverClient do
   @type url :: String.t()
   @type reason :: ProtocolMismatchError.t() | basic_reason
   @type basic_reason ::
-          HTTPClientError.t()
+          ConnectionError.t()
           | UnexpectedResponseError.t()
           | WebDriverError.t()
 
@@ -419,8 +419,8 @@ defmodule WebDriverClient do
   end
 
   @spec send_request_for_protocol(protocol, [
-          {protocol, (() -> {:ok, HTTPResponse.t()} | {:error, HTTPClientError.t()})}
-        ]) :: {:ok, HTTPResponse.t()} | {:error, HTTPClientError.t()}
+          {protocol, (() -> {:ok, HTTPResponse.t()} | {:error, ConnectionError.t()})}
+        ]) :: {:ok, HTTPResponse.t()} | {:error, ConnectionError.t()}
   defp send_request_for_protocol(protocol, send_request_fns)
        when is_list(send_request_fns) and is_atom(protocol) do
     send_request_fns

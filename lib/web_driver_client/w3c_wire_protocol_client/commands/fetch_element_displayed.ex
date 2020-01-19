@@ -2,8 +2,8 @@ defmodule WebDriverClient.W3CWireProtocolClient.Commands.FetchElementDisplayed d
   @moduledoc false
 
   alias WebDriverClient.Config
+  alias WebDriverClient.ConnectionError
   alias WebDriverClient.Element
-  alias WebDriverClient.HTTPClientError
   alias WebDriverClient.HTTPResponse
   alias WebDriverClient.Session
   alias WebDriverClient.W3CWireProtocolClient.ResponseParser
@@ -12,7 +12,7 @@ defmodule WebDriverClient.W3CWireProtocolClient.Commands.FetchElementDisplayed d
   alias WebDriverClient.W3CWireProtocolClient.WebDriverError
 
   @spec send_request(Session.t(), Element.t()) ::
-          {:ok, HTTPResponse.t()} | {:error, HTTPClientError.t()}
+          {:ok, HTTPResponse.t()} | {:error, ConnectionError.t()}
 
   def send_request(
         %Session{id: session_id, config: %Config{} = config},

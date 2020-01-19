@@ -6,7 +6,7 @@ defmodule WebDriverClient.W3CWireProtocolClient.ErrorScenarios do
 
   alias ExUnit.AssertionError
   alias WebDriverClient.Config
-  alias WebDriverClient.HTTPClientError
+  alias WebDriverClient.ConnectionError
   alias WebDriverClient.JSONWireProtocolClient.TestResponses, as: JWPTestResponses
   alias WebDriverClient.TestData
   alias WebDriverClient.W3CWireProtocolClient.ErrorScenarios.ErrorScenario
@@ -217,7 +217,7 @@ defmodule WebDriverClient.W3CWireProtocolClient.ErrorScenarios do
   end
 
   defp do_assert_expected_response(response, %ErrorScenario{communication_error: :server_down}) do
-    assert {:error, %HTTPClientError{reason: :econnrefused}} = response
+    assert {:error, %ConnectionError{reason: :econnrefused}} = response
   end
 
   defp do_assert_expected_response(response, %ErrorScenario{
@@ -232,7 +232,7 @@ defmodule WebDriverClient.W3CWireProtocolClient.ErrorScenarios do
   defp do_assert_expected_response(response, %ErrorScenario{
          communication_error: :nonexistent_domain
        }) do
-    assert {:error, %HTTPClientError{reason: :nxdomain}} = response
+    assert {:error, %ConnectionError{reason: :nxdomain}} = response
   end
 
   defp do_assert_expected_response(

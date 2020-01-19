@@ -1,7 +1,7 @@
-defmodule WebDriverClient.Middleware.HTTPClientErrorHandler do
+defmodule WebDriverClient.Middleware.ConnectionErrorHandler do
   @moduledoc false
 
-  alias WebDriverClient.HTTPClientError
+  alias WebDriverClient.ConnectionError
 
   @behaviour Tesla.Middleware
 
@@ -12,7 +12,7 @@ defmodule WebDriverClient.Middleware.HTTPClientErrorHandler do
         {:ok, env}
 
       {:error, reason} when is_atom(reason) ->
-        {:error, HTTPClientError.exception(reason: reason)}
+        {:error, ConnectionError.exception(reason: reason)}
     end
   end
 end

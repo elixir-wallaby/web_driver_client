@@ -15,8 +15,8 @@ defmodule WebDriverClient.W3CWireProtocolClient do
   import WebDriverClient.W3CWireProtocolClient.Guards
 
   alias WebDriverClient.Config
+  alias WebDriverClient.ConnectionError
   alias WebDriverClient.Element
-  alias WebDriverClient.HTTPClientError
   alias WebDriverClient.Session
   alias WebDriverClient.W3CWireProtocolClient.Commands
   alias WebDriverClient.W3CWireProtocolClient.LogEntry
@@ -27,7 +27,7 @@ defmodule WebDriverClient.W3CWireProtocolClient do
   @type url :: String.t()
 
   @type basic_reason ::
-          HTTPClientError.t()
+          ConnectionError.t()
           | UnexpectedResponseError.t()
           | WebDriverError.t()
 

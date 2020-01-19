@@ -2,7 +2,7 @@ defmodule WebDriverClient.JSONWireProtocolClient.Commands.FetchSessions do
   @moduledoc false
 
   alias WebDriverClient.Config
-  alias WebDriverClient.HTTPClientError
+  alias WebDriverClient.ConnectionError
   alias WebDriverClient.HTTPResponse
   alias WebDriverClient.JSONWireProtocolClient.ResponseParser
   alias WebDriverClient.JSONWireProtocolClient.TeslaClientBuilder
@@ -10,7 +10,7 @@ defmodule WebDriverClient.JSONWireProtocolClient.Commands.FetchSessions do
   alias WebDriverClient.JSONWireProtocolClient.WebDriverError
   alias WebDriverClient.Session
 
-  @spec send_request(Config.t()) :: {:ok, HTTPResponse.t()} | {:error, HTTPClientError.t()}
+  @spec send_request(Config.t()) :: {:ok, HTTPResponse.t()} | {:error, ConnectionError.t()}
   def send_request(%Config{} = config) do
     client = TeslaClientBuilder.build_simple(config)
 

@@ -2,7 +2,7 @@ defmodule WebDriverClient.W3CWireProtocolClient.Commands.StartSession do
   @moduledoc false
 
   alias WebDriverClient.Config
-  alias WebDriverClient.HTTPClientError
+  alias WebDriverClient.ConnectionError
   alias WebDriverClient.HTTPResponse
   alias WebDriverClient.Session
   alias WebDriverClient.W3CWireProtocolClient.ResponseParser
@@ -10,7 +10,7 @@ defmodule WebDriverClient.W3CWireProtocolClient.Commands.StartSession do
   alias WebDriverClient.W3CWireProtocolClient.UnexpectedResponseError
   alias WebDriverClient.W3CWireProtocolClient.WebDriverError
 
-  @spec send_request(Config.t(), map) :: {:ok, HTTPResponse.t()} | {:error, HTTPClientError.t()}
+  @spec send_request(Config.t(), map) :: {:ok, HTTPResponse.t()} | {:error, ConnectionError.t()}
 
   def send_request(
         %Config{} = config,

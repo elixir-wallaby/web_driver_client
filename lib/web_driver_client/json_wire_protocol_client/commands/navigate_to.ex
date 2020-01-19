@@ -2,7 +2,7 @@ defmodule WebDriverClient.JSONWireProtocolClient.Commands.NavigateTo do
   @moduledoc false
 
   alias WebDriverClient.Config
-  alias WebDriverClient.HTTPClientError
+  alias WebDriverClient.ConnectionError
   alias WebDriverClient.HTTPResponse
   alias WebDriverClient.JSONWireProtocolClient.ResponseParser
   alias WebDriverClient.JSONWireProtocolClient.TeslaClientBuilder
@@ -11,7 +11,7 @@ defmodule WebDriverClient.JSONWireProtocolClient.Commands.NavigateTo do
   alias WebDriverClient.Session
 
   @spec send_request(Session.t(), String.t()) ::
-          {:ok, HTTPResponse.t()} | {:error, HTTPClientError.t()}
+          {:ok, HTTPResponse.t()} | {:error, ConnectionError.t()}
   def send_request(%Session{id: id, config: %Config{} = config}, url) do
     request_body = %{"url" => url}
 
