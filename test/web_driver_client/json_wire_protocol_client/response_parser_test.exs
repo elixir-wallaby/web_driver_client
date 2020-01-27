@@ -9,6 +9,7 @@ defmodule WebDriverClient.JSONWireProtocolClient.ResponseParserTest do
   alias WebDriverClient.JSONWireProtocolClient.ResponseParser
   alias WebDriverClient.JSONWireProtocolClient.TestResponses
   alias WebDriverClient.JSONWireProtocolClient.UnexpectedResponseError
+  alias WebDriverClient.JSONWireProtocolClient.WebDriverError
   alias WebDriverClient.Session
   alias WebDriverClient.Size
   alias WebDriverClient.TestData
@@ -27,6 +28,19 @@ defmodule WebDriverClient.JSONWireProtocolClient.ResponseParserTest do
                 value: ^expected_value
               }} = ResponseParser.parse_response(http_response)
     end
+  end
+
+  test "parse_response/1 returns {:error, %WebDriverError{reason: :unknown_command}} 404 status code" do
+    http_response =
+      [status: constant(404), body: constant("")]
+      |> http_response()
+      |> pick()
+
+    assert {:error,
+            %WebDriverError{
+              http_status_code: 404,
+              reason: :unknown_command
+            }} = ResponseParser.parse_response(http_response)
   end
 
   property "parse_response/1 returns {:error, %UnexpectedResponseError{}} on invalid JWP response" do

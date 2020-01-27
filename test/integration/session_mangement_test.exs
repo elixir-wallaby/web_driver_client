@@ -4,7 +4,9 @@ defmodule WebDriverClient.Integration.SessionManagementTest do
   alias WebDriverClient.IntegrationTesting.Scenarios
   alias WebDriverClient.IntegrationTesting.Scenarios.Scenario
   alias WebDriverClient.IntegrationTesting.TestGenerator
+  alias WebDriverClient.ProtocolMismatchError
   alias WebDriverClient.Session
+  alias WebDriverClient.WebDriverError
 
   require WebDriverClient.IntegrationTesting.TestGenerator
 
@@ -31,6 +33,32 @@ defmodule WebDriverClient.Integration.SessionManagementTest do
       end
 
       assert {:ok, []} = WebDriverClient.fetch_sessions(config)
+
+      # Ending an already ended session
+      case scenario do
+        %Scenario{driver: :selenium_2} ->
+          assert {:error, %WebDriverError{reason: :unknown_error}} =
+                   WebDriverClient.end_session(session)
+
+        %Scenario{driver: :chromedriver, protocol: :w3c} ->
+          assert :ok = WebDriverClient.end_session(session)
+
+        %Scenario{driver: :chromedriver, protocol: :jwp} ->
+          assert {:error,
+                  %ProtocolMismatchError{
+                    response: :ok,
+                    expected_protocol: :jwp,
+                    actual_protocol: :w3c
+                  }} = WebDriverClient.end_session(session)
+
+        %Scenario{protocol: :jwp} ->
+          assert {:error, %WebDriverError{reason: :unknown_command}} =
+                   WebDriverClient.end_session(session)
+
+        %Scenario{protocol: :w3c} ->
+          assert {:error, %WebDriverError{reason: :invalid_session_id}} =
+                   WebDriverClient.end_session(session)
+      end
     end
   end
 
@@ -40,7 +68,11 @@ defmodule WebDriverClient.Integration.SessionManagementTest do
     {:ok, sessions} = WebDriverClient.fetch_sessions(config)
 
     Enum.each(sessions, fn session ->
-      :ok = WebDriverClient.end_session(session)
+      case WebDriverClient.end_session(session) do
+        :ok -> :ok
+        {:error, %ProtocolMismatchError{response: :ok}} -> :ok
+        {:error, error} -> raise error
+      end
     end)
   end
 end

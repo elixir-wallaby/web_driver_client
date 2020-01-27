@@ -18,7 +18,11 @@ defmodule WebDriverClient.JSONWireProtocolClient.ResponseParser do
   defguardp is_status(term) when is_integer(term) and term >= 0
 
   @spec parse_response(HTTPResponse.t()) ::
-          {:ok, Response.t()} | {:error, UnexpectedResponseError.t()}
+          {:ok, Response.t()} | {:error, UnexpectedResponseError.t() | WebDriverError.t()}
+  def parse_response(%HTTPResponse{status: 404}) do
+    {:error, WebDriverError.exception(http_status_code: 404, reason: :unknown_command)}
+  end
+
   def parse_response(%HTTPResponse{body: body} = http_response) when is_binary(body) do
     with {:ok, %{"value" => value, "status" => status} = body} when is_status(status) <-
            parse_json(http_response),

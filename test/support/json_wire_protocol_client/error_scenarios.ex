@@ -192,6 +192,10 @@ defmodule WebDriverClient.JSONWireProtocolClient.ErrorScenarios do
     assert {:error, %ConnectionError{reason: :nxdomain}} = response
   end
 
+  defp do_assert_expected_response(response, %ErrorScenario{http_status_code: 404}) do
+    assert {:error, %WebDriverError{reason: :unknown_command, http_status_code: 404}} = response
+  end
+
   defp do_assert_expected_response(
          response,
          %ErrorScenario{
