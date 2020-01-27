@@ -16,8 +16,11 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        elixir: ["1.9.4", "1.8.2", "1.7.4", "1.6.6"]
+        elixir: ["1.10.0", "1.9.4", "1.8.2", "1.7.4", "1.6.6"]
         include:
+          - elixir: "1.10.0"
+            otp: "22.2.3"
+            check_formatting: true
           - elixir: "1.9.4"
             otp: "22.1.7"
             check_formatting: true
@@ -66,8 +69,10 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        elixir: ["1.9.4", "1.8.2", "1.7.4", "1.6.6"]
+        elixir: ["1.10.0", "1.9.4", "1.8.2", "1.7.4", "1.6.6"]
         include:
+          - elixir: "1.10.0"
+            otp: "22.2.3"
           - elixir: "1.9.4"
             otp: "22.1.7"
           - elixir: "1.8.2"
@@ -111,11 +116,14 @@ jobs:
       fail-fast: false
       matrix:
         elixir:
+          - "1.10.0"
           - "1.9.4"
           - "1.8.2"
           - "1.7.4"
           - "1.6.6"
         include:
+          - elixir: "1.10.0"
+            otp: "22.2.3"
           - elixir: "1.9.4"
             otp: "22.1.7"
           - elixir: "1.8.2"
