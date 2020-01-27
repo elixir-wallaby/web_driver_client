@@ -39,7 +39,7 @@ defmodule WebDriverClient.MixProject do
       {:hackney, "~> 1.6", only: [:dev, :test]},
       {:stream_data, "~> 0.1", only: [:dev, :test]},
       {:excoveralls, "~> 0.10", only: :test},
-      {:credo, "~> 1.1.0", only: [:dev, :test], runtime: false},
+      {:credo, "~> 1.2.0", only: [:dev, :test], runtime: false},
       {:dialyxir, "~> 1.0.0-rc.7", only: [:dev], runtime: false},
       {:ex_doc, "~> 0.20", only: [:docs, :docs_prerelease]}
     ]
