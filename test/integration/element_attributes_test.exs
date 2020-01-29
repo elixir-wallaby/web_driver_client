@@ -40,6 +40,42 @@ defmodule WebDriverClient.Integration.ElementAttributesTest do
 
       assert {:ok, false} = WebDriverClient.fetch_element_displayed(session, element)
     end
+
+    test "returning element attributes", %{scenario: scenario} do
+      config = Scenarios.get_config(scenario)
+      payload = Scenarios.get_start_session_payload(scenario)
+
+      {:ok, session} = WebDriverClient.start_session(config, payload)
+
+      ensure_session_is_closed(session)
+
+      :ok = WebDriverClient.navigate_to(session, ElementsPage.url())
+      text_input_id = ElementsPage.text_input_id()
+
+      assert {:ok, text_input_element} =
+               WebDriverClient.find_element(
+                 session,
+                 :css_selector,
+                 "#" <> text_input_id
+               )
+
+      assert {:ok, ^text_input_id} =
+               WebDriverClient.fetch_element_attribute(session, text_input_element, "id")
+
+      assert {:ok, nil} =
+               WebDriverClient.fetch_element_attribute(
+                 session,
+                 text_input_element,
+                 "unknown-attribute"
+               )
+
+      assert {:ok, nil} =
+               WebDriverClient.fetch_element_attribute(
+                 session,
+                 text_input_element,
+                 "invalid attribute name"
+               )
+    end
   end
 
   @spec ensure_session_is_closed(Session.t()) :: :ok

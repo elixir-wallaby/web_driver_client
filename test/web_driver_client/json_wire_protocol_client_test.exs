@@ -968,6 +968,77 @@ defmodule WebDriverClient.JSONWireProtocolClientTest do
     end
   end
 
+  property "fetch_element_attribute/3 returns {:ok, value} on valid response", %{
+    bypass: bypass,
+    config: config
+  } do
+    check all resp <- TestResponses.fetch_element_attribute_response() do
+      {config, prefix} = prefix_base_url_for_multiple_runs(config)
+
+      %Session{id: session_id} = session = TestData.session(config: constant(config)) |> pick()
+      %Element{id: element_id} = element = TestData.element() |> pick()
+      attribute = TestData.attribute_name() |> pick
+
+      Bypass.expect_once(
+        bypass,
+        "GET",
+        "/#{prefix}/session/#{session_id}/element/#{element_id}/attribute/#{attribute}",
+        fn conn ->
+          conn
+          |> put_resp_content_type("application/json")
+          |> send_resp(200, resp)
+        end
+      )
+
+      parsed_response = Jason.decode!(resp)
+      value = Map.fetch!(parsed_response, "value")
+
+      assert {:ok, ^value} =
+               JSONWireProtocolClient.fetch_element_attribute(session, element, attribute)
+    end
+  end
+
+  test "fetch_element_attribute/3 returns {:error, %UnexpectedResponseError{}} on invalid response",
+       %{bypass: bypass, config: config} do
+    %Session{id: session_id} = session = TestData.session(config: constant(config)) |> pick()
+    %Element{id: element_id} = element = TestData.element() |> pick()
+    attribute = TestData.attribute_name() |> pick
+
+    parsed_response = %{}
+
+    Bypass.expect_once(
+      bypass,
+      "GET",
+      "/session/#{session_id}/element/#{element_id}/attribute/#{attribute}",
+      fn conn ->
+        conn
+        |> put_resp_content_type("application/json")
+        |> send_resp(200, Jason.encode!(parsed_response))
+      end
+    )
+
+    assert {:error, %UnexpectedResponseError{response_body: ^parsed_response}} =
+             JSONWireProtocolClient.fetch_element_attribute(session, element, attribute)
+  end
+
+  test "fetch_element_attribute/3 returns appropriate errors on various server responses", %{
+    bypass: bypass,
+    config: config
+  } do
+    scenario_server = set_up_error_scenario_tests(bypass)
+
+    for error_scenario <- error_scenarios() do
+      session = build_session_for_scenario(scenario_server, bypass, config, error_scenario)
+      element = TestData.element() |> pick()
+      attribute = TestData.attribute_name() |> pick()
+
+      assert_expected_response(
+        JSONWireProtocolClient.fetch_element_attribute(session, element, attribute),
+        error_scenario
+      )
+    end
+  end
+
   defp build_start_session_payload do
     %{"defaultCapabilities" => %{"browserName" => "firefox"}}
   end

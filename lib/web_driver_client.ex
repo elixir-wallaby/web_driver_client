@@ -23,6 +23,7 @@ defmodule WebDriverClient do
 
   @type protocol :: Config.protocol()
   @type url :: String.t()
+  @type attribute_name :: String.t()
   @type reason :: ProtocolMismatchError.t() | basic_reason
   @type basic_reason ::
           ConnectionError.t()
@@ -370,6 +371,35 @@ defmodule WebDriverClient do
       parse_with_fallbacks(http_response, protocol,
         jwp: &JWPCommands.FetchElementDisplayed.parse_response/1,
         w3c: &W3CCommands.FetchElementDisplayed.parse_response/1
+      )
+    end
+  end
+
+  @doc """
+  Fetches the value of an element's attribute
+  """
+  doc_metadata subject: :elements
+
+  @spec fetch_element_attribute(Session.t(), Element.t(), attribute_name) ::
+          {:ok, String.t()} | {:error, reason}
+  def fetch_element_attribute(
+        %Session{config: %Config{protocol: protocol}} = session,
+        %Element{} = element,
+        attribute_name
+      )
+      when is_attribute_name(attribute_name) do
+    with {:ok, http_response} <-
+           send_request_for_protocol(protocol,
+             jwp: fn ->
+               JWPCommands.FetchElementAttribute.send_request(session, element, attribute_name)
+             end,
+             w3c: fn ->
+               W3CCommands.FetchElementAttribute.send_request(session, element, attribute_name)
+             end
+           ) do
+      parse_with_fallbacks(http_response, protocol,
+        jwp: &JWPCommands.FetchElementAttribute.parse_response/1,
+        w3c: &W3CCommands.FetchElementAttribute.parse_response/1
       )
     end
   end

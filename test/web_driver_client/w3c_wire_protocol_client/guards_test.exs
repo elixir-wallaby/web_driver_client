@@ -51,4 +51,14 @@ defmodule WebDriverClient.W3CWireProtocolClient.GuardsTest do
       end
     end
   end
+
+  property "is_attribute_name/1 only returns true on binaries" do
+    check all term <- term() do
+      if is_binary(term) do
+        assert Guards.is_attribute_name(term)
+      else
+        refute Guards.is_attribute_name(term)
+      end
+    end
+  end
 end

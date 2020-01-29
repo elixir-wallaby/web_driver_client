@@ -25,6 +25,7 @@ defmodule WebDriverClient.JSONWireProtocolClient do
   alias WebDriverClient.Size
 
   @type url :: String.t()
+  @type attribute_name :: String.t()
 
   @type basic_reason ::
           ConnectionError.t()
@@ -257,6 +258,29 @@ defmodule WebDriverClient.JSONWireProtocolClient do
       ) do
     with {:ok, http_response} <- Commands.FetchElementDisplayed.send_request(session, element),
          {:ok, boolean} <- Commands.FetchElementDisplayed.parse_response(http_response) do
+      {:ok, boolean}
+    end
+  end
+
+  @doc """
+  Fetchs the attribute value of an element
+
+  Specification: https://github.com/SeleniumHQ/selenium/wiki/JsonWireProtocol#get-sessionsessionidelementidattributename
+  """
+  doc_metadata subject: :elements
+
+  @spec fetch_element_attribute(Session.t(), Element.t(), attribute_name) ::
+          {:ok, String.t()} | {:error, basic_reason}
+
+  def fetch_element_attribute(
+        %Session{} = session,
+        %Element{} = element,
+        attribute_name
+      )
+      when is_attribute_name(attribute_name) do
+    with {:ok, http_response} <-
+           Commands.FetchElementAttribute.send_request(session, element, attribute_name),
+         {:ok, boolean} <- Commands.FetchElementAttribute.parse_response(http_response) do
       {:ok, boolean}
     end
   end

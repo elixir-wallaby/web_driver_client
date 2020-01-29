@@ -32,4 +32,14 @@ defmodule WebDriverClient.IntegrationTesting.TestPages.ElementsPage do
   def xpath_selector_for_list_items do
     "//ul[@id='sample-list']/li"
   end
+
+  @spec text_input_id :: String.t()
+  def text_input_id do
+    "text-input"
+  end
+
+  @spec css_selector_for_text_input :: String.t()
+  def css_selector_for_text_input do
+    "#" <> text_input_id()
+  end
 end

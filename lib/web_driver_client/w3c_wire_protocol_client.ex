@@ -25,6 +25,7 @@ defmodule WebDriverClient.W3CWireProtocolClient do
   alias WebDriverClient.W3CWireProtocolClient.WebDriverError
 
   @type url :: String.t()
+  @type attribute_name :: String.t()
 
   @type basic_reason ::
           ConnectionError.t()
@@ -253,6 +254,25 @@ defmodule WebDriverClient.W3CWireProtocolClient do
     with {:ok, http_response} <- Commands.FetchElementDisplayed.send_request(session, element),
          {:ok, boolean} <- Commands.FetchElementDisplayed.parse_response(http_response) do
       {:ok, boolean}
+    end
+  end
+
+  @doc """
+  Fetches the value of an element's attribute
+
+  Specification: https://w3c.github.io/webdriver/#get-element-attribute
+  """
+  doc_metadata subject: :elements
+
+  @spec fetch_element_attribute(Session.t(), Element.t(), attribute_name) ::
+          {:ok, String.t()} | {:error, basic_reason}
+
+  def fetch_element_attribute(%Session{} = session, %Element{} = element, attribute_name)
+      when is_attribute_name(attribute_name) do
+    with {:ok, http_response} <-
+           Commands.FetchElementAttribute.send_request(session, element, attribute_name),
+         {:ok, value} <- Commands.FetchElementAttribute.parse_response(http_response) do
+      {:ok, value}
     end
   end
 end

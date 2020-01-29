@@ -48,4 +48,9 @@ defmodule WebDriverClient.TestData do
   def element_id do
     string(:alphanumeric, length: 20)
   end
+
+  @spec attribute_name :: StreamData.t(String.t())
+  def attribute_name do
+    string(:alphanumeric, min_length: 1, max_length: 10)
+  end
 end

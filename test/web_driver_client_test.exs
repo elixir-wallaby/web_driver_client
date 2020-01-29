@@ -746,6 +746,62 @@ defmodule WebDriverClientTest do
     end
   end
 
+  @tag protocol: :jwp
+  test "fetch_element_attribute/3 with JWP session returns {:ok, value} on valid response",
+       %{
+         config: config,
+         bypass: bypass
+       } do
+    session = TestData.session(config: constant(config)) |> pick()
+    element = TestData.element() |> pick()
+    attribute = TestData.attribute_name() |> pick()
+    resp = JWPTestResponses.fetch_element_attribute_response() |> pick()
+
+    stub_bypass_response(bypass, resp)
+
+    assert {:ok, value} = WebDriverClient.fetch_element_attribute(session, element, attribute)
+    assert is_binary(value)
+  end
+
+  @tag protocol: :w3c
+  test "fetch_element_attribute/3 with W3C session returns {:ok, value} on valid response",
+       %{
+         config: config,
+         bypass: bypass
+       } do
+    session = TestData.session(config: constant(config)) |> pick()
+    element = TestData.element() |> pick()
+    attribute = TestData.attribute_name() |> pick()
+    resp = W3CTestResponses.fetch_element_attribute_response() |> pick()
+
+    stub_bypass_response(bypass, resp)
+
+    assert {:ok, value} = WebDriverClient.fetch_element_attribute(session, element, attribute)
+    assert is_binary(value)
+  end
+
+  for protocol <- @protocols do
+    @tag protocol: protocol
+    test "fetch_element_attribute/3 with #{protocol} session returns appropriate errors on various server responses",
+         %{config: config, bypass: bypass, protocol: protocol} do
+      scenario_server = set_up_error_scenario_tests(protocol, bypass)
+
+      for error_scenario <- basic_error_scenarios(protocol) do
+        session =
+          build_session_for_scenario(protocol, scenario_server, bypass, config, error_scenario)
+
+        element = TestData.element() |> pick()
+        attribute = TestData.attribute_name() |> pick()
+
+        assert_expected_response(
+          protocol,
+          WebDriverClient.fetch_element_attribute(session, element, attribute),
+          error_scenario
+        )
+      end
+    end
+  end
+
   defp set_up_error_scenario_tests(:jwp, bypass) do
     JWPErrorScenarios.set_up_error_scenario_tests(bypass)
   end
