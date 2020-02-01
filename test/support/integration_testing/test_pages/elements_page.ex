@@ -13,6 +13,11 @@ defmodule WebDriverClient.IntegrationTesting.TestPages.ElementsPage do
     "h1.page-heading"
   end
 
+  @spec css_selector_for_page_heading_element :: String.t()
+  def css_selector_for_page_heading_element do
+    "h1.page-heading"
+  end
+
   @spec css_selector_for_non_existent_element :: String.t()
   def css_selector_for_non_existent_element do
     "does not exist"

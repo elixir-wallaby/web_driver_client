@@ -284,4 +284,22 @@ defmodule WebDriverClient.JSONWireProtocolClient do
       {:ok, boolean}
     end
   end
+
+  @doc """
+  Fetchess the visible text of an element
+
+  Specification: https://github.com/SeleniumHQ/selenium/wiki/JsonWireProtocol#get-sessionsessionidelementidtext
+  """
+  doc_metadata subject: :elements
+
+  @spec fetch_element_text(Session.t(), Element.t()) :: {:ok, String.t()} | {:error, basic_reason}
+  def fetch_element_text(
+        %Session{} = session,
+        %Element{} = element
+      ) do
+    with {:ok, http_response} <- Commands.FetchElementText.send_request(session, element),
+         {:ok, text} <- Commands.FetchElementText.parse_response(http_response) do
+      {:ok, text}
+    end
+  end
 end

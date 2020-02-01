@@ -41,6 +41,36 @@ defmodule WebDriverClient.Integration.ElementAttributesTest do
       assert {:ok, false} = WebDriverClient.fetch_element_displayed(session, element)
     end
 
+    test "returning visible text", %{scenario: scenario} do
+      config = Scenarios.get_config(scenario)
+      payload = Scenarios.get_start_session_payload(scenario)
+
+      {:ok, session} = WebDriverClient.start_session(config, payload)
+
+      ensure_session_is_closed(session)
+
+      :ok = WebDriverClient.navigate_to(session, ElementsPage.url())
+
+      assert {:ok, element} =
+               WebDriverClient.find_element(
+                 session,
+                 :css_selector,
+                 ElementsPage.css_selector_for_page_heading_element()
+               )
+
+      assert {:ok, "Welcome to the Elements Page!"} =
+               WebDriverClient.fetch_element_text(session, element)
+
+      assert {:ok, hidden_element} =
+               WebDriverClient.find_element(
+                 session,
+                 :css_selector,
+                 ElementsPage.css_selector_for_non_visible_element()
+               )
+
+      assert {:ok, ""} = WebDriverClient.fetch_element_text(session, hidden_element)
+    end
+
     test "returning element attributes", %{scenario: scenario} do
       config = Scenarios.get_config(scenario)
       payload = Scenarios.get_start_session_payload(scenario)

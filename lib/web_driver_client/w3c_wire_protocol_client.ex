@@ -275,4 +275,19 @@ defmodule WebDriverClient.W3CWireProtocolClient do
       {:ok, value}
     end
   end
+
+  @doc """
+  Fetches an elements visible text
+
+  Specification: https://w3c.github.io/webdriver/#get-element-text
+  """
+  doc_metadata subject: :elements
+
+  @spec fetch_element_text(Session.t(), Element.t()) :: {:ok, String.t()} | {:error, basic_reason}
+  def fetch_element_text(%Session{} = session, %Element{} = element) do
+    with {:ok, http_response} <- Commands.FetchElementText.send_request(session, element),
+         {:ok, value} <- Commands.FetchElementText.parse_response(http_response) do
+      {:ok, value}
+    end
+  end
 end
