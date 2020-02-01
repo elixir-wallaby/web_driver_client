@@ -404,6 +404,27 @@ defmodule WebDriverClient do
     end
   end
 
+  @doc """
+  Clears a text input or textfield's value
+  """
+  doc_metadata subject: :elements
+  @spec clear_element(Session.t(), Element.t()) :: :ok | {:error, reason}
+  def clear_element(
+        %Session{config: %Config{protocol: protocol}} = session,
+        %Element{} = element
+      ) do
+    with {:ok, http_response} <-
+           send_request_for_protocol(protocol,
+             jwp: fn -> JWPCommands.ClearElement.send_request(session, element) end,
+             w3c: fn -> W3CCommands.ClearElement.send_request(session, element) end
+           ) do
+      parse_with_fallbacks(http_response, protocol,
+        jwp: &JWPCommands.ClearElement.parse_response/1,
+        w3c: &W3CCommands.ClearElement.parse_response/1
+      )
+    end
+  end
+
   @spec to_log_entry(JSONWireProtocolClient.LogEntry.t()) :: LogEntry.t()
   defp to_log_entry(%JSONWireProtocolClient.LogEntry{} = log_entry) do
     log_entry

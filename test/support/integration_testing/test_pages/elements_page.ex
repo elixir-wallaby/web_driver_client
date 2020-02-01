@@ -42,4 +42,9 @@ defmodule WebDriverClient.IntegrationTesting.TestPages.ElementsPage do
   def css_selector_for_text_input do
     "#" <> text_input_id()
   end
+
+  @spec css_selector_for_prefilled_text_input :: String.t()
+  def css_selector_for_prefilled_text_input do
+    "#prefilled-text-input"
+  end
 end
