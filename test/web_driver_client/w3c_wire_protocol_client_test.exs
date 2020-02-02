@@ -268,6 +268,72 @@ defmodule WebDriverClient.W3CWireProtocolClientTest do
     end
   end
 
+  property "fetch_title/1 returns {:ok, title} on valid response", %{
+    bypass: bypass,
+    config: config
+  } do
+    check all resp <- TestResponses.fetch_title_response() do
+      {config, prefix} = prefix_base_url_for_multiple_runs(config)
+
+      %Session{id: session_id} = session = TestData.session(config: constant(config)) |> pick()
+
+      Bypass.expect_once(
+        bypass,
+        "GET",
+        "/#{prefix}/session/#{session_id}/title",
+        fn conn ->
+          conn
+          |> put_resp_content_type("application/json")
+          |> send_resp(200, resp)
+        end
+      )
+
+      parsed_response = Jason.decode!(resp)
+      title = Map.fetch!(parsed_response, "value")
+
+      assert {:ok, ^title} = W3CWireProtocolClient.fetch_title(session)
+    end
+  end
+
+  test "fetch_title/1 returns {:error, %UnexpectedResponseError{}} on invalid response",
+       %{bypass: bypass, config: config} do
+    {config, prefix} = prefix_base_url_for_multiple_runs(config)
+
+    %Session{id: session_id} = session = TestData.session(config: constant(config)) |> pick()
+
+    parsed_response = %{}
+
+    Bypass.expect_once(
+      bypass,
+      "GET",
+      "/#{prefix}/session/#{session_id}/title",
+      fn conn ->
+        conn
+        |> put_resp_content_type("application/json")
+        |> send_resp(200, Jason.encode!(parsed_response))
+      end
+    )
+
+    assert {:error, %UnexpectedResponseError{response_body: ^parsed_response}} =
+             W3CWireProtocolClient.fetch_title(session)
+  end
+
+  test "fetch_title/1 returns appropriate errors on various server responses", %{
+    bypass: bypass,
+    config: config
+  } do
+    scenario_server = set_up_error_scenario_tests(bypass)
+
+    for error_scenario <- error_scenarios() do
+      session = build_session_for_scenario(scenario_server, bypass, config, error_scenario)
+
+      assert_expected_response(
+        W3CWireProtocolClient.fetch_title(session),
+        error_scenario
+      )
+    end
+  end
+
   property "fetch_window_rect/1 returns {:ok, %Rect} on valid response", %{
     bypass: bypass,
     config: config

@@ -103,6 +103,20 @@ defmodule WebDriverClient.JSONWireProtocolClient do
     end
   end
 
+  @doc """
+  Fetches the title of the current page.
+
+  Specification: https://github.com/SeleniumHQ/selenium/wiki/JsonWireProtocol#sessionsessionidtitle
+  """
+  doc_metadata subject: :navigation
+  @spec fetch_title(Session.t()) :: {:ok, String.t()} | {:error, basic_reason}
+  def fetch_title(%Session{id: id} = session) when is_session_id(id) do
+    with {:ok, http_response} <- Commands.FetchTitle.send_request(session),
+         {:ok, title} <- Commands.FetchTitle.parse_response(http_response) do
+      {:ok, title}
+    end
+  end
+
   @spec fetch_window_size(Session.t()) :: {:ok, Size.t()} | {:error, basic_reason}
   def fetch_window_size(%Session{id: id} = session)
       when is_session_id(id) do

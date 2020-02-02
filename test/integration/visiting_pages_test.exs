@@ -26,6 +26,20 @@ defmodule WebDriverClient.Integration.VisitingPagesTest do
 
       assert {:ok, returned_url} = WebDriverClient.fetch_current_url(session)
       assert String.starts_with?(returned_url, url)
+
+      expected_title = IndexPage.title()
+      assert {:ok, ^expected_title} = WebDriverClient.fetch_title(session)
+    end
+
+    test "session before visiting a page", %{scenario: scenario} do
+      config = Scenarios.get_config(scenario)
+      payload = Scenarios.get_start_session_payload(scenario)
+
+      {:ok, session} = WebDriverClient.start_session(config, payload)
+
+      ensure_session_is_closed(session)
+
+      assert {:ok, ""} = WebDriverClient.fetch_title(session)
     end
   end
 

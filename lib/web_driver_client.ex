@@ -123,6 +123,26 @@ defmodule WebDriverClient do
   end
 
   @doc """
+  Returns page title of the top-most window.
+
+  This is the equivalent of calling `document.title`.
+  """
+  doc_metadata subject: :navigation
+  @spec fetch_title(Session.t()) :: {:ok, String.t()} | {:error, reason}
+  def fetch_title(%Session{config: %Config{protocol: protocol}} = session) do
+    with {:ok, http_response} <-
+           send_request_for_protocol(protocol,
+             jwp: fn -> JWPCommands.FetchTitle.send_request(session) end,
+             w3c: fn -> W3CCommands.FetchTitle.send_request(session) end
+           ) do
+      parse_with_fallbacks(http_response, protocol,
+        jwp: &JWPCommands.FetchTitle.parse_response/1,
+        w3c: &W3CCommands.FetchTitle.parse_response/1
+      )
+    end
+  end
+
+  @doc """
   Returns the size of the current window
   """
   @spec fetch_window_size(Session.t()) :: {:ok, Size.t()} | {:error, reason}

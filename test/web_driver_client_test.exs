@@ -250,6 +250,51 @@ defmodule WebDriverClientTest do
     end
   end
 
+  @tag protocol: :w3c
+  test "fetch_title/1 with w3c session returns {:ok, title} on success", %{
+    config: config,
+    bypass: bypass
+  } do
+    session = TestData.session(config: constant(config)) |> pick()
+    resp = W3CTestResponses.fetch_title_response() |> pick()
+    stub_bypass_response(bypass, resp)
+
+    assert {:ok, title} = WebDriverClient.fetch_title(session)
+    assert is_binary(title)
+  end
+
+  @tag protocol: :jwp
+  test "fetch_title/1 with JWP session returns {:ok, title} on success", %{
+    config: config,
+    bypass: bypass
+  } do
+    session = TestData.session(config: constant(config)) |> pick()
+    resp = JWPTestResponses.fetch_title_response() |> pick()
+    stub_bypass_response(bypass, resp)
+
+    assert {:ok, title} = WebDriverClient.fetch_title(session)
+    assert is_binary(title)
+  end
+
+  for protocol <- @protocols do
+    @tag protocol: protocol
+    test "fetch_title/1 with #{protocol} session returns appropriate errors on various server responses",
+         %{config: config, bypass: bypass, protocol: protocol} do
+      scenario_server = set_up_error_scenario_tests(protocol, bypass)
+
+      for error_scenario <- basic_error_scenarios(protocol) do
+        session =
+          build_session_for_scenario(protocol, scenario_server, bypass, config, error_scenario)
+
+        assert_expected_response(
+          protocol,
+          WebDriverClient.fetch_title(session),
+          error_scenario
+        )
+      end
+    end
+  end
+
   @tag protocol: :jwp
   test "fetch_window_size/1 with JWP session returns {:ok, %Size{}} on success", %{
     config: config,
