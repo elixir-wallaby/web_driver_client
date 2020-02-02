@@ -305,4 +305,19 @@ defmodule WebDriverClient.W3CWireProtocolClient do
       :ok
     end
   end
+
+  @doc """
+  Clears a resettable or content editable element
+
+  Specification: https://w3c.github.io/webdriver/#element-clear
+  """
+  doc_metadata subject: :elements
+
+  @spec clear_element(Session.t(), Element.t()) :: :ok | {:error, basic_reason}
+  def clear_element(%Session{} = session, %Element{} = element) do
+    with {:ok, http_response} <- Commands.ClearElement.send_request(session, element),
+         :ok <- Commands.ClearElement.parse_response(http_response) do
+      :ok
+    end
+  end
 end
