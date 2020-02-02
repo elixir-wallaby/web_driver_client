@@ -302,4 +302,22 @@ defmodule WebDriverClient.JSONWireProtocolClient do
       {:ok, text}
     end
   end
+
+  @doc """
+  Clicks an element
+
+  Specification: https://github.com/SeleniumHQ/selenium/wiki/JsonWireProtocol#post-sessionsessionidelementidclick
+  """
+  doc_metadata subject: :elements
+
+  @spec click_element(Session.t(), Element.t()) :: :ok | {:error, basic_reason}
+  def click_element(
+        %Session{} = session,
+        %Element{} = element
+      ) do
+    with {:ok, http_response} <- Commands.ClickElement.send_request(session, element),
+         :ok <- Commands.ClickElement.parse_response(http_response) do
+      :ok
+    end
+  end
 end
