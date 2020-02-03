@@ -143,6 +143,24 @@ defmodule WebDriverClient do
   end
 
   @doc """
+  Returns page source of the top-most window.
+  """
+  doc_metadata subject: :navigation
+  @spec fetch_page_source(Session.t()) :: {:ok, String.t()} | {:error, reason}
+  def fetch_page_source(%Session{config: %Config{protocol: protocol}} = session) do
+    with {:ok, http_response} <-
+           send_request_for_protocol(protocol,
+             jwp: fn -> JWPCommands.FetchPageSource.send_request(session) end,
+             w3c: fn -> W3CCommands.FetchPageSource.send_request(session) end
+           ) do
+      parse_with_fallbacks(http_response, protocol,
+        jwp: &JWPCommands.FetchPageSource.parse_response/1,
+        w3c: &W3CCommands.FetchPageSource.parse_response/1
+      )
+    end
+  end
+
+  @doc """
   Returns the size of the current window
   """
   @spec fetch_window_size(Session.t()) :: {:ok, Size.t()} | {:error, reason}

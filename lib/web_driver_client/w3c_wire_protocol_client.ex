@@ -116,6 +116,20 @@ defmodule WebDriverClient.W3CWireProtocolClient do
     end
   end
 
+  @doc """
+  Fetches the page source of the top-level browsing context.
+
+  Specification: https://w3c.github.io/webdriver/#get-page-source
+  """
+  doc_metadata subject: :navigation
+  @spec fetch_page_source(Session.t()) :: {:ok, String.t()} | {:error, basic_reason}
+  def fetch_page_source(%Session{id: id} = session) when is_session_id(id) do
+    with {:ok, http_response} <- Commands.FetchPageSource.send_request(session),
+         {:ok, page_source} <- Commands.FetchPageSource.parse_response(http_response) do
+      {:ok, page_source}
+    end
+  end
+
   @spec fetch_window_rect(Session.t()) :: {:ok, Rect.t()} | {:error, basic_reason}
   def fetch_window_rect(%Session{id: id} = session) when is_session_id(id) do
     with {:ok, http_response} <- Commands.FetchWindowRect.send_request(session),

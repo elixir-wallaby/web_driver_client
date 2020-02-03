@@ -29,6 +29,10 @@ defmodule WebDriverClient.Integration.VisitingPagesTest do
 
       expected_title = IndexPage.title()
       assert {:ok, ^expected_title} = WebDriverClient.fetch_title(session)
+
+      assert {:ok, page_source} = WebDriverClient.fetch_page_source(session)
+      assert page_source =~ "<html"
+      assert page_source =~ IndexPage.title()
     end
 
     test "session before visiting a page", %{scenario: scenario} do

@@ -118,6 +118,12 @@ defmodule WebDriverClient.W3CWireProtocolClient.TestResponses do
     |> map(&Jason.encode!/1)
   end
 
+  def fetch_page_source_response do
+    %{"value" => string(:alphanumeric, max_length: 5)}
+    |> fixed_map()
+    |> map(&Jason.encode!/1)
+  end
+
   def find_element_response do
     %{"value" => element()}
     |> fixed_map()

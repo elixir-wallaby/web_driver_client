@@ -117,6 +117,20 @@ defmodule WebDriverClient.JSONWireProtocolClient do
     end
   end
 
+  @doc """
+  Fetches the page source of the current page.
+
+  Specification: https://github.com/SeleniumHQ/selenium/wiki/JsonWireProtocol#sessionsessionidtitle
+  """
+  doc_metadata subject: :navigation
+  @spec fetch_page_source(Session.t()) :: {:ok, String.t()} | {:error, basic_reason}
+  def fetch_page_source(%Session{id: id} = session) when is_session_id(id) do
+    with {:ok, http_response} <- Commands.FetchPageSource.send_request(session),
+         {:ok, page_source} <- Commands.FetchPageSource.parse_response(http_response) do
+      {:ok, page_source}
+    end
+  end
+
   @spec fetch_window_size(Session.t()) :: {:ok, Size.t()} | {:error, basic_reason}
   def fetch_window_size(%Session{id: id} = session)
       when is_session_id(id) do
