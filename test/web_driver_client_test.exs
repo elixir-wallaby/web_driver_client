@@ -1047,6 +1047,51 @@ defmodule WebDriverClientTest do
     end
   end
 
+  @tag protocol: :w3c
+  test "fetch_alert_text/1 with w3c session returns {:ok, alert_text} on success", %{
+    config: config,
+    bypass: bypass
+  } do
+    session = TestData.session(config: constant(config)) |> pick()
+    resp = W3CTestResponses.fetch_alert_text_response() |> pick()
+    stub_bypass_response(bypass, resp)
+
+    assert {:ok, alert_text} = WebDriverClient.fetch_alert_text(session)
+    assert is_binary(alert_text)
+  end
+
+  @tag protocol: :jwp
+  test "fetch_alert_text/1 with JWP session returns {:ok, alert_text} on success", %{
+    config: config,
+    bypass: bypass
+  } do
+    session = TestData.session(config: constant(config)) |> pick()
+    resp = JWPTestResponses.fetch_alert_text_response() |> pick()
+    stub_bypass_response(bypass, resp)
+
+    assert {:ok, alert_text} = WebDriverClient.fetch_alert_text(session)
+    assert is_binary(alert_text)
+  end
+
+  for protocol <- @protocols do
+    @tag protocol: protocol
+    test "fetch_alert_text/1 with #{protocol} session returns appropriate errors on various server responses",
+         %{config: config, bypass: bypass, protocol: protocol} do
+      scenario_server = set_up_error_scenario_tests(protocol, bypass)
+
+      for error_scenario <- basic_error_scenarios(protocol) do
+        session =
+          build_session_for_scenario(protocol, scenario_server, bypass, config, error_scenario)
+
+        assert_expected_response(
+          protocol,
+          WebDriverClient.fetch_alert_text(session),
+          error_scenario
+        )
+      end
+    end
+  end
+
   defp set_up_error_scenario_tests(:jwp, bypass) do
     JWPErrorScenarios.set_up_error_scenario_tests(bypass)
   end

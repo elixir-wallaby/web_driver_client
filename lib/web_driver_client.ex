@@ -520,6 +520,24 @@ defmodule WebDriverClient do
     end
   end
 
+  @doc """
+  Fetches the text from the currently active alert.
+  """
+  doc_metadata subject: :alerts
+  @spec fetch_alert_text(Session.t()) :: :ok | {:error, reason}
+  def fetch_alert_text(%Session{config: %Config{protocol: protocol}} = session) do
+    with {:ok, http_response} <-
+           send_request_for_protocol(protocol,
+             jwp: fn -> JWPCommands.FetchAlertText.send_request(session) end,
+             w3c: fn -> W3CCommands.FetchAlertText.send_request(session) end
+           ) do
+      parse_with_fallbacks(http_response, protocol,
+        jwp: &JWPCommands.FetchAlertText.parse_response/1,
+        w3c: &W3CCommands.FetchAlertText.parse_response/1
+      )
+    end
+  end
+
   @spec to_log_entry(JSONWireProtocolClient.LogEntry.t()) :: LogEntry.t()
   defp to_log_entry(%JSONWireProtocolClient.LogEntry{} = log_entry) do
     log_entry
@@ -535,6 +553,15 @@ defmodule WebDriverClient do
   end
 
   defp to_error(%JSONWireProtocolClient.WebDriverError{reason: reason}) do
+    reason =
+      case reason do
+        :no_alert_open_error ->
+          :no_such_alert
+
+        reason ->
+          reason
+      end
+
     WebDriverError.exception(reason: reason)
   end
 

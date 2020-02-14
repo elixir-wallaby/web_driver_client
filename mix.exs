@@ -88,6 +88,7 @@ defmodule WebDriverClient.MixProject do
         Sessions: &(&1[:subject] == :sessions),
         Navigation: &(&1[:subject] == :navigation),
         Elements: &(&1[:subject] == :elements),
+        Alerts: &(&1[:subject] == :alerts),
         Logging: &(&1[:subject] == :logging)
       ]
     ]

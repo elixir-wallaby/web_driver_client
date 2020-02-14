@@ -366,4 +366,18 @@ defmodule WebDriverClient.JSONWireProtocolClient do
       :ok
     end
   end
+
+  @doc """
+  Fetches the text of the current alert.
+
+  Specification: https://github.com/SeleniumHQ/selenium/wiki/JsonWireProtocol#get-sessionsessionidalert_text
+  """
+  doc_metadata subject: :alerts
+  @spec fetch_alert_text(Session.t()) :: {:ok, String.t()} | {:error, basic_reason}
+  def fetch_alert_text(%Session{id: id} = session) when is_session_id(id) do
+    with {:ok, http_response} <- Commands.FetchAlertText.send_request(session),
+         {:ok, alert_text} <- Commands.FetchAlertText.parse_response(http_response) do
+      {:ok, alert_text}
+    end
+  end
 end

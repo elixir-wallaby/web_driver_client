@@ -11,9 +11,15 @@
             This text is switchable. Click a button.
         </div>
 
+        <button id="btn-open-alert">Open Alert</button>
+
         <script>
          document.getElementById("btn-switch-text").onclick = function(){
              document.getElementById("switchable-text").innerHTML = "This text is switched";
+         };
+
+         document.getElementById("btn-open-alert").onclick = function(){
+             alert("Hi, I'm an alert");
          };
         </script>
     </body>
