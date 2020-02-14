@@ -57,6 +57,7 @@ defmodule WebDriverClient.MixProject do
 
   defp docs do
     [
+      main: "WebDriverClient",
       groups_for_modules: [
         "Main API": [
           WebDriverClient,
