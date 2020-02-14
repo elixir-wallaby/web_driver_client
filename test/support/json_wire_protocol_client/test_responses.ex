@@ -105,6 +105,12 @@ defmodule WebDriverClient.JSONWireProtocolClient.TestResponses do
     |> map(&Jason.encode!/1)
   end
 
+  def accept_alert_response do
+    nil
+    |> jwp_response()
+    |> map(&Jason.encode!/1)
+  end
+
   def fetch_page_source_response do
     string(:alphanumeric, max_length: 10)
     |> jwp_response()

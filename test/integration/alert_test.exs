@@ -28,6 +28,8 @@ defmodule WebDriverClient.Integration.AlertTest do
 
       :ok = WebDriverClient.navigate_to(session, InteractionsPage.url())
 
+      {:error, %WebDriverError{reason: :no_such_alert}} = WebDriverClient.accept_alert(session)
+
       {:error, %WebDriverError{reason: :no_such_alert}} =
         WebDriverClient.fetch_alert_text(session)
 
@@ -42,6 +44,11 @@ defmodule WebDriverClient.Integration.AlertTest do
 
       {:ok, alert_text} = WebDriverClient.fetch_alert_text(session)
       assert InteractionsPage.alert_text() == alert_text
+
+      :ok = WebDriverClient.accept_alert(session)
+
+      {:error, %WebDriverError{reason: :no_such_alert}} =
+        WebDriverClient.fetch_alert_text(session)
     end
   end
 

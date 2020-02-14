@@ -1403,6 +1403,46 @@ defmodule WebDriverClient.W3CWireProtocolClientTest do
     end
   end
 
+  property "accept_alert/1 returns :ok on valid response", %{
+    bypass: bypass,
+    config: config
+  } do
+    check all resp <- TestResponses.accept_alert_response() do
+      {config, prefix} = prefix_base_url_for_multiple_runs(config)
+
+      %Session{id: session_id} = session = TestData.session(config: constant(config)) |> pick()
+
+      Bypass.expect_once(
+        bypass,
+        "POST",
+        "/#{prefix}/session/#{session_id}/alert/accept",
+        fn conn ->
+          conn
+          |> put_resp_content_type("application/json")
+          |> send_resp(200, resp)
+        end
+      )
+
+      assert :ok = W3CWireProtocolClient.accept_alert(session)
+    end
+  end
+
+  test "accept_alert/1 returns appropriate errors on various server responses", %{
+    bypass: bypass,
+    config: config
+  } do
+    scenario_server = set_up_error_scenario_tests(bypass)
+
+    for error_scenario <- error_scenarios() do
+      session = build_session_for_scenario(scenario_server, bypass, config, error_scenario)
+
+      assert_expected_response(
+        W3CWireProtocolClient.accept_alert(session),
+        error_scenario
+      )
+    end
+  end
+
   defp build_start_session_payload do
     %{"capablities" => %{"browserName" => "firefox"}}
   end

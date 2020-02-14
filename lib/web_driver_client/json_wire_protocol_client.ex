@@ -380,4 +380,18 @@ defmodule WebDriverClient.JSONWireProtocolClient do
       {:ok, alert_text}
     end
   end
+
+  @doc """
+  Accepts the currently active alert.
+
+  Specification: https://github.com/SeleniumHQ/selenium/wiki/JsonWireProtocol#post-sessionsessionidaccept_alert
+  """
+  doc_metadata subject: :alerts
+  @spec accept_alert(Session.t()) :: :ok | {:error, basic_reason}
+  def accept_alert(%Session{id: id} = session) when is_session_id(id) do
+    with {:ok, http_response} <- Commands.AcceptAlert.send_request(session),
+         :ok <- Commands.AcceptAlert.parse_response(http_response) do
+      :ok
+    end
+  end
 end

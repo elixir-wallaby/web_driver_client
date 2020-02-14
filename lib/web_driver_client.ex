@@ -538,6 +538,26 @@ defmodule WebDriverClient do
     end
   end
 
+  @doc """
+  Accepts the currently active alert dialog.
+
+  Usually this is the equivalent to clicking ok on a dialog.
+  """
+  doc_metadata subject: :alerts
+  @spec accept_alert(Session.t()) :: :ok | {:error, reason}
+  def accept_alert(%Session{config: %Config{protocol: protocol}} = session) do
+    with {:ok, http_response} <-
+           send_request_for_protocol(protocol,
+             jwp: fn -> JWPCommands.AcceptAlert.send_request(session) end,
+             w3c: fn -> W3CCommands.AcceptAlert.send_request(session) end
+           ) do
+      parse_with_fallbacks(http_response, protocol,
+        jwp: &JWPCommands.AcceptAlert.parse_response/1,
+        w3c: &W3CCommands.AcceptAlert.parse_response/1
+      )
+    end
+  end
+
   @spec to_log_entry(JSONWireProtocolClient.LogEntry.t()) :: LogEntry.t()
   defp to_log_entry(%JSONWireProtocolClient.LogEntry{} = log_entry) do
     log_entry
