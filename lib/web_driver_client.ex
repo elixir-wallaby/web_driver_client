@@ -558,6 +558,28 @@ defmodule WebDriverClient do
     end
   end
 
+  @doc """
+  Dismisses the currently active alert dialog.
+
+  For `confirm()` and `prompt()` dialogs, this is equivalent to
+  clicking the 'Cancel' button. For `alert()` dialogs, this is
+  equivalent to clicking the 'OK' button.
+  """
+  doc_metadata subject: :alerts
+  @spec dismiss_alert(Session.t()) :: :ok | {:error, reason}
+  def dismiss_alert(%Session{config: %Config{protocol: protocol}} = session) do
+    with {:ok, http_response} <-
+           send_request_for_protocol(protocol,
+             jwp: fn -> JWPCommands.DismissAlert.send_request(session) end,
+             w3c: fn -> W3CCommands.DismissAlert.send_request(session) end
+           ) do
+      parse_with_fallbacks(http_response, protocol,
+        jwp: &JWPCommands.DismissAlert.parse_response/1,
+        w3c: &W3CCommands.DismissAlert.parse_response/1
+      )
+    end
+  end
+
   @spec to_log_entry(JSONWireProtocolClient.LogEntry.t()) :: LogEntry.t()
   defp to_log_entry(%JSONWireProtocolClient.LogEntry{} = log_entry) do
     log_entry

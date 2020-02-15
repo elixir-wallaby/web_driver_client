@@ -12,6 +12,9 @@
         </div>
 
         <button id="btn-open-alert">Open Alert</button>
+        <button id="btn-open-confirm">Open Confirm</button>
+
+        <div id="confirm-prompt-result"></div>
 
         <script>
          document.getElementById("btn-switch-text").onclick = function(){
@@ -20,6 +23,14 @@
 
          document.getElementById("btn-open-alert").onclick = function(){
              alert("Hi, I'm an alert");
+         };
+
+         document.getElementById("btn-open-confirm").onclick = function(){
+             if(confirm("Are you sure?")) {
+                 document.getElementById("confirm-prompt-result").innerHTML = "Yes, they're sure";
+             } else {
+                 document.getElementById("confirm-prompt-result").innerHTML = "Not so much";
+             }
          };
         </script>
     </body>

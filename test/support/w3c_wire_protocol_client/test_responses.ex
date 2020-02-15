@@ -128,6 +128,10 @@ defmodule WebDriverClient.W3CWireProtocolClient.TestResponses do
     %{"value" => nil} |> constant() |> map(&Jason.encode!/1)
   end
 
+  def dismiss_alert_response do
+    %{"value" => nil} |> constant() |> map(&Jason.encode!/1)
+  end
+
   def fetch_page_source_response do
     %{"value" => string(:alphanumeric, max_length: 5)}
     |> fixed_map()

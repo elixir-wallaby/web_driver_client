@@ -394,4 +394,18 @@ defmodule WebDriverClient.JSONWireProtocolClient do
       :ok
     end
   end
+
+  @doc """
+  Dismisses the currently active alert.
+
+  Specification: https://github.com/SeleniumHQ/selenium/wiki/JsonWireProtocol#post-sessionsessioniddismiss_alert
+  """
+  doc_metadata subject: :alerts
+  @spec dismiss_alert(Session.t()) :: :ok | {:error, basic_reason}
+  def dismiss_alert(%Session{id: id} = session) when is_session_id(id) do
+    with {:ok, http_response} <- Commands.DismissAlert.send_request(session),
+         :ok <- Commands.DismissAlert.parse_response(http_response) do
+      :ok
+    end
+  end
 end

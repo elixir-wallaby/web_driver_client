@@ -376,4 +376,18 @@ defmodule WebDriverClient.W3CWireProtocolClient do
       :ok
     end
   end
+
+  @doc """
+  Dismisses the currently active alert dialog.
+
+  Specification: https://w3c.github.io/webdriver/#dismiss-alert
+  """
+  doc_metadata subject: :alerts
+  @spec dismiss_alert(Session.t()) :: :ok | {:error, basic_reason}
+  def dismiss_alert(%Session{id: id} = session) when is_session_id(id) do
+    with {:ok, http_response} <- Commands.DismissAlert.send_request(session),
+         :ok <- Commands.DismissAlert.parse_response(http_response) do
+      :ok
+    end
+  end
 end
