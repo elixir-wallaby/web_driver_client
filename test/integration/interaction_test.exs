@@ -40,6 +40,8 @@ defmodule WebDriverClient.Integration.InteractionTest do
 
       :ok = WebDriverClient.click_element(session, switch_text_button)
 
+      assert {:ok, ^switch_text_button} = WebDriverClient.fetch_active_element(session)
+
       {:ok, new_value} = WebDriverClient.fetch_element_text(session, switchable_text_element)
 
       assert original_value != new_value

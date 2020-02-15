@@ -136,6 +136,12 @@ defmodule WebDriverClient.JSONWireProtocolClient.TestResponses do
     |> map(&Jason.encode!/1)
   end
 
+  def fetch_active_element_response do
+    element()
+    |> jwp_response()
+    |> map(&Jason.encode!/1)
+  end
+
   def fetch_log_types_response do
     log_type()
     |> list_of(max_length: 10)

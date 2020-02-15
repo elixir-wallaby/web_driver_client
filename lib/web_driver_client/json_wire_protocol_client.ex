@@ -239,6 +239,21 @@ defmodule WebDriverClient.JSONWireProtocolClient do
     end
   end
 
+  @doc """
+  Fetches the currently active (focused) element
+
+  Specification: https://github.com/SeleniumHQ/selenium/wiki/JsonWireProtocol#post-sessionsessionidelementactive
+  """
+  doc_metadata subject: :elements
+
+  @spec fetch_active_element(Session.t()) :: {:ok, Element.t()} | {:error, basic_reason}
+  def fetch_active_element(%Session{} = session) do
+    with {:ok, http_response} <- Commands.FetchActiveElement.send_request(session),
+         {:ok, element} <- Commands.FetchActiveElement.parse_response(http_response) do
+      {:ok, element}
+    end
+  end
+
   @type log_type :: String.t()
 
   @doc """

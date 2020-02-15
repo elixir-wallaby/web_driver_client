@@ -268,6 +268,21 @@ defmodule WebDriverClient.W3CWireProtocolClient do
   end
 
   @doc """
+  Fetches the currently active element
+
+  Specification: https://w3c.github.io/webdriver/#get-active-element
+  """
+  doc_metadata subject: :elements
+
+  @spec fetch_active_element(Session.t()) :: {:ok, Element.t()} | {:error, basic_reason}
+  def fetch_active_element(%Session{} = session) do
+    with {:ok, http_response} <- Commands.FetchActiveElement.send_request(session),
+         {:ok, element} <- Commands.FetchActiveElement.parse_response(http_response) do
+      {:ok, element}
+    end
+  end
+
+  @doc """
   Sends a request to the server to see if an element
   is displayed
 

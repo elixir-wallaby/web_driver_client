@@ -320,6 +320,25 @@ defmodule WebDriverClient do
     end
   end
 
+  @doc """
+  Fetches the currently active (focused) element
+  """
+  doc_metadata subject: :elements
+
+  @spec fetch_active_element(Session.t()) :: {:ok, Element.t()} | {:error, reason}
+  def fetch_active_element(%Session{config: %Config{protocol: protocol}} = session) do
+    with {:ok, http_response} <-
+           send_request_for_protocol(protocol,
+             jwp: fn -> JWPCommands.FetchActiveElement.send_request(session) end,
+             w3c: fn -> W3CCommands.FetchActiveElement.send_request(session) end
+           ) do
+      parse_with_fallbacks(http_response, protocol,
+        jwp: &JWPCommands.FetchActiveElement.parse_response/1,
+        w3c: &W3CCommands.FetchActiveElement.parse_response/1
+      )
+    end
+  end
+
   @type size_opt :: {:width, pos_integer} | {:height, pos_integer}
 
   @doc """

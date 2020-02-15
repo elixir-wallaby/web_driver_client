@@ -862,6 +862,71 @@ defmodule WebDriverClient.JSONWireProtocolClientTest do
     end
   end
 
+  property "fetch_active_element/1 returns {:ok, %Element{}} on valid response", %{
+    bypass: bypass,
+    config: config
+  } do
+    check all resp <- TestResponses.fetch_active_element_response() do
+      {config, prefix} = prefix_base_url_for_multiple_runs(config)
+
+      %Session{id: session_id} = session = TestData.session(config: constant(config)) |> pick()
+
+      Bypass.expect_once(
+        bypass,
+        "POST",
+        "/#{prefix}/session/#{session_id}/element/active",
+        fn conn ->
+          conn
+          |> put_resp_content_type("application/json")
+          |> send_resp(200, resp)
+        end
+      )
+
+      parsed_response = Jason.decode!(resp)
+      element_id = get_in(parsed_response, ["value", "ELEMENT"])
+
+      assert {:ok, %Element{id: ^element_id}} =
+               JSONWireProtocolClient.fetch_active_element(session)
+    end
+  end
+
+  test "fetch_active_element/1 returns {:error, %UnexpectedResponseError{}} on invalid response",
+       %{bypass: bypass, config: config} do
+    %Session{id: session_id} = session = TestData.session(config: constant(config)) |> pick()
+
+    parsed_response = %{}
+
+    Bypass.expect_once(
+      bypass,
+      "POST",
+      "/session/#{session_id}/element/active",
+      fn conn ->
+        conn
+        |> put_resp_content_type("application/json")
+        |> send_resp(200, Jason.encode!(parsed_response))
+      end
+    )
+
+    assert {:error, %UnexpectedResponseError{response_body: ^parsed_response}} =
+             JSONWireProtocolClient.fetch_active_element(session)
+  end
+
+  test "fetch_active_element/1 returns appropriate errors on various server responses", %{
+    bypass: bypass,
+    config: config
+  } do
+    scenario_server = set_up_error_scenario_tests(bypass)
+
+    for error_scenario <- error_scenarios() do
+      session = build_session_for_scenario(scenario_server, bypass, config, error_scenario)
+
+      assert_expected_response(
+        JSONWireProtocolClient.fetch_active_element(session),
+        error_scenario
+      )
+    end
+  end
+
   property "fetch_log_types/1 returns {:ok, log_types} on valid response", %{
     bypass: bypass,
     config: config

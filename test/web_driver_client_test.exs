@@ -784,6 +784,51 @@ defmodule WebDriverClientTest do
   end
 
   @tag protocol: :jwp
+  test "fetch_active_element/1 with JWP session returns {:ok, element} on valid response", %{
+    config: config,
+    bypass: bypass
+  } do
+    session = TestData.session(config: constant(config)) |> pick()
+    resp = JWPTestResponses.fetch_active_element_response() |> pick()
+
+    stub_bypass_response(bypass, resp)
+
+    assert {:ok, %Element{}} = WebDriverClient.fetch_active_element(session)
+  end
+
+  @tag protocol: :w3c
+  test "fetch_active_element/1 with W3C session returns {:ok, element} on valid response", %{
+    config: config,
+    bypass: bypass
+  } do
+    session = TestData.session(config: constant(config)) |> pick()
+    resp = W3CTestResponses.fetch_active_element_response() |> pick()
+
+    stub_bypass_response(bypass, resp)
+
+    assert {:ok, %Element{}} = WebDriverClient.fetch_active_element(session)
+  end
+
+  for protocol <- @protocols do
+    @tag protocol: protocol
+    test "fetch_active_element/3 with #{protocol} session returns appropriate errors on various server responses",
+         %{config: config, bypass: bypass, protocol: protocol} do
+      scenario_server = set_up_error_scenario_tests(protocol, bypass)
+
+      for error_scenario <- basic_error_scenarios(protocol) do
+        session =
+          build_session_for_scenario(protocol, scenario_server, bypass, config, error_scenario)
+
+        assert_expected_response(
+          protocol,
+          WebDriverClient.fetch_active_element(session),
+          error_scenario
+        )
+      end
+    end
+  end
+
+  @tag protocol: :jwp
   test "fetch_element_displayed/2 with JWP session returns {:ok, displayed?} on valid response",
        %{
          config: config,
