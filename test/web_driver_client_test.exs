@@ -159,7 +159,7 @@ defmodule WebDriverClientTest do
   end
 
   @tag protocol: :jwp
-  test "navigate_to/2 with jwp session returns {:ok, url} on success", %{
+  test "navigate_to/2 with jwp session returns :ok on success", %{
     config: config,
     bypass: bypass
   } do
@@ -173,7 +173,7 @@ defmodule WebDriverClientTest do
   end
 
   @tag protocol: :w3c
-  test "navigate_to/2 with w3c session returns {:ok, url} on success", %{
+  test "navigate_to/2 with w3c session returns :ok on success", %{
     config: config,
     bypass: bypass
   } do
