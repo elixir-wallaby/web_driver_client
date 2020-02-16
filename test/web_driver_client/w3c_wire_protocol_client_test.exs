@@ -6,6 +6,7 @@ defmodule WebDriverClient.W3CWireProtocolClientTest do
   import WebDriverClient.W3CWireProtocolClient.ErrorScenarios
 
   alias WebDriverClient.Element
+  alias WebDriverClient.KeyCodes
   alias WebDriverClient.Session
   alias WebDriverClient.TestData
   alias WebDriverClient.W3CWireProtocolClient
@@ -1473,6 +1474,119 @@ defmodule WebDriverClient.W3CWireProtocolClientTest do
     end
   end
 
+  property "send_keys_to_element/3 sends the proper request", %{
+    bypass: bypass,
+    config: config
+  } do
+    check all keys <-
+                one_of([
+                  string_to_type(),
+                  valid_key_code(),
+                  list_of(
+                    one_of([
+                      string_to_type(),
+                      valid_key_code()
+                    ]),
+                    max_length: 10
+                  )
+                ]) do
+      {config, prefix} = prefix_base_url_for_multiple_runs(config)
+
+      %Session{id: session_id} = session = TestData.session(config: constant(config)) |> pick()
+      %Element{id: element_id} = element = TestData.element() |> pick()
+
+      encoded_keys =
+        keys
+        |> List.wrap()
+        |> Enum.map(fn
+          keys when is_binary(keys) ->
+            keys
+
+          keys when is_atom(keys) ->
+            {:ok, encoded} = KeyCodes.encode(keys)
+            encoded
+        end)
+        |> IO.iodata_to_binary()
+
+      resp = "{}"
+
+      Bypass.expect_once(
+        bypass,
+        "POST",
+        "/#{prefix}/session/#{session_id}/element/#{element_id}/value",
+        fn conn ->
+          conn = parse_params(conn)
+
+          assert %{"value" => encoded_keys}
+
+          conn
+          |> put_resp_content_type("application/json")
+          |> send_resp(200, resp)
+        end
+      )
+
+      W3CWireProtocolClient.send_keys_to_element(session, element, keys)
+    end
+  end
+
+  property "send_keys_to_element/3 returns :ok on valid response", %{
+    bypass: bypass,
+    config: config
+  } do
+    check all resp <- TestResponses.send_keys_to_element_response() do
+      {config, prefix} = prefix_base_url_for_multiple_runs(config)
+
+      %Session{id: session_id} = session = TestData.session(config: constant(config)) |> pick()
+      %Element{id: element_id} = element = TestData.element() |> pick()
+      value = ["hello"]
+
+      Bypass.expect_once(
+        bypass,
+        "POST",
+        "/#{prefix}/session/#{session_id}/element/#{element_id}/value",
+        fn conn ->
+          conn = parse_params(conn)
+
+          assert %{"value" => value}
+
+          conn
+          |> put_resp_content_type("application/json")
+          |> send_resp(200, resp)
+        end
+      )
+
+      assert :ok = W3CWireProtocolClient.send_keys_to_element(session, element, value)
+    end
+  end
+
+  test "send_keys_to_element/3 raises an ArgumentError on unknown keystroke" do
+    session = TestData.session() |> pick()
+    element = TestData.element() |> pick()
+    keys = [:unknown]
+
+    assert_raise ArgumentError, ~r/unknown key code: :unknown/i, fn ->
+      W3CWireProtocolClient.send_keys_to_element(session, element, keys)
+    end
+  end
+
+  test "send_keys_to_element/3 returns appropriate errors on various server responses", %{
+    bypass: bypass,
+    config: config
+  } do
+    scenario_server = set_up_error_scenario_tests(bypass)
+
+    for error_scenario <- error_scenarios() do
+      session = build_session_for_scenario(scenario_server, bypass, config, error_scenario)
+      element = TestData.element() |> pick()
+      keys = ["hello"]
+
+      assert_expected_response(
+        W3CWireProtocolClient.send_keys_to_element(session, element, keys),
+        error_scenario
+      )
+    end
+  end
+
   property "fetch_alert_text/1 returns {:ok, alert_text} on valid response", %{
     bypass: bypass,
     config: config
@@ -1621,5 +1735,14 @@ defmodule WebDriverClient.W3CWireProtocolClientTest do
 
   defp build_start_session_payload do
     %{"capablities" => %{"browserName" => "firefox"}}
+  end
+
+  defp string_to_type do
+    string(:ascii, max_length: 10)
+  end
+
+  defp valid_key_code do
+    KeyCodes.known_key_codes()
+    |> member_of()
   end
 end

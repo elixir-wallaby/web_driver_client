@@ -200,6 +200,10 @@ defmodule WebDriverClient.W3CWireProtocolClient.TestResponses do
     %{"value" => nil} |> constant() |> map(&Jason.encode!/1)
   end
 
+  def send_keys_to_element_response do
+    %{"value" => nil} |> constant() |> map(&Jason.encode!/1)
+  end
+
   def log_entry do
     fixed_map(%{
       "timestamp" => recent_timestamp(),

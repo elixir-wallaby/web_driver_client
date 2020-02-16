@@ -21,6 +21,7 @@ defmodule WebDriverClient.JSONWireProtocolClient do
   alias WebDriverClient.JSONWireProtocolClient.LogEntry
   alias WebDriverClient.JSONWireProtocolClient.UnexpectedResponseError
   alias WebDriverClient.JSONWireProtocolClient.WebDriverError
+  alias WebDriverClient.KeyCodes
   alias WebDriverClient.Session
   alias WebDriverClient.Size
 
@@ -378,6 +379,25 @@ defmodule WebDriverClient.JSONWireProtocolClient do
       ) do
     with {:ok, http_response} <- Commands.ClearElement.send_request(session, element),
          :ok <- Commands.ClearElement.parse_response(http_response) do
+      :ok
+    end
+  end
+
+  @type key_code :: unquote_splicing([KeyCodes.key_code_atoms_union()])
+  @type keystroke :: String.t() | key_code
+  @type keys :: keystroke | [keystroke]
+
+  @doc """
+  Send a sequence of key strokes to an element
+
+  Specification: https://github.com/SeleniumHQ/selenium/wiki/JsonWireProtocol#post-sessionsessionidelementidvalue
+  """
+  doc_metadata subject: :elements
+  @spec send_keys_to_element(Session.t(), Element.t(), keys) :: :ok | {:error, basic_reason}
+  def send_keys_to_element(%Session{id: id} = session, %Element{} = element, keys)
+      when is_session_id(id) do
+    with {:ok, http_response} <- Commands.SendKeysToElement.send_request(session, element, keys),
+         :ok <- Commands.SendKeysToElement.parse_response(http_response) do
       :ok
     end
   end

@@ -17,6 +17,7 @@ defmodule WebDriverClient.W3CWireProtocolClient do
   alias WebDriverClient.Config
   alias WebDriverClient.ConnectionError
   alias WebDriverClient.Element
+  alias WebDriverClient.KeyCodes
   alias WebDriverClient.Session
   alias WebDriverClient.W3CWireProtocolClient.Commands
   alias WebDriverClient.W3CWireProtocolClient.LogEntry
@@ -380,6 +381,25 @@ defmodule WebDriverClient.W3CWireProtocolClient do
   def clear_element(%Session{} = session, %Element{} = element) do
     with {:ok, http_response} <- Commands.ClearElement.send_request(session, element),
          :ok <- Commands.ClearElement.parse_response(http_response) do
+      :ok
+    end
+  end
+
+  @type key_code :: unquote_splicing([KeyCodes.key_code_atoms_union()])
+  @type keystroke :: String.t() | key_code
+  @type keys :: keystroke | [keystroke]
+
+  @doc """
+  Send keystrokes to an element
+
+  Specification: https://w3c.github.io/webdriver/#element-send-keys
+  """
+  doc_metadata subject: :elements
+
+  @spec send_keys_to_element(Session.t(), Element.t(), keys) :: :ok | {:error, basic_reason}
+  def send_keys_to_element(%Session{} = session, %Element{} = element, keys) do
+    with {:ok, http_response} <- Commands.SendKeysToElement.send_request(session, element, keys),
+         :ok <- Commands.SendKeysToElement.parse_response(http_response) do
       :ok
     end
   end

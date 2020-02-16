@@ -1141,6 +1141,57 @@ defmodule WebDriverClientTest do
     end
   end
 
+  @tag protocol: :jwp
+  test "send_keys_to_element/3 with jwp session returns :ok on success", %{
+    config: config,
+    bypass: bypass
+  } do
+    session = TestData.session(config: constant(config)) |> pick()
+    element = TestData.element() |> pick()
+    resp = JWPTestResponses.send_keys_to_element_response() |> pick()
+    keys = ["foo", :tab]
+
+    stub_bypass_response(bypass, resp)
+
+    assert :ok = WebDriverClient.send_keys_to_element(session, element, keys)
+  end
+
+  @tag protocol: :w3c
+  test "send_keys_to_element/3 with w3c session returns :ok on success", %{
+    config: config,
+    bypass: bypass
+  } do
+    session = TestData.session(config: constant(config)) |> pick()
+    element = TestData.element() |> pick()
+    resp = W3CTestResponses.send_keys_to_element_response() |> pick()
+    keys = ["foo", :tab]
+
+    stub_bypass_response(bypass, resp)
+
+    assert :ok = WebDriverClient.send_keys_to_element(session, element, keys)
+  end
+
+  for protocol <- @protocols do
+    @tag protocol: protocol
+    test "send_keys_to_element/3 with #{protocol} session returns appropriate errors on various server responses",
+         %{config: config, bypass: bypass, protocol: protocol} do
+      scenario_server = set_up_error_scenario_tests(protocol, bypass)
+
+      for error_scenario <- basic_error_scenarios(protocol) do
+        session =
+          build_session_for_scenario(protocol, scenario_server, bypass, config, error_scenario)
+
+        element = TestData.element() |> pick()
+
+        assert_expected_response(
+          protocol,
+          WebDriverClient.send_keys_to_element(session, element, "foo"),
+          error_scenario
+        )
+      end
+    end
+  end
+
   @tag protocol: :w3c
   test "fetch_alert_text/1 with w3c session returns {:ok, alert_text} on success", %{
     config: config,

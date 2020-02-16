@@ -12,6 +12,7 @@ defmodule WebDriverClient do
   alias WebDriverClient.HTTPResponse
   alias WebDriverClient.JSONWireProtocolClient
   alias WebDriverClient.JSONWireProtocolClient.Commands, as: JWPCommands
+  alias WebDriverClient.KeyCodes
   alias WebDriverClient.LogEntry
   alias WebDriverClient.ProtocolMismatchError
   alias WebDriverClient.Session
@@ -568,6 +569,33 @@ defmodule WebDriverClient do
       parse_with_fallbacks(http_response, protocol,
         jwp: &JWPCommands.ClearElement.parse_response/1,
         w3c: &W3CCommands.ClearElement.parse_response/1
+      )
+    end
+  end
+
+  @type key_code :: unquote_splicing([KeyCodes.key_code_atoms_union()])
+  @type keystroke :: String.t() | key_code
+  @type keys :: keystroke | [keystroke]
+
+  @doc """
+  Sends a sequence of keystrokes to an element
+  """
+  doc_metadata subject: :elements
+
+  @spec send_keys_to_element(Session.t(), Element.t(), keys) :: :ok | {:error, reason}
+  def send_keys_to_element(
+        %Session{config: %Config{protocol: protocol}} = session,
+        %Element{} = element,
+        keys
+      ) do
+    with {:ok, http_response} <-
+           send_request_for_protocol(protocol,
+             jwp: fn -> JWPCommands.SendKeysToElement.send_request(session, element, keys) end,
+             w3c: fn -> W3CCommands.SendKeysToElement.send_request(session, element, keys) end
+           ) do
+      parse_with_fallbacks(http_response, protocol,
+        jwp: &JWPCommands.SendKeysToElement.parse_response/1,
+        w3c: &W3CCommands.SendKeysToElement.parse_response/1
       )
     end
   end
