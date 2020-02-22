@@ -2,9 +2,11 @@ defmodule WebDriverClient.Integration.ElementAttributesTest do
   use ExUnit.Case, async: false
 
   alias WebDriverClient.IntegrationTesting.Scenarios
+  alias WebDriverClient.IntegrationTesting.Scenarios.Scenario
   alias WebDriverClient.IntegrationTesting.TestGenerator
   alias WebDriverClient.IntegrationTesting.TestPages.ElementsPage
   alias WebDriverClient.Session
+  alias WebDriverClient.WebDriverError
 
   require TestGenerator
 
@@ -105,6 +107,33 @@ defmodule WebDriverClient.Integration.ElementAttributesTest do
                  text_input_element,
                  "invalid attribute name"
                )
+    end
+
+    test "returning element properties", %{scenario: scenario} do
+      config = Scenarios.get_config(scenario)
+      payload = Scenarios.get_start_session_payload(scenario)
+
+      {:ok, session} = WebDriverClient.start_session(config, payload)
+
+      ensure_session_is_closed(session)
+
+      :ok = WebDriverClient.navigate_to(session, ElementsPage.url())
+
+      assert {:ok, element} =
+               WebDriverClient.find_element(
+                 session,
+                 :css_selector,
+                 ElementsPage.css_selector_for_sample_list()
+               )
+
+      case scenario do
+        %Scenario{protocol: :w3c} ->
+          assert {:ok, "UL"} = WebDriverClient.fetch_element_property(session, element, "tagName")
+
+        %Scenario{protocol: :jwp} ->
+          assert {:error, %WebDriverError{reason: :unsupported_operation}} =
+                   WebDriverClient.fetch_element_property(session, element, "tagName")
+      end
     end
   end
 

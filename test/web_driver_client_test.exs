@@ -938,6 +938,55 @@ defmodule WebDriverClientTest do
   end
 
   @tag protocol: :jwp
+  test "fetch_element_property/3 with JWP session returns {:error, %WebDriverError{reason: :unsupported_operation}}",
+       %{config: config} do
+    session = TestData.session(config: constant(config)) |> pick()
+    element = TestData.element() |> pick()
+    property = TestData.property_name() |> pick()
+
+    assert {:error, %WebDriverError{reason: :unsupported_operation}} =
+             WebDriverClient.fetch_element_property(session, element, property)
+  end
+
+  @tag protocol: :w3c
+  test "fetch_element_property/3 with W3C session returns {:ok, value} on valid response",
+       %{
+         config: config,
+         bypass: bypass
+       } do
+    session = TestData.session(config: constant(config)) |> pick()
+    element = TestData.element() |> pick()
+    property = TestData.property_name() |> pick()
+    resp = W3CTestResponses.fetch_element_property_response() |> pick()
+
+    stub_bypass_response(bypass, resp)
+
+    assert {:ok, value} = WebDriverClient.fetch_element_property(session, element, property)
+    assert is_binary(value)
+  end
+
+  @tag protocol: :w3c
+  test "fetch_element_property/3 with w3c session returns appropriate errors on various server responses",
+       %{config: config, bypass: bypass, protocol: protocol} do
+    scenario_server = set_up_error_scenario_tests(protocol, bypass)
+
+    for error_scenario <-
+          basic_error_scenarios(protocol) -- [:protocol_mismatch_error_web_driver_error] do
+      session =
+        build_session_for_scenario(protocol, scenario_server, bypass, config, error_scenario)
+
+      element = TestData.element() |> pick()
+      property = TestData.property_name() |> pick()
+
+      assert_expected_response(
+        protocol,
+        WebDriverClient.fetch_element_property(session, element, property),
+        error_scenario
+      )
+    end
+  end
+
+  @tag protocol: :jwp
   test "fetch_element_text/2 with JWP session returns {:ok, value} on valid response",
        %{
          config: config,
@@ -975,7 +1024,7 @@ defmodule WebDriverClientTest do
          %{config: config, bypass: bypass, protocol: protocol} do
       scenario_server = set_up_error_scenario_tests(protocol, bypass)
 
-      for error_scenario <- basic_error_scenarios(protocol) do
+      for error_scenario <- basic_error_scenarios(protocol) -- [:protocl_m] do
         session =
           build_session_for_scenario(protocol, scenario_server, bypass, config, error_scenario)
 

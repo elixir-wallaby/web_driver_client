@@ -61,4 +61,14 @@ defmodule WebDriverClient.GuardsTest do
       end
     end
   end
+
+  property "is_property_name/1 only returns true on binaries" do
+    check all term <- term() do
+      if is_binary(term) do
+        assert Guards.is_property_name(term)
+      else
+        refute Guards.is_property_name(term)
+      end
+    end
+  end
 end

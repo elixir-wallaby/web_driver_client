@@ -26,6 +26,7 @@ defmodule WebDriverClient.W3CWireProtocolClient do
 
   @type url :: String.t()
   @type attribute_name :: String.t()
+  @type property_name :: String.t()
 
   @type basic_reason ::
           ConnectionError.t()
@@ -315,6 +316,25 @@ defmodule WebDriverClient.W3CWireProtocolClient do
     with {:ok, http_response} <-
            Commands.FetchElementAttribute.send_request(session, element, attribute_name),
          {:ok, value} <- Commands.FetchElementAttribute.parse_response(http_response) do
+      {:ok, value}
+    end
+  end
+
+  @doc """
+  Fetches the value of an element's property
+
+  Specification: https://w3c.github.io/webdriver/#get-element-property
+  """
+  doc_metadata subject: :elements
+
+  @spec fetch_element_property(Session.t(), Element.t(), property_name) ::
+          {:ok, String.t()} | {:error, basic_reason}
+
+  def fetch_element_property(%Session{} = session, %Element{} = element, property_name)
+      when is_property_name(property_name) do
+    with {:ok, http_response} <-
+           Commands.FetchElementProperty.send_request(session, element, property_name),
+         {:ok, value} <- Commands.FetchElementProperty.parse_response(http_response) do
       {:ok, value}
     end
   end
