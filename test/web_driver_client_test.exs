@@ -1367,6 +1367,51 @@ defmodule WebDriverClientTest do
     end
   end
 
+  @tag protocol: :w3c
+  test "send_alert_text/2 with w3c session returns :ok on success", %{
+    config: config,
+    bypass: bypass
+  } do
+    session = TestData.session(config: constant(config)) |> pick()
+    resp = W3CTestResponses.send_alert_text_response() |> pick()
+    stub_bypass_response(bypass, resp)
+
+    assert :ok = WebDriverClient.send_alert_text(session, "foo")
+  end
+
+  @tag protocol: :jwp
+  test "send_alert_text/2 with JWP session returns :ok on success", %{
+    config: config,
+    bypass: bypass
+  } do
+    session = TestData.session(config: constant(config)) |> pick()
+    resp = JWPTestResponses.send_alert_text_response() |> pick()
+    stub_bypass_response(bypass, resp)
+
+    assert :ok = WebDriverClient.send_alert_text(session, "foo")
+  end
+
+  for protocol <- @protocols do
+    @tag protocol: protocol
+    test "send_alert_text/2 with #{protocol} session returns appropriate errors on various server responses",
+         %{config: config, bypass: bypass, protocol: protocol} do
+      scenario_server = set_up_error_scenario_tests(protocol, bypass)
+
+      for error_scenario <- basic_error_scenarios(protocol) do
+        session =
+          build_session_for_scenario(protocol, scenario_server, bypass, config, error_scenario)
+
+        keys = "foo"
+
+        assert_expected_response(
+          protocol,
+          WebDriverClient.send_alert_text(session, keys),
+          error_scenario
+        )
+      end
+    end
+  end
+
   defp set_up_error_scenario_tests(:jwp, bypass) do
     JWPErrorScenarios.set_up_error_scenario_tests(bypass)
   end

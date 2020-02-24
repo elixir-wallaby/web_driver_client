@@ -28,14 +28,29 @@ defmodule WebDriverClient.IntegrationTesting.TestPages.InteractionsPage do
     "#btn-open-confirm"
   end
 
+  @spec css_selector_for_open_prompt_button :: String.t()
+  def css_selector_for_open_prompt_button do
+    "#btn-open-prompt"
+  end
+
   @spec css_selector_for_confirm_prompt_output :: String.t()
   def css_selector_for_confirm_prompt_output do
     "#confirm-prompt-result"
   end
 
+  @spec css_selector_for_prompt_output :: String.t()
+  def css_selector_for_prompt_output do
+    "#prompt-result"
+  end
+
   @spec alert_text :: String.t()
   def alert_text do
     "Hi, I'm an alert"
+  end
+
+  @spec prompt_text :: String.t()
+  def prompt_text do
+    "Please enter your name"
   end
 
   @spec confirm_accepted_result_text :: String.t()

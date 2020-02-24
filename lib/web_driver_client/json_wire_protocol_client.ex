@@ -431,6 +431,21 @@ defmodule WebDriverClient.JSONWireProtocolClient do
   end
 
   @doc """
+  Sends keystrokes to a JavaScript `prompt()` dialog.
+
+  Specification: https://github.com/SeleniumHQ/selenium/wiki/JsonWireProtocol#post-sessionsessionidalert_text
+  """
+  doc_metadata subject: :alerts
+  @spec send_alert_text(Session.t(), String.t()) :: :ok | {:error, basic_reason}
+  def send_alert_text(%Session{id: id} = session, text)
+      when is_session_id(id) and is_binary(text) do
+    with {:ok, http_response} <- Commands.SendAlertText.send_request(session, text),
+         :ok <- Commands.SendAlertText.parse_response(http_response) do
+      :ok
+    end
+  end
+
+  @doc """
   Accepts the currently active alert.
 
   Specification: https://github.com/SeleniumHQ/selenium/wiki/JsonWireProtocol#post-sessionsessionidaccept_alert

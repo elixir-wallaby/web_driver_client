@@ -1733,6 +1733,44 @@ defmodule WebDriverClient.W3CWireProtocolClientTest do
     end
   end
 
+  test "send_alert_text/2 with valid data calls the correct url and returns the response", %{
+    config: config,
+    bypass: bypass
+  } do
+    %Session{id: session_id} = session = TestData.session(config: constant(config)) |> pick()
+
+    text = "bar"
+    resp = TestResponses.send_alert_text_response() |> pick()
+
+    Bypass.expect_once(bypass, "POST", "/session/#{session_id}/alert/text", fn conn ->
+      conn = parse_params(conn)
+
+      assert conn.params == %{"text" => text}
+
+      conn
+      |> put_resp_content_type("application/json")
+      |> send_resp(200, resp)
+    end)
+
+    assert :ok = W3CWireProtocolClient.send_alert_text(session, text)
+  end
+
+  test "send_alert_text/2 returns appropriate errors on various server responses", %{
+    bypass: bypass,
+    config: config
+  } do
+    scenario_server = set_up_error_scenario_tests(bypass)
+
+    for error_scenario <- error_scenarios() do
+      session = build_session_for_scenario(scenario_server, bypass, config, error_scenario)
+
+      assert_expected_response(
+        W3CWireProtocolClient.send_alert_text(session, "foo"),
+        error_scenario
+      )
+    end
+  end
+
   defp build_start_session_payload do
     %{"capablities" => %{"browserName" => "firefox"}}
   end

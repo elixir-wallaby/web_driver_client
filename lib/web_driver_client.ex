@@ -682,6 +682,25 @@ defmodule WebDriverClient do
     end
   end
 
+  @doc """
+  Sends keystrokes to the currently active Javascript `prompt` dialog.
+  """
+  doc_metadata subject: :alerts
+  @spec send_alert_text(Session.t(), String.t()) :: :ok | {:error, reason}
+  def send_alert_text(%Session{config: %Config{protocol: protocol}} = session, text)
+      when is_binary(text) do
+    with {:ok, http_response} <-
+           send_request_for_protocol(protocol,
+             jwp: fn -> JWPCommands.SendAlertText.send_request(session, text) end,
+             w3c: fn -> W3CCommands.SendAlertText.send_request(session, text) end
+           ) do
+      parse_with_fallbacks(http_response, protocol,
+        jwp: &JWPCommands.SendAlertText.parse_response/1,
+        w3c: &W3CCommands.SendAlertText.parse_response/1
+      )
+    end
+  end
+
   @spec to_log_entry(JSONWireProtocolClient.LogEntry.t()) :: LogEntry.t()
   defp to_log_entry(%JSONWireProtocolClient.LogEntry{} = log_entry) do
     log_entry

@@ -102,6 +102,46 @@ defmodule WebDriverClient.Integration.AlertTest do
       {:error, %WebDriverError{reason: :unexpected_alert_open}} =
         WebDriverClient.click_element(session, open_confirm_button)
     end
+
+    test "interacting with prompts", %{scenario: scenario} do
+      config = Scenarios.get_config(scenario)
+      payload = Scenarios.get_start_session_payload(scenario)
+
+      {:ok, session} = WebDriverClient.start_session(config, payload)
+
+      ensure_session_is_closed(session)
+
+      :ok = WebDriverClient.navigate_to(session, InteractionsPage.url())
+
+      {:ok, prompt_output_element} =
+        WebDriverClient.find_element(
+          session,
+          :css_selector,
+          InteractionsPage.css_selector_for_prompt_output()
+        )
+
+      {:ok, open_prompt_button} =
+        WebDriverClient.find_element(
+          session,
+          :css_selector,
+          InteractionsPage.css_selector_for_open_prompt_button()
+        )
+
+      :ok = WebDriverClient.click_element(session, open_prompt_button)
+
+      assert {:ok, alert_text} = WebDriverClient.fetch_alert_text(session)
+      assert InteractionsPage.prompt_text() == alert_text
+
+      :ok = WebDriverClient.accept_alert(session)
+
+      assert {:ok, ""} = WebDriverClient.fetch_element_text(session, prompt_output_element)
+
+      :ok = WebDriverClient.click_element(session, open_prompt_button)
+
+      :ok = WebDriverClient.send_alert_text(session, "foo")
+      :ok = WebDriverClient.accept_alert(session)
+      assert {:ok, "foo"} = WebDriverClient.fetch_element_text(session, prompt_output_element)
+    end
   end
 
   @spec ensure_session_is_closed(Session.t()) :: :ok

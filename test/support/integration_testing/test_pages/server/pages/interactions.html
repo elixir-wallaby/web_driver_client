@@ -13,8 +13,10 @@
 
         <button id="btn-open-alert">Open Alert</button>
         <button id="btn-open-confirm">Open Confirm</button>
+        <button id="btn-open-prompt">Open Prompt</button>
 
         <div id="confirm-prompt-result"></div>
+        <div id="prompt-result"></div>
 
         <script>
          document.getElementById("btn-switch-text").onclick = function(){
@@ -31,6 +33,12 @@
              } else {
                  document.getElementById("confirm-prompt-result").innerHTML = "Not so much";
              }
+         };
+
+         document.getElementById("btn-open-prompt").onclick = function(){
+             var result = prompt("Please enter your name");
+
+             document.getElementById("prompt-result").innerHTML = result;
          };
         </script>
     </body>

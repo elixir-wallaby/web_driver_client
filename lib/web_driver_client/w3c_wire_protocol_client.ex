@@ -419,6 +419,21 @@ defmodule WebDriverClient.W3CWireProtocolClient do
   end
 
   @doc """
+  Sets the text field of a `window.prompt()` dialog to the given value
+
+  Specification: https://w3c.github.io/webdriver/#send-alert-text
+  """
+  doc_metadata subject: :alerts
+  @spec send_alert_text(Session.t(), String.t()) :: {:ok, String.t()} | {:error, basic_reason}
+  def send_alert_text(%Session{id: id} = session, text)
+      when is_session_id(id) and is_binary(text) do
+    with {:ok, http_response} <- Commands.SendAlertText.send_request(session, text),
+         :ok <- Commands.SendAlertText.parse_response(http_response) do
+      :ok
+    end
+  end
+
+  @doc """
   Accepts the currently active alert dialog.
 
   Specification: https://w3c.github.io/webdriver/#accept-alert
