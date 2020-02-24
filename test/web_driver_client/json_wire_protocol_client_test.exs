@@ -1384,7 +1384,7 @@ defmodule WebDriverClient.JSONWireProtocolClientTest do
     end
   end
 
-  test "send_keys_to_element/3 sends the expected request", %{
+  property "send_keys_to_element/3 sends the expected request", %{
     bypass: bypass,
     config: config
   } do
@@ -1488,6 +1488,111 @@ defmodule WebDriverClient.JSONWireProtocolClientTest do
 
       assert_expected_response(
         JSONWireProtocolClient.send_keys_to_element(session, element, "foo"),
+        error_scenario
+      )
+    end
+  end
+
+  property "send_keys/2 sends the expected request", %{
+    bypass: bypass,
+    config: config
+  } do
+    check all keys <-
+                one_of([
+                  string_to_type(),
+                  valid_key_code(),
+                  list_of(
+                    one_of([
+                      string_to_type(),
+                      valid_key_code()
+                    ]),
+                    max_length: 10
+                  )
+                ]) do
+      {config, prefix} = prefix_base_url_for_multiple_runs(config)
+
+      %Session{id: session_id} = session = TestData.session(config: constant(config)) |> pick()
+
+      encoded_keys =
+        keys
+        |> List.wrap()
+        |> Enum.map(fn
+          keys when is_binary(keys) ->
+            keys
+
+          keys when is_atom(keys) ->
+            {:ok, encoded} = KeyCodes.encode(keys)
+            encoded
+        end)
+        |> IO.iodata_to_binary()
+
+      resp = "{}"
+
+      Bypass.expect_once(
+        bypass,
+        "POST",
+        "/#{prefix}/session/#{session_id}/keys",
+        fn conn ->
+          conn = parse_params(conn)
+
+          assert conn.params == %{
+                   "value" => [encoded_keys]
+                 }
+
+          conn
+          |> put_resp_content_type("application/json")
+          |> send_resp(200, resp)
+        end
+      )
+
+      JSONWireProtocolClient.send_keys(session, keys)
+    end
+  end
+
+  property "send_keys/2 returns :ok on valid response", %{
+    bypass: bypass,
+    config: config
+  } do
+    check all resp <- TestResponses.send_keys_response() do
+      {config, prefix} = prefix_base_url_for_multiple_runs(config)
+
+      %Session{id: session_id} = session = TestData.session(config: constant(config)) |> pick()
+
+      Bypass.expect_once(
+        bypass,
+        "POST",
+        "/#{prefix}/session/#{session_id}/keys",
+        fn conn ->
+          conn
+          |> put_resp_content_type("application/json")
+          |> send_resp(200, resp)
+        end
+      )
+
+      assert :ok = JSONWireProtocolClient.send_keys(session, "foo")
+    end
+  end
+
+  test "send_keys/2 raises an ArgumentError on unknown keystroke" do
+    session = TestData.session() |> pick()
+    keys = [:unknown]
+
+    assert_raise ArgumentError, ~r/unknown key code: :unknown/i, fn ->
+      JSONWireProtocolClient.send_keys(session, keys)
+    end
+  end
+
+  test "send_keys/2 returns appropriate errors on various server responses", %{
+    bypass: bypass,
+    config: config
+  } do
+    scenario_server = set_up_error_scenario_tests(bypass)
+
+    for error_scenario <- error_scenarios() do
+      session = build_session_for_scenario(scenario_server, bypass, config, error_scenario)
+
+      assert_expected_response(
+        JSONWireProtocolClient.send_keys(session, "foo"),
         error_scenario
       )
     end

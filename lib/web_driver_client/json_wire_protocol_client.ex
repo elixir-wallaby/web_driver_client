@@ -403,6 +403,20 @@ defmodule WebDriverClient.JSONWireProtocolClient do
   end
 
   @doc """
+  Send a sequence of key strokes to the active element
+
+  Specification: https://github.com/SeleniumHQ/selenium/wiki/JsonWireProtocol#sessionsessionidkeys
+  """
+  @spec send_keys(Session.t(), keys) :: :ok | {:error, basic_reason}
+  def send_keys(%Session{id: id} = session, keys)
+      when is_session_id(id) do
+    with {:ok, http_response} <- Commands.SendKeys.send_request(session, keys),
+         :ok <- Commands.SendKeys.parse_response(http_response) do
+      :ok
+    end
+  end
+
+  @doc """
   Fetches the text of the current alert.
 
   Specification: https://github.com/SeleniumHQ/selenium/wiki/JsonWireProtocol#get-sessionsessionidalert_text

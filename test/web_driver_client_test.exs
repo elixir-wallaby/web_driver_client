@@ -1192,6 +1192,50 @@ defmodule WebDriverClientTest do
     end
   end
 
+  @tag protocol: :jwp
+  test "send_keys/2 with jwp session returns :ok on success", %{
+    config: config,
+    bypass: bypass
+  } do
+    session = TestData.session(config: constant(config)) |> pick()
+    resp = JWPTestResponses.send_keys_response() |> pick()
+    keys = ["foo", :tab]
+
+    stub_bypass_response(bypass, resp)
+
+    assert :ok = WebDriverClient.send_keys(session, keys)
+  end
+
+  @tag protocol: :jwp
+  test "send_keys/2 with jwp session returns appropriate errors on various server responses",
+       %{config: config, bypass: bypass, protocol: protocol} do
+    scenario_server = set_up_error_scenario_tests(protocol, bypass)
+
+    for error_scenario <-
+          basic_error_scenarios(protocol) -- [:protocol_mismatch_error_web_driver_error] do
+      session =
+        build_session_for_scenario(protocol, scenario_server, bypass, config, error_scenario)
+
+      keys = ["foo", :tab]
+
+      assert_expected_response(
+        protocol,
+        WebDriverClient.send_keys(session, keys),
+        error_scenario
+      )
+    end
+  end
+
+  @tag protocol: :w3c
+  test "send_keys/2 with w3c session returns {:error, %WebDriverError{reason: :unsupported_operation}}",
+       %{config: config} do
+    session = TestData.session(config: constant(config)) |> pick()
+    keys = ["foo", :tab]
+
+    assert {:error, %WebDriverError{reason: :unsupported_operation}} =
+             WebDriverClient.send_keys(session, keys)
+  end
+
   @tag protocol: :w3c
   test "fetch_alert_text/1 with w3c session returns {:ok, alert_text} on success", %{
     config: config,

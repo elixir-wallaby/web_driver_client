@@ -601,6 +601,28 @@ defmodule WebDriverClient do
   end
 
   @doc """
+  Sends a sequence of keystrokes to the currently active element.
+
+  Only supported with `:jwp` protocol. Prefer `send_keys_to_element/3` for
+  improved compatibility.
+  """
+  doc_metadata subject: :elements
+
+  @spec send_keys(Session.t(), keys) :: :ok | {:error, reason}
+  def send_keys(%Session{config: %Config{protocol: :w3c}}, _keys) do
+    {:error, WebDriverError.exception(reason: :unsupported_operation)}
+  end
+
+  def send_keys(%Session{config: %Config{protocol: protocol}} = session, keys) do
+    with {:ok, http_response} <-
+           send_request_for_protocol(protocol,
+             jwp: fn -> JWPCommands.SendKeys.send_request(session, keys) end
+           ) do
+      parse_with_fallbacks(http_response, protocol, jwp: &JWPCommands.SendKeys.parse_response/1)
+    end
+  end
+
+  @doc """
   Fetches the text from the currently active alert.
   """
   doc_metadata subject: :alerts

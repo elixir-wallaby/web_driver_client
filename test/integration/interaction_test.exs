@@ -148,6 +148,47 @@ defmodule WebDriverClient.Integration.InteractionTest do
     end
   end
 
+  # Send_keys is only supported for jwp clients
+  jwp_scenarios =
+    Scenarios.all()
+    |> Enum.filter(&match?(%Scenario{protocol: :jwp}, &1))
+
+  TestGenerator.generate_describe_per_scenario scenarios: jwp_scenarios do
+    test "send_keys works for JWP sessions", %{scenario: scenario} do
+      config = Scenarios.get_config(scenario)
+      payload = Scenarios.get_start_session_payload(scenario)
+
+      {:ok, session} = WebDriverClient.start_session(config, payload)
+
+      ensure_session_is_closed(session)
+
+      :ok = WebDriverClient.navigate_to(session, FormPage.url())
+
+      {:ok, first_name_field} =
+        WebDriverClient.find_element(
+          session,
+          :css_selector,
+          FormPage.css_selector_for_first_name_field()
+        )
+
+      {:ok, last_name_field} =
+        WebDriverClient.find_element(
+          session,
+          :css_selector,
+          FormPage.css_selector_for_last_name_field()
+        )
+
+      :ok = WebDriverClient.click_element(session, first_name_field)
+      assert {:ok, ^first_name_field} = WebDriverClient.fetch_active_element(session)
+
+      :ok = WebDriverClient.send_keys(session, [:tab])
+      assert {:ok, ^last_name_field} = WebDriverClient.fetch_active_element(session)
+
+      :ok = WebDriverClient.send_keys(session, [:shift, :tab])
+      assert {:ok, ^first_name_field} = WebDriverClient.fetch_active_element(session)
+    end
+  end
+
   @spec ensure_session_is_closed(Session.t()) :: :ok
   defp ensure_session_is_closed(%Session{} = session) do
     on_exit(fn ->
