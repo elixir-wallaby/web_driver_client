@@ -2,11 +2,9 @@ defmodule WebDriverClient.Integration.ScreenshotTest do
   use ExUnit.Case, async: false
 
   alias WebDriverClient.IntegrationTesting.Scenarios
-  alias WebDriverClient.IntegrationTesting.Scenarios.Scenario
   alias WebDriverClient.IntegrationTesting.TestGenerator
   alias WebDriverClient.IntegrationTesting.TestPages.InteractionsPage
   alias WebDriverClient.Session
-  alias WebDriverClient.WebDriverError
 
   require TestGenerator
 
