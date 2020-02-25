@@ -10,4 +10,8 @@ defmodule WebDriverClient.JSONWireProtocolClient.Guards do
   defguard is_element_selector(term) when is_binary(term)
 
   defguard is_attribute_name(term) when is_binary(term)
+
+  defguard is_cookie_name(term) when is_binary(term)
+
+  defguard is_cookie_value(term) when is_binary(term)
 end

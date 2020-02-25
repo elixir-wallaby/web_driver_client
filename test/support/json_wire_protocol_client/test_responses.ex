@@ -216,6 +216,25 @@ defmodule WebDriverClient.JSONWireProtocolClient.TestResponses do
     |> map(&Jason.encode!/1)
   end
 
+  def fetch_cookies_response do
+    cookie()
+    |> list_of(max_length: 10)
+    |> jwp_response()
+    |> map(&Jason.encode!/1)
+  end
+
+  def set_cookie_response do
+    nil
+    |> jwp_response()
+    |> map(&Jason.encode!/1)
+  end
+
+  def delete_cookies_response do
+    nil
+    |> jwp_response()
+    |> map(&Jason.encode!/1)
+  end
+
   def log_entry do
     gen all required_data <-
               fixed_map(%{
@@ -229,6 +248,26 @@ defmodule WebDriverClient.JSONWireProtocolClient.TestResponses do
               }) do
       Map.merge(required_data, optional_data)
     end
+  end
+
+  def cookie do
+    fixed_map(%{
+      "name" => cookie_name(),
+      "value" => cookie_value(),
+      "domain" => cookie_domain()
+    })
+  end
+
+  def cookie_name do
+    string(:alphanumeric, min_length: 1, max_length: 10)
+  end
+
+  def cookie_value do
+    string(:alphanumeric, max_length: 10)
+  end
+
+  def cookie_domain do
+    string(:alphanumeric, min_length: 1, max_length: 10)
   end
 
   def log_message do

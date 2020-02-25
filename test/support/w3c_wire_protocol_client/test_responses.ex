@@ -216,6 +216,20 @@ defmodule WebDriverClient.W3CWireProtocolClient.TestResponses do
     |> map(&Jason.encode!/1)
   end
 
+  def fetch_cookies_response do
+    %{"value" => list_of(cookie(), max_length: 10)}
+    |> fixed_map()
+    |> map(&Jason.encode!/1)
+  end
+
+  def set_cookie_response do
+    %{"value" => nil} |> constant() |> map(&Jason.encode!/1)
+  end
+
+  def delete_cookies_response do
+    %{"value" => nil} |> constant() |> map(&Jason.encode!/1)
+  end
+
   def log_entry do
     fixed_map(%{
       "timestamp" => recent_timestamp(),
@@ -233,6 +247,26 @@ defmodule WebDriverClient.W3CWireProtocolClient.TestResponses do
   end
 
   def log_type do
+    string(:alphanumeric, min_length: 1, max_length: 10)
+  end
+
+  def cookie do
+    fixed_map(%{
+      "name" => cookie_name(),
+      "value" => cookie_value(),
+      "domain" => cookie_domain()
+    })
+  end
+
+  def cookie_name do
+    string(:alphanumeric, min_length: 1, max_length: 10)
+  end
+
+  def cookie_value do
+    string(:alphanumeric, max_length: 10)
+  end
+
+  def cookie_domain do
     string(:alphanumeric, min_length: 1, max_length: 10)
   end
 

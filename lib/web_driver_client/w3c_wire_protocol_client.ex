@@ -20,6 +20,7 @@ defmodule WebDriverClient.W3CWireProtocolClient do
   alias WebDriverClient.KeyCodes
   alias WebDriverClient.Session
   alias WebDriverClient.W3CWireProtocolClient.Commands
+  alias WebDriverClient.W3CWireProtocolClient.Cookie
   alias WebDriverClient.W3CWireProtocolClient.LogEntry
   alias WebDriverClient.W3CWireProtocolClient.Rect
   alias WebDriverClient.W3CWireProtocolClient.UnexpectedResponseError
@@ -471,6 +472,49 @@ defmodule WebDriverClient.W3CWireProtocolClient do
     with {:ok, http_response} <- Commands.TakeScreenshot.send_request(session),
          {:ok, image_data} <- Commands.TakeScreenshot.parse_response(http_response) do
       {:ok, image_data}
+    end
+  end
+
+  @doc """
+  Fetches the cookies visible to the current page
+
+  Specification: https://w3c.github.io/webdriver/#get-all-cookies
+  """
+  @spec fetch_cookies(Session.t()) :: {:ok, [Cookie.t()]} | {:error, basic_reason()}
+  def fetch_cookies(%Session{} = session) do
+    with {:ok, http_response} <- Commands.FetchCookies.send_request(session),
+         {:ok, cookies} <- Commands.FetchCookies.parse_response(http_response) do
+      {:ok, cookies}
+    end
+  end
+
+  @type set_cookie_opt :: {:domain, Cookie.domain()}
+
+  @doc """
+  Sets a cookie
+
+  Specification: https://w3c.github.io/webdriver/#add-cookie
+  """
+  @spec set_cookie(Session.t(), Cookie.name(), Cookie.value(), [set_cookie_opt]) ::
+          :ok | {:error, basic_reason}
+  def set_cookie(%Session{id: id} = session, name, value, opts \\ [])
+      when is_session_id(id) and is_cookie_name(name) and is_cookie_value(value) and is_list(opts) do
+    with {:ok, http_response} <- Commands.SetCookie.send_request(session, name, value, opts),
+         :ok <- Commands.SetCookie.parse_response(http_response) do
+      :ok
+    end
+  end
+
+  @doc """
+  Deletes all cookies for the current page
+
+  Specification: https://w3c.github.io/webdriver/#delete-all-cookies
+  """
+  @spec delete_cookies(Session.t()) :: :ok | {:error, basic_reason}
+  def delete_cookies(%Session{id: id} = session) when is_session_id(id) do
+    with {:ok, http_response} <- Commands.DeleteCookies.send_request(session),
+         :ok <- Commands.DeleteCookies.parse_response(http_response) do
+      :ok
     end
   end
 end

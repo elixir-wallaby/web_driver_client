@@ -12,4 +12,8 @@ defmodule WebDriverClient.W3CWireProtocolClient.Guards do
   defguard is_attribute_name(term) when is_binary(term)
 
   defguard is_property_name(term) when is_binary(term)
+
+  defguard is_cookie_name(term) when is_binary(term)
+
+  defguard is_cookie_value(term) when is_binary(term)
 end

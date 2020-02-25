@@ -174,9 +174,9 @@ jobs:
           elixir-version: ${{ matrix.elixir }}
       - run: mkdir -p logs
       - name: Run PhantomJS
-        run: phantomjs --wd | tee -a logs/phantomjs.log &
+        run: phantomjs --wd --webdriver-logfile=logs/phantomjs.log --webdriver-loglevel=DEBUG --debug=true &> logs/phantomjs-output.log &
       - name: Run chromedriver
-        run: chromedriver | tee -a logs/chromedriver.log &
+        run: chromedriver --log-path=logs/chromedriver.log --log-level=DEBUG &
       - uses: actions/cache@v1
         with:
           path: deps
@@ -184,7 +184,9 @@ jobs:
       - uses: actions/cache@v1
         with:
           path: _build/${{ env.MIX_ENV }}
-          key: ${{ env.CACHE_VERSION }}-_build-${{ env.MIX_ENV }}-${{ matrix.otp }}-${{ matrix.elixir }}-
+          key: ${{ env.CACHE_VERSION }}-_build-${{ env.MIX_ENV }}-${{ matrix.otp }}-${{ matrix.elixir }}-integration-tests
+          restore-keys: |
+            ${{ env.CACHE_VERSION }}-_build-${{ env.MIX_ENV }}-${{ matrix.otp }}-${{ matrix.elixir }}-
       - name: Install Dependencies
         run: mix deps.get
       - name: Compile app
@@ -227,6 +229,7 @@ jobs:
         run: bash <(curl -s https://codecov.io/bash) -F IntegrationTest -F Selenium2Firefox -e ELIXIR_VERSION,OTP_VERSION || echo "Codecov did not collect coverage reports"
 
       - uses: actions/upload-artifact@v1
+        if: always()
         with:
-          name: PhantomJS and Chromedriver Logs
+          name: Integration test server logs (Elixir ${{matrix.elixir}})
           path: logs/

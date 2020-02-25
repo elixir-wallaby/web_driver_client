@@ -6,6 +6,7 @@ defmodule WebDriverClient.W3CWireProtocolClient.ResponseParserTest do
   alias WebDriverClient.HTTPResponse
   alias WebDriverClient.Session
   alias WebDriverClient.TestData
+  alias WebDriverClient.W3CWireProtocolClient.Cookie
   alias WebDriverClient.W3CWireProtocolClient.LogEntry
   alias WebDriverClient.W3CWireProtocolClient.Rect
   alias WebDriverClient.W3CWireProtocolClient.Response
@@ -278,6 +279,35 @@ defmodule WebDriverClient.W3CWireProtocolClient.ResponseParserTest do
              ResponseParser.parse_start_session_response(w3c_response, config)
   end
 
+  property "parse_cookies/1 returns {:ok, [%Cookie{}]} when all cookies are valid" do
+    check all unparsed_cookies <- list_of(TestResponses.cookie(), max_length: 10) do
+      response = %{"value" => unparsed_cookies}
+      w3c_response = build_w3c_response(response)
+
+      expected_cookies =
+        Enum.map(unparsed_cookies, fn %{"name" => name, "value" => value, "domain" => domain} ->
+          %Cookie{name: name, value: value, domain: domain}
+        end)
+
+      assert {:ok, ^expected_cookies} = ResponseParser.parse_cookies(w3c_response)
+    end
+  end
+
+  property "parse_cookies/1 returns {:error, %UnexpectedResponseError{}} on an invalid response" do
+    check all response <-
+                one_of([
+                  constant(%{}),
+                  fixed_map(%{
+                    "value" => cookies_with_invalid_responses()
+                  })
+                ]) do
+      w3c_response = build_w3c_response(response)
+
+      assert {:error, %UnexpectedResponseError{response_body: ^response}} =
+               ResponseParser.parse_cookies(w3c_response)
+    end
+  end
+
   defp elements_with_invalid_responses do
     gen all valid_elements <- list_of(TestResponses.element(), max_length: 10),
             invalid_elements <- list_of(constant(%{}), min_length: 1, max_length: 10) do
@@ -291,6 +321,15 @@ defmodule WebDriverClient.W3CWireProtocolClient.ResponseParserTest do
     gen all valid_log_entries <- list_of(TestResponses.log_entry(), max_length: 10),
             invalid_log_entries <- list_of(constant(%{}), min_length: 1, max_length: 10) do
       [valid_log_entries, invalid_log_entries]
+      |> List.flatten()
+      |> Enum.shuffle()
+    end
+  end
+
+  defp cookies_with_invalid_responses do
+    gen all valid_cookies <- list_of(TestResponses.cookie(), max_length: 10),
+            invalid_cookies <- list_of(constant(%{}), min_length: 1, max_length: 10) do
+      [valid_cookies, invalid_cookies]
       |> List.flatten()
       |> Enum.shuffle()
     end

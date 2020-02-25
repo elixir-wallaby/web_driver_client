@@ -8,6 +8,7 @@ defmodule WebDriverClient do
 
   alias WebDriverClient.Config
   alias WebDriverClient.ConnectionError
+  alias WebDriverClient.Cookie
   alias WebDriverClient.Element
   alias WebDriverClient.HTTPResponse
   alias WebDriverClient.JSONWireProtocolClient
@@ -718,6 +719,69 @@ defmodule WebDriverClient do
     end
   end
 
+  @doc """
+  Fetches all cookies visible to the current web page.
+  """
+  @spec fetch_cookies(Session.t()) :: {:ok, [Cookie.t()]} | {:error, reason}
+  def fetch_cookies(%Session{config: %Config{protocol: protocol}} = session) do
+    with {:ok, http_response} <-
+           send_request_for_protocol(protocol,
+             jwp: fn -> JWPCommands.FetchCookies.send_request(session) end,
+             w3c: fn -> W3CCommands.FetchCookies.send_request(session) end
+           ) do
+      parse_with_fallbacks(
+        http_response,
+        protocol,
+        [
+          jwp: &JWPCommands.FetchCookies.parse_response/1,
+          w3c: &W3CCommands.FetchCookies.parse_response/1
+        ],
+        fn
+          {:ok, cookies} -> {:ok, Enum.map(cookies, &to_cookie/1)}
+          {:error, error} -> {:error, to_error(error)}
+        end
+      )
+    end
+  end
+
+  @type set_cookie_opt :: {:domain, Cookie.domain()}
+
+  @doc """
+  Sets a cookie
+  """
+  @spec set_cookie(Session.t(), Cookie.name(), Cookie.value(), [set_cookie_opt]) ::
+          :ok | {:error, reason}
+  def set_cookie(%Session{config: %Config{protocol: protocol}} = session, name, value, opts \\ [])
+      when is_cookie_name(name) and is_cookie_value(value) and is_list(opts) do
+    with {:ok, http_response} <-
+           send_request_for_protocol(protocol,
+             jwp: fn -> JWPCommands.SetCookie.send_request(session, name, value, opts) end,
+             w3c: fn -> W3CCommands.SetCookie.send_request(session, name, value, opts) end
+           ) do
+      parse_with_fallbacks(http_response, protocol,
+        jwp: &JWPCommands.SetCookie.parse_response/1,
+        w3c: &W3CCommands.SetCookie.parse_response/1
+      )
+    end
+  end
+
+  @doc """
+  Deletes all cookies visible to the current page
+  """
+  @spec delete_cookies(Session.t()) :: :ok | {:error, reason}
+  def delete_cookies(%Session{config: %Config{protocol: protocol}} = session) do
+    with {:ok, http_response} <-
+           send_request_for_protocol(protocol,
+             jwp: fn -> JWPCommands.DeleteCookies.send_request(session) end,
+             w3c: fn -> W3CCommands.DeleteCookies.send_request(session) end
+           ) do
+      parse_with_fallbacks(http_response, protocol,
+        jwp: &JWPCommands.DeleteCookies.parse_response/1,
+        w3c: &W3CCommands.DeleteCookies.parse_response/1
+      )
+    end
+  end
+
   @spec to_log_entry(JSONWireProtocolClient.LogEntry.t()) :: LogEntry.t()
   defp to_log_entry(%JSONWireProtocolClient.LogEntry{} = log_entry) do
     log_entry
@@ -730,6 +794,20 @@ defmodule WebDriverClient do
     log_entry
     |> Map.from_struct()
     |> (&struct!(LogEntry, &1)).()
+  end
+
+  @spec to_cookie(W3CWireProtocolClient.Cookie.t() | JSONWireProtocolClient.Cookie.t()) ::
+          Cookie.t()
+  defp to_cookie(%JSONWireProtocolClient.Cookie{} = cookie) do
+    cookie
+    |> Map.from_struct()
+    |> (&struct!(Cookie, &1)).()
+  end
+
+  defp to_cookie(%W3CWireProtocolClient.Cookie{} = cookie) do
+    cookie
+    |> Map.from_struct()
+    |> (&struct!(Cookie, &1)).()
   end
 
   defp to_error(%JSONWireProtocolClient.WebDriverError{reason: reason}) do

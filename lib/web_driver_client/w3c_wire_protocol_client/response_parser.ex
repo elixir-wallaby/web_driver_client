@@ -8,6 +8,7 @@ defmodule WebDriverClient.W3CWireProtocolClient.ResponseParser do
   alias WebDriverClient.HTTPResponse
   alias WebDriverClient.Session
   alias WebDriverClient.W3CWireProtocolClient
+  alias WebDriverClient.W3CWireProtocolClient.Cookie
   alias WebDriverClient.W3CWireProtocolClient.LogEntry
   alias WebDriverClient.W3CWireProtocolClient.Rect
   alias WebDriverClient.W3CWireProtocolClient.Response
@@ -170,6 +171,17 @@ defmodule WebDriverClient.W3CWireProtocolClient.ResponseParser do
     end
   end
 
+  @spec parse_cookies(Response.t()) :: {:ok, [Cookie.t()]} | {:error, UnexpectedResponseError.t()}
+  def parse_cookies(%Response{body: body}) do
+    with %{"value" => values} when is_list(values) <- body,
+         cookies when is_list(cookies) <- do_parse_cookies(values) do
+      {:ok, cookies}
+    else
+      _ ->
+        {:error, UnexpectedResponseError.exception(response_body: body)}
+    end
+  end
+
   defp do_parse_elements(elements) do
     elements
     |> Enum.reduce_while([], fn
@@ -209,6 +221,28 @@ defmodule WebDriverClient.W3CWireProtocolClient.ResponseParser do
     |> case do
       :error -> :error
       log_entries -> Enum.reverse(log_entries)
+    end
+  end
+
+  defp do_parse_cookies(cookies) do
+    cookies
+    |> Enum.reduce_while([], fn
+      %{"name" => name, "value" => value, "domain" => domain}, acc
+      when is_binary(name) and is_binary(value) and is_binary(domain) ->
+        cookie = %Cookie{
+          name: name,
+          value: value,
+          domain: domain
+        }
+
+        {:cont, [cookie | acc]}
+
+      _, _ ->
+        {:halt, :error}
+    end)
+    |> case do
+      :error -> :error
+      cookies -> Enum.reverse(cookies)
     end
   end
 

@@ -61,6 +61,7 @@ defmodule WebDriverClient.MixProject do
       groups_for_modules: [
         "Main API": [
           WebDriverClient,
+          WebDriverClient.Cookie,
           WebDriverClient.Config,
           WebDriverClient.ConnectionError,
           WebDriverClient.Element,

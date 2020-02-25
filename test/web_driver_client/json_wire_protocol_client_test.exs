@@ -7,6 +7,7 @@ defmodule WebDriverClient.JSONWireProtocolClientTest do
 
   alias WebDriverClient.Element
   alias WebDriverClient.JSONWireProtocolClient
+  alias WebDriverClient.JSONWireProtocolClient.Cookie
   alias WebDriverClient.JSONWireProtocolClient.LogEntry
   alias WebDriverClient.JSONWireProtocolClient.TestResponses
   alias WebDriverClient.JSONWireProtocolClient.UnexpectedResponseError
@@ -1839,6 +1840,169 @@ defmodule WebDriverClient.JSONWireProtocolClientTest do
 
       assert_expected_response(
         JSONWireProtocolClient.take_screenshot(session),
+        error_scenario
+      )
+    end
+  end
+
+  property "fetch_cookies/1 returns {:ok, [Cookie.t()]} on valid response", %{
+    bypass: bypass,
+    config: config
+  } do
+    check all resp <- TestResponses.fetch_cookies_response() do
+      {config, prefix} = prefix_base_url_for_multiple_runs(config)
+
+      %Session{id: session_id} = session = TestData.session(config: constant(config)) |> pick()
+
+      Bypass.expect_once(
+        bypass,
+        "GET",
+        "/#{prefix}/session/#{session_id}/cookie",
+        fn conn ->
+          conn
+          |> put_resp_content_type("application/json")
+          |> send_resp(200, resp)
+        end
+      )
+
+      expected_cookies =
+        resp
+        |> Jason.decode!()
+        |> Map.fetch!("value")
+        |> Enum.map(fn raw_cookie ->
+          %Cookie{
+            name: Map.fetch!(raw_cookie, "name"),
+            value: Map.fetch!(raw_cookie, "value"),
+            domain: Map.fetch!(raw_cookie, "domain")
+          }
+        end)
+
+      assert {:ok, ^expected_cookies} = JSONWireProtocolClient.fetch_cookies(session)
+    end
+  end
+
+  test "fetch_cookies/1 returns {:error, %UnexpectedResponseError{}} on invalid response",
+       %{bypass: bypass, config: config} do
+    %Session{id: session_id} = session = TestData.session(config: constant(config)) |> pick()
+
+    parsed_response = %{}
+
+    Bypass.expect_once(
+      bypass,
+      "GET",
+      "/session/#{session_id}/cookie",
+      fn conn ->
+        conn
+        |> put_resp_content_type("application/json")
+        |> send_resp(200, Jason.encode!(parsed_response))
+      end
+    )
+
+    assert {:error, %UnexpectedResponseError{response_body: ^parsed_response}} =
+             JSONWireProtocolClient.fetch_cookies(session)
+  end
+
+  test "fetch_cookies/1 returns appropriate errors on various server responses", %{
+    bypass: bypass,
+    config: config
+  } do
+    scenario_server = set_up_error_scenario_tests(bypass)
+
+    for error_scenario <- error_scenarios() do
+      session = build_session_for_scenario(scenario_server, bypass, config, error_scenario)
+
+      assert_expected_response(
+        JSONWireProtocolClient.fetch_cookies(session),
+        error_scenario
+      )
+    end
+  end
+
+  property "set_cookie/4 with valid data calls the correct payload and returns the response", %{
+    config: config,
+    bypass: bypass
+  } do
+    cookie_name = "my_cookie"
+    cookie_value = "tasty!"
+    resp = TestResponses.set_cookie_response() |> pick()
+
+    check all opts <-
+                optional_map(%{domain: TestResponses.cookie_domain()}) |> map(&Keyword.new/1) do
+      {config, prefix} = prefix_base_url_for_multiple_runs(config)
+      %Session{id: session_id} = session = TestData.session(config: constant(config)) |> pick()
+
+      Bypass.expect_once(bypass, "POST", "/#{prefix}/session/#{session_id}/cookie", fn conn ->
+        conn = parse_params(conn)
+
+        %{"cookie" => cookie_params} = conn.params
+
+        expected_params =
+          Enum.into(opts, %{"name" => cookie_name, "value" => cookie_value}, fn {k, v} ->
+            {to_string(k), v}
+          end)
+
+        assert cookie_params == expected_params
+
+        conn
+        |> put_resp_content_type("application/json")
+        |> send_resp(200, resp)
+      end)
+
+      assert :ok = JSONWireProtocolClient.set_cookie(session, cookie_name, cookie_value, opts)
+    end
+  end
+
+  test "set_cookie/4 returns appropriate errors on various server responses", %{
+    bypass: bypass,
+    config: config
+  } do
+    scenario_server = set_up_error_scenario_tests(bypass)
+
+    for error_scenario <- error_scenarios() do
+      session = build_session_for_scenario(scenario_server, bypass, config, error_scenario)
+
+      assert_expected_response(
+        JSONWireProtocolClient.set_cookie(session, "name", "value"),
+        error_scenario
+      )
+    end
+  end
+
+  property "delete_cookies/1 returns :ok on valid response", %{
+    bypass: bypass,
+    config: config
+  } do
+    check all resp <- TestResponses.delete_cookies_response() do
+      {config, prefix} = prefix_base_url_for_multiple_runs(config)
+
+      %Session{id: session_id} = session = TestData.session(config: constant(config)) |> pick()
+
+      Bypass.expect_once(
+        bypass,
+        "DELETE",
+        "/#{prefix}/session/#{session_id}/cookie",
+        fn conn ->
+          conn
+          |> put_resp_content_type("application/json")
+          |> send_resp(200, resp)
+        end
+      )
+
+      assert :ok = JSONWireProtocolClient.delete_cookies(session)
+    end
+  end
+
+  test "delete_cookies/1 returns appropriate errors on various server responses", %{
+    bypass: bypass,
+    config: config
+  } do
+    scenario_server = set_up_error_scenario_tests(bypass)
+
+    for error_scenario <- error_scenarios() do
+      session = build_session_for_scenario(scenario_server, bypass, config, error_scenario)
+
+      assert_expected_response(
+        JSONWireProtocolClient.delete_cookies(session),
         error_scenario
       )
     end

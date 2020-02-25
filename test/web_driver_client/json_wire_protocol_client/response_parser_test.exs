@@ -4,6 +4,7 @@ defmodule WebDriverClient.JSONWireProtocolClient.ResponseParserTest do
 
   alias WebDriverClient.Element
   alias WebDriverClient.HTTPResponse
+  alias WebDriverClient.JSONWireProtocolClient.Cookie
   alias WebDriverClient.JSONWireProtocolClient.LogEntry
   alias WebDriverClient.JSONWireProtocolClient.Response
   alias WebDriverClient.JSONWireProtocolClient.ResponseParser
@@ -314,6 +315,33 @@ defmodule WebDriverClient.JSONWireProtocolClient.ResponseParserTest do
              ResponseParser.parse_start_session_response(parsed_response, config)
   end
 
+  property "parse_cookies/1 returns {:ok, [%Cookie{}]} when all cookies are valid" do
+    check all unparsed_cookies <- list_of(TestResponses.cookie(), max_length: 10),
+              response <- TestResponses.jwp_response(constant(unparsed_cookies)),
+              http_response <- http_response(body: constant(response)) do
+      {:ok, parsed_response} = ResponseParser.parse_response(http_response)
+
+      expected_cookies =
+        Enum.map(unparsed_cookies, fn %{"name" => name, "value" => value, "domain" => domain} ->
+          %Cookie{name: name, value: value, domain: domain}
+        end)
+
+      assert {:ok, ^expected_cookies} = ResponseParser.parse_cookies(parsed_response)
+    end
+  end
+
+  property "parse_cookies/1 returns {:error, %UnexpectedResponseError{}} on an invalid response" do
+    check all response <- cookies_with_invalid_responses() |> TestResponses.jwp_response(),
+              %HTTPResponse{status: status} = http_response <-
+                http_response(body: constant(response)) do
+      {:ok, parsed_response} = ResponseParser.parse_response(http_response)
+
+      assert {:error,
+              %UnexpectedResponseError{response_body: ^response, http_status_code: ^status}} =
+               ResponseParser.parse_cookies(parsed_response)
+    end
+  end
+
   defp elements_with_invalid_responses do
     gen all valid_elements <- list_of(TestResponses.element(), max_length: 10),
             invalid_elements <- list_of(constant(%{}), min_length: 1, max_length: 10) do
@@ -327,6 +355,15 @@ defmodule WebDriverClient.JSONWireProtocolClient.ResponseParserTest do
     gen all valid_log_entries <- list_of(TestResponses.log_entry(), max_length: 10),
             invalid_log_entries <- list_of(constant(%{}), min_length: 1, max_length: 10) do
       [valid_log_entries, invalid_log_entries]
+      |> List.flatten()
+      |> Enum.shuffle()
+    end
+  end
+
+  defp cookies_with_invalid_responses do
+    gen all valid_cookies <- list_of(TestResponses.cookie(), max_length: 10),
+            invalid_cookies <- list_of(constant(%{}), min_length: 1, max_length: 10) do
+      [valid_cookies, invalid_cookies]
       |> List.flatten()
       |> Enum.shuffle()
     end

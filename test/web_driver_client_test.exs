@@ -5,6 +5,7 @@ defmodule WebDriverClientTest do
   import Plug.Conn
 
   alias WebDriverClient.ConnectionError
+  alias WebDriverClient.Cookie
   alias WebDriverClient.Element
   alias WebDriverClient.JSONWireProtocolClient.ErrorScenarios, as: JWPErrorScenarios
   alias WebDriverClient.JSONWireProtocolClient.TestResponses, as: JWPTestResponses
@@ -1451,6 +1452,141 @@ defmodule WebDriverClientTest do
         assert_expected_response(
           protocol,
           WebDriverClient.take_screenshot(session),
+          error_scenario
+        )
+      end
+    end
+  end
+
+  @tag protocol: :jwp
+  test "fetch_cookies/2 with JWP session returns {:ok, cookies} on valid response", %{
+    config: config,
+    bypass: bypass
+  } do
+    session = TestData.session(config: constant(config)) |> pick()
+    resp = JWPTestResponses.fetch_cookies_response() |> pick()
+
+    stub_bypass_response(bypass, resp)
+
+    assert {:ok, cookies} = WebDriverClient.fetch_cookies(session)
+    assert Enum.all?(cookies, &match?(%Cookie{}, &1))
+  end
+
+  @tag protocol: :w3c
+  test "fetch_cookies/2 with w3c session returns {:ok, cookies} on valid response", %{
+    config: config,
+    bypass: bypass
+  } do
+    session = TestData.session(config: constant(config)) |> pick()
+    resp = W3CTestResponses.fetch_cookies_response() |> pick()
+
+    stub_bypass_response(bypass, resp)
+
+    assert {:ok, cookies} = WebDriverClient.fetch_cookies(session)
+    assert Enum.all?(cookies, &match?(%Cookie{}, &1))
+  end
+
+  for protocol <- @protocols do
+    @tag protocol: protocol
+    test "fetch_cookies/2 with #{protocol} session returns appropriate errors on various server responses",
+         %{config: config, bypass: bypass, protocol: protocol} do
+      scenario_server = set_up_error_scenario_tests(protocol, bypass)
+
+      for error_scenario <- basic_error_scenarios(protocol) do
+        session =
+          build_session_for_scenario(protocol, scenario_server, bypass, config, error_scenario)
+
+        assert_expected_response(
+          protocol,
+          WebDriverClient.fetch_cookies(session),
+          error_scenario
+        )
+      end
+    end
+  end
+
+  @tag protocol: :jwp
+  test "set_cookie/3 with JWP session returns :ok on valid response", %{
+    config: config,
+    bypass: bypass
+  } do
+    session = TestData.session(config: constant(config)) |> pick()
+    resp = JWPTestResponses.set_cookie_response() |> pick()
+
+    stub_bypass_response(bypass, resp)
+
+    assert :ok = WebDriverClient.set_cookie(session, "greeting", "hello world")
+  end
+
+  @tag protocol: :w3c
+  test "set_cookie/3 with w3c session returns :ok on valid response", %{
+    config: config,
+    bypass: bypass
+  } do
+    session = TestData.session(config: constant(config)) |> pick()
+    resp = W3CTestResponses.set_cookie_response() |> pick()
+
+    stub_bypass_response(bypass, resp)
+
+    assert :ok = WebDriverClient.set_cookie(session, "greeting", "hello world")
+  end
+
+  for protocol <- @protocols do
+    @tag protocol: protocol
+    test "set_cookie/1 with #{protocol} session returns appropriate errors on various server responses",
+         %{config: config, bypass: bypass, protocol: protocol} do
+      scenario_server = set_up_error_scenario_tests(protocol, bypass)
+
+      for error_scenario <- basic_error_scenarios(protocol) do
+        session =
+          build_session_for_scenario(protocol, scenario_server, bypass, config, error_scenario)
+
+        assert_expected_response(
+          protocol,
+          WebDriverClient.set_cookie(session, "foo", "bar"),
+          error_scenario
+        )
+      end
+    end
+  end
+
+  @tag protocol: :w3c
+  test "delete_cookies/1 with w3c session returns :ok on success", %{
+    config: config,
+    bypass: bypass
+  } do
+    session = TestData.session(config: constant(config)) |> pick()
+    resp = W3CTestResponses.delete_cookies_response() |> pick()
+    stub_bypass_response(bypass, resp)
+
+    assert :ok = WebDriverClient.delete_cookies(session)
+  end
+
+  @tag protocol: :jwp
+  test "delete_cookies/1 with JWP session returns :ok on success", %{
+    config: config,
+    bypass: bypass
+  } do
+    session = TestData.session(config: constant(config)) |> pick()
+    resp = JWPTestResponses.delete_cookies_response() |> pick()
+    stub_bypass_response(bypass, resp)
+
+    assert :ok = WebDriverClient.delete_cookies(session)
+  end
+
+  for protocol <- @protocols do
+    @tag protocol: protocol
+    test "delete_cookies/1 with #{protocol} session returns appropriate errors on various server responses",
+         %{config: config, bypass: bypass, protocol: protocol} do
+      scenario_server = set_up_error_scenario_tests(protocol, bypass)
+
+      for error_scenario <- basic_error_scenarios(protocol) do
+        session =
+          build_session_for_scenario(protocol, scenario_server, bypass, config, error_scenario)
+
+        assert_expected_response(
+          protocol,
+          WebDriverClient.delete_cookies(session),
           error_scenario
         )
       end

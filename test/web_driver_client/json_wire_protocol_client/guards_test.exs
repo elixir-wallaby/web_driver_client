@@ -61,4 +61,24 @@ defmodule WebDriverClient.JSONWireProtocolClient.GuardsTest do
       end
     end
   end
+
+  property "is_cookie_name/1 only returns true on binaries" do
+    check all term <- term() do
+      if is_binary(term) do
+        assert Guards.is_cookie_name(term)
+      else
+        refute Guards.is_cookie_name(term)
+      end
+    end
+  end
+
+  property "is_cookie_value/1 only returns true on binaries" do
+    check all term <- term() do
+      if is_binary(term) do
+        assert Guards.is_cookie_value(term)
+      else
+        refute Guards.is_cookie_value(term)
+      end
+    end
+  end
 end

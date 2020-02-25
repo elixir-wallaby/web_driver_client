@@ -7,6 +7,7 @@ defmodule WebDriverClient.JSONWireProtocolClient.ResponseParser do
   alias WebDriverClient.Element
   alias WebDriverClient.HTTPResponse
   alias WebDriverClient.JSONWireProtocolClient
+  alias WebDriverClient.JSONWireProtocolClient.Cookie
   alias WebDriverClient.JSONWireProtocolClient.LogEntry
   alias WebDriverClient.JSONWireProtocolClient.Response
   alias WebDriverClient.JSONWireProtocolClient.Response.Status
@@ -235,6 +236,35 @@ defmodule WebDriverClient.JSONWireProtocolClient.ResponseParser do
     else
       _ ->
         {:error, build_unexpected_response_error(http_response)}
+    end
+  end
+
+  @spec parse_cookies(Response.t()) :: {:ok, [Cookie.t()]} | {:error, UnexpectedResponseError.t()}
+  def parse_cookies(%Response{value: value, http_response: http_response}) do
+    with values when is_list(values) <- value,
+         cookies when is_list(cookies) <- do_parse_cookies(values) do
+      {:ok, cookies}
+    else
+      _ ->
+        {:error, build_unexpected_response_error(http_response)}
+    end
+  end
+
+  def do_parse_cookies(cookies) do
+    cookies
+    |> Enum.reduce_while([], fn
+      %{"name" => name, "value" => value, "domain" => domain}, acc
+      when is_binary(name) and is_binary(value) and is_binary(domain) ->
+        cookie = %Cookie{name: name, value: value, domain: domain}
+
+        {:cont, [cookie | acc]}
+
+      _, _ ->
+        {:halt, :error}
+    end)
+    |> case do
+      :error -> :error
+      cookies -> Enum.reverse(cookies)
     end
   end
 
