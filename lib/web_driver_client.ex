@@ -701,6 +701,23 @@ defmodule WebDriverClient do
     end
   end
 
+  @doc """
+  Takes a screenshot of the current page.
+  """
+  @spec take_screenshot(Session.t()) :: {:ok, binary} | {:error, reason}
+  def take_screenshot(%Session{config: %Config{protocol: protocol}} = session) do
+    with {:ok, http_response} <-
+           send_request_for_protocol(protocol,
+             jwp: fn -> JWPCommands.TakeScreenshot.send_request(session) end,
+             w3c: fn -> W3CCommands.TakeScreenshot.send_request(session) end
+           ) do
+      parse_with_fallbacks(http_response, protocol,
+        jwp: &JWPCommands.TakeScreenshot.parse_response/1,
+        w3c: &W3CCommands.TakeScreenshot.parse_response/1
+      )
+    end
+  end
+
   @spec to_log_entry(JSONWireProtocolClient.LogEntry.t()) :: LogEntry.t()
   defp to_log_entry(%JSONWireProtocolClient.LogEntry{} = log_entry) do
     log_entry

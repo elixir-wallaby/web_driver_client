@@ -227,6 +227,17 @@ defmodule WebDriverClient.JSONWireProtocolClient.ResponseParser do
     {:error, build_unexpected_response_error(http_response)}
   end
 
+  @spec parse_image_data(Response.t()) :: {:ok, binary} | {:error, UnexpectedResponseError.t()}
+  def parse_image_data(%Response{value: value, http_response: http_response}) do
+    with encoded when is_binary(encoded) <- value,
+         {:ok, decoded} <- Base.decode64(encoded) do
+      {:ok, decoded}
+    else
+      _ ->
+        {:error, build_unexpected_response_error(http_response)}
+    end
+  end
+
   @spec build_unexpected_response_error(HTTPResponse.t()) :: UnexpectedResponseError.t()
   defp build_unexpected_response_error(%HTTPResponse{status: status, body: body}) do
     UnexpectedResponseError.exception(response_body: body, http_status_code: status)

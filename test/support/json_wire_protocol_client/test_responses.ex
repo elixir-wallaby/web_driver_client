@@ -206,6 +206,16 @@ defmodule WebDriverClient.JSONWireProtocolClient.TestResponses do
     |> map(&Jason.encode!/1)
   end
 
+  @png_prefix <<0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A>>
+
+  def take_screenshot_response do
+    (@png_prefix <> "foo")
+    |> Base.encode64()
+    |> constant()
+    |> jwp_response()
+    |> map(&Jason.encode!/1)
+  end
+
   def log_entry do
     gen all required_data <-
               fixed_map(%{

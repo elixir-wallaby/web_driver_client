@@ -208,6 +208,14 @@ defmodule WebDriverClient.W3CWireProtocolClient.TestResponses do
     %{"value" => nil} |> constant() |> map(&Jason.encode!/1)
   end
 
+  @png_prefix <<0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A>>
+
+  def take_screenshot_response do
+    %{"value" => constant(Base.encode64(@png_prefix <> "foo"))}
+    |> fixed_map()
+    |> map(&Jason.encode!/1)
+  end
+
   def log_entry do
     fixed_map(%{
       "timestamp" => recent_timestamp(),

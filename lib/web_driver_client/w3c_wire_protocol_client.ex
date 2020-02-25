@@ -460,4 +460,17 @@ defmodule WebDriverClient.W3CWireProtocolClient do
       :ok
     end
   end
+
+  @doc """
+  Takes a screenshot of the current page
+
+  Specification: https://w3c.github.io/webdriver/#take-screenshot
+  """
+  @spec take_screenshot(Session.t()) :: {:ok, binary} | {:error, basic_reason}
+  def take_screenshot(%Session{id: id} = session) when is_session_id(id) do
+    with {:ok, http_response} <- Commands.TakeScreenshot.send_request(session),
+         {:ok, image_data} <- Commands.TakeScreenshot.parse_response(http_response) do
+      {:ok, image_data}
+    end
+  end
 end

@@ -472,4 +472,17 @@ defmodule WebDriverClient.JSONWireProtocolClient do
       :ok
     end
   end
+
+  @doc """
+  Takes a screenshot of the current page
+
+  Specification: https://github.com/SeleniumHQ/selenium/wiki/JsonWireProtocol#get-sessionsessionidscreenshot
+  """
+  @spec take_screenshot(Session.t()) :: {:ok, binary} | {:error, basic_reason}
+  def take_screenshot(%Session{id: id} = session) when is_session_id(id) do
+    with {:ok, http_response} <- Commands.TakeScreenshot.send_request(session),
+         {:ok, image_data} <- Commands.TakeScreenshot.parse_response(http_response) do
+      {:ok, image_data}
+    end
+  end
 end

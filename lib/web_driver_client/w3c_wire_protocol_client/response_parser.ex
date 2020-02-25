@@ -137,6 +137,17 @@ defmodule WebDriverClient.W3CWireProtocolClient.ResponseParser do
     {:error, UnexpectedResponseError.exception(response_body: body)}
   end
 
+  @spec parse_image_data(Response.t()) :: {:ok, binary} | {:error, UnexpectedResponseError.t()}
+  def parse_image_data(%Response{body: body}) do
+    with %{"value" => encoded} when is_binary(encoded) <- body,
+         {:ok, decoded} <- Base.decode64(encoded) do
+      {:ok, decoded}
+    else
+      _ ->
+        {:error, UnexpectedResponseError.exception(response_body: body)}
+    end
+  end
+
   @spec parse_element(Response.t()) :: {:ok, Element.t()} | {:error, UnexpectedResponseError.t()}
   def parse_element(%Response{body: %{"value" => %{@web_element_identifier => element_id}}})
       when is_binary(element_id) do
