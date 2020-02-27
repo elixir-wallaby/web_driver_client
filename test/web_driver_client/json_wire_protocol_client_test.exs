@@ -2027,13 +2027,7 @@ defmodule WebDriverClient.JSONWireProtocolClientTest do
         end
       )
 
-      ready? =
-        resp
-        |> Jason.decode!()
-        |> Map.fetch!("value")
-        |> Map.get("ready", true)
-
-      assert {:ok, %ServerStatus{ready?: ^ready?}} =
+      assert {:ok, %ServerStatus{ready?: true}} =
                JSONWireProtocolClient.fetch_server_status(config)
     end
   end

@@ -1614,8 +1614,7 @@ defmodule WebDriverClientTest do
     resp = JWPTestResponses.fetch_server_status_response() |> pick()
     stub_bypass_response(bypass, resp)
 
-    assert {:ok, %ServerStatus{ready?: ready?}} = WebDriverClient.fetch_server_status(config)
-    assert is_boolean(ready?)
+    assert {:ok, %ServerStatus{ready?: true}} = WebDriverClient.fetch_server_status(config)
   end
 
   for protocol <- @protocols do

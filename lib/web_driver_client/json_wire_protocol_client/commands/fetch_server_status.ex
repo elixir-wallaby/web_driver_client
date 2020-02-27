@@ -26,10 +26,13 @@ defmodule WebDriverClient.JSONWireProtocolClient.Commands.FetchServerStatus do
   @spec parse_response(HTTPResponse.t()) ::
           {:ok, ServerStatus.t()} | {:error, UnexpectedResponseError.t() | WebDriverError.t()}
   def parse_response(%HTTPResponse{} = http_response) do
+    # The spec says a 200 response indicates the server is ready (the "ready" key
+    # returned by some implementations doesn't matter). This implementation also ensures
+    # a valid jwp response and status code.
+
     with {:ok, jwp_response} <- ResponseParser.parse_response(http_response),
-         :ok <- ResponseParser.ensure_successful_jwp_status(jwp_response),
-         {:ok, server_status} <- ResponseParser.parse_server_status(jwp_response) do
-      {:ok, server_status}
+         :ok <- ResponseParser.ensure_successful_jwp_status(jwp_response) do
+      {:ok, %ServerStatus{ready?: true}}
     end
   end
 end

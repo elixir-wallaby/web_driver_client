@@ -8,7 +8,6 @@ defmodule WebDriverClient.JSONWireProtocolClient.ResponseParserTest do
   alias WebDriverClient.JSONWireProtocolClient.LogEntry
   alias WebDriverClient.JSONWireProtocolClient.Response
   alias WebDriverClient.JSONWireProtocolClient.ResponseParser
-  alias WebDriverClient.JSONWireProtocolClient.ServerStatus
   alias WebDriverClient.JSONWireProtocolClient.TestResponses
   alias WebDriverClient.JSONWireProtocolClient.UnexpectedResponseError
   alias WebDriverClient.JSONWireProtocolClient.WebDriverError
@@ -340,22 +339,6 @@ defmodule WebDriverClient.JSONWireProtocolClient.ResponseParserTest do
       assert {:error,
               %UnexpectedResponseError{response_body: ^response, http_status_code: ^status}} =
                ResponseParser.parse_cookies(parsed_response)
-    end
-  end
-
-  property "parse_server_status/1 returns {:ok, %ServerStatus{}} on valid response" do
-    check all json_response <- TestResponses.fetch_server_status_response(),
-              response = Jason.decode!(json_response),
-              http_response <- http_response(body: constant(response)) do
-      {:ok, parsed_response} = ResponseParser.parse_response(http_response)
-
-      ready? =
-        response
-        |> Map.fetch!("value")
-        |> Map.get("ready", true)
-
-      assert {:ok, %ServerStatus{ready?: ^ready?}} =
-               ResponseParser.parse_server_status(parsed_response)
     end
   end
 
