@@ -185,9 +185,9 @@ defmodule WebDriverClient.W3CWireProtocolClient.ResponseParser do
 
   @spec parse_server_status(Response.t()) ::
           {:ok, ServerStatus.t()} | {:error, UnexpectedResponseError.t()}
-  def parse_server_status(%Response{body: %{"value" => value}}) when is_map(value) do
-    ready = Map.get(value, "ready", true)
-    {:ok, %ServerStatus{ready?: ready}}
+  def parse_server_status(%Response{body: %{"value" => %{"ready" => ready?}}})
+      when is_boolean(ready?) do
+    {:ok, %ServerStatus{ready?: ready?}}
   end
 
   def parse_server_status(%Response{body: body}) do
