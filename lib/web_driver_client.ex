@@ -16,6 +16,7 @@ defmodule WebDriverClient do
   alias WebDriverClient.KeyCodes
   alias WebDriverClient.LogEntry
   alias WebDriverClient.ProtocolMismatchError
+  alias WebDriverClient.ServerStatus
   alias WebDriverClient.Session
   alias WebDriverClient.Size
   alias WebDriverClient.UnexpectedResponseError
@@ -782,6 +783,31 @@ defmodule WebDriverClient do
     end
   end
 
+  @doc """
+  Fetches server status
+  """
+  @spec fetch_server_status(Config.t()) :: {:ok, ServerStatus.t()} | {:error, reason}
+  def fetch_server_status(%Config{protocol: protocol} = config) do
+    with {:ok, http_response} <-
+           send_request_for_protocol(protocol,
+             jwp: fn -> JWPCommands.FetchServerStatus.send_request(config) end,
+             w3c: fn -> W3CCommands.FetchServerStatus.send_request(config) end
+           ) do
+      parse_with_fallbacks(
+        http_response,
+        protocol,
+        [
+          jwp: &JWPCommands.FetchServerStatus.parse_response/1,
+          w3c: &W3CCommands.FetchServerStatus.parse_response/1
+        ],
+        fn
+          {:ok, server_status} -> {:ok, to_server_status(server_status)}
+          {:error, error} -> {:error, to_error(error)}
+        end
+      )
+    end
+  end
+
   @spec to_log_entry(JSONWireProtocolClient.LogEntry.t()) :: LogEntry.t()
   defp to_log_entry(%JSONWireProtocolClient.LogEntry{} = log_entry) do
     log_entry
@@ -808,6 +834,22 @@ defmodule WebDriverClient do
     cookie
     |> Map.from_struct()
     |> (&struct!(Cookie, &1)).()
+  end
+
+  @spec to_server_status(
+          W3CWireProtocolClient.ServerStatus.t()
+          | JSONWireProtocolClient.ServerStatus.t()
+        ) :: ServerStatus.t()
+  defp to_server_status(%JSONWireProtocolClient.ServerStatus{} = server_status) do
+    server_status
+    |> Map.from_struct()
+    |> (&struct!(ServerStatus, &1)).()
+  end
+
+  defp to_server_status(%W3CWireProtocolClient.ServerStatus{} = server_status) do
+    server_status
+    |> Map.from_struct()
+    |> (&struct!(ServerStatus, &1)).()
   end
 
   defp to_error(%JSONWireProtocolClient.WebDriverError{reason: reason}) do

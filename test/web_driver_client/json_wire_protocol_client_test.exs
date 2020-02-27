@@ -9,6 +9,7 @@ defmodule WebDriverClient.JSONWireProtocolClientTest do
   alias WebDriverClient.JSONWireProtocolClient
   alias WebDriverClient.JSONWireProtocolClient.Cookie
   alias WebDriverClient.JSONWireProtocolClient.LogEntry
+  alias WebDriverClient.JSONWireProtocolClient.ServerStatus
   alias WebDriverClient.JSONWireProtocolClient.TestResponses
   alias WebDriverClient.JSONWireProtocolClient.UnexpectedResponseError
   alias WebDriverClient.KeyCodes
@@ -2003,6 +2004,71 @@ defmodule WebDriverClient.JSONWireProtocolClientTest do
 
       assert_expected_response(
         JSONWireProtocolClient.delete_cookies(session),
+        error_scenario
+      )
+    end
+  end
+
+  property "fetch_server_status/1 returns {:ok, %ServerStatus{}} on valid response", %{
+    bypass: bypass,
+    config: config
+  } do
+    check all resp <- TestResponses.fetch_server_status_response() do
+      {config, prefix} = prefix_base_url_for_multiple_runs(config)
+
+      Bypass.expect_once(
+        bypass,
+        "GET",
+        "/#{prefix}/status",
+        fn conn ->
+          conn
+          |> put_resp_content_type("application/json")
+          |> send_resp(200, resp)
+        end
+      )
+
+      ready? =
+        resp
+        |> Jason.decode!()
+        |> Map.fetch!("value")
+        |> Map.get("ready", true)
+
+      assert {:ok, %ServerStatus{ready?: ^ready?}} =
+               JSONWireProtocolClient.fetch_server_status(config)
+    end
+  end
+
+  test "fetch_server_status/1 returns {:error, %UnexpectedResponseError{}} on invalid response",
+       %{bypass: bypass, config: config} do
+    parsed_response = %{}
+
+    Bypass.expect_once(
+      bypass,
+      "GET",
+      "/status",
+      fn conn ->
+        conn
+        |> put_resp_content_type("application/json")
+        |> send_resp(200, Jason.encode!(parsed_response))
+      end
+    )
+
+    assert {:error, %UnexpectedResponseError{response_body: ^parsed_response}} =
+             JSONWireProtocolClient.fetch_server_status(config)
+  end
+
+  test "fetch_server_status/1 returns appropriate errors on various server responses", %{
+    bypass: bypass,
+    config: config
+  } do
+    scenario_server = set_up_error_scenario_tests(bypass)
+
+    for error_scenario <- error_scenarios() do
+      %Session{config: config} =
+        build_session_for_scenario(scenario_server, bypass, config, error_scenario)
+
+      assert_expected_response(
+        JSONWireProtocolClient.fetch_server_status(config),
         error_scenario
       )
     end

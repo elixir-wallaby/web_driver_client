@@ -20,6 +20,7 @@ defmodule WebDriverClient.JSONWireProtocolClient do
   alias WebDriverClient.JSONWireProtocolClient.Commands
   alias WebDriverClient.JSONWireProtocolClient.Cookie
   alias WebDriverClient.JSONWireProtocolClient.LogEntry
+  alias WebDriverClient.JSONWireProtocolClient.ServerStatus
   alias WebDriverClient.JSONWireProtocolClient.UnexpectedResponseError
   alias WebDriverClient.JSONWireProtocolClient.WebDriverError
   alias WebDriverClient.KeyCodes
@@ -527,6 +528,19 @@ defmodule WebDriverClient.JSONWireProtocolClient do
     with {:ok, http_response} <- Commands.DeleteCookies.send_request(session),
          :ok <- Commands.DeleteCookies.parse_response(http_response) do
       :ok
+    end
+  end
+
+  @doc """
+  Fetches the current server status
+
+  Specification: https://github.com/SeleniumHQ/selenium/wiki/JsonWireProtocol#get-status
+  """
+  @spec fetch_server_status(Config.t()) :: {:ok, ServerStatus.t()} | {:error, basic_reason()}
+  def fetch_server_status(%Config{} = config) do
+    with {:ok, http_response} <- Commands.FetchServerStatus.send_request(config),
+         {:ok, server_status} <- Commands.FetchServerStatus.parse_response(http_response) do
+      {:ok, server_status}
     end
   end
 end

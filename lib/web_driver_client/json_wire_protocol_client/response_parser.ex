@@ -11,6 +11,7 @@ defmodule WebDriverClient.JSONWireProtocolClient.ResponseParser do
   alias WebDriverClient.JSONWireProtocolClient.LogEntry
   alias WebDriverClient.JSONWireProtocolClient.Response
   alias WebDriverClient.JSONWireProtocolClient.Response.Status
+  alias WebDriverClient.JSONWireProtocolClient.ServerStatus
   alias WebDriverClient.JSONWireProtocolClient.UnexpectedResponseError
   alias WebDriverClient.JSONWireProtocolClient.WebDriverError
   alias WebDriverClient.Session
@@ -266,6 +267,18 @@ defmodule WebDriverClient.JSONWireProtocolClient.ResponseParser do
       :error -> :error
       cookies -> Enum.reverse(cookies)
     end
+  end
+
+  @spec parse_server_status(Response.t()) ::
+          {:ok, ServerStatus.t()} | {:error, UnexpectedResponseError.t()}
+  def parse_server_status(%Response{value: value}) when is_map(value) do
+    ready = Map.get(value, "ready", true)
+
+    {:ok, %ServerStatus{ready?: ready}}
+  end
+
+  def parse_server_status(%Response{http_response: http_response}) do
+    {:error, build_unexpected_response_error(http_response)}
   end
 
   @spec build_unexpected_response_error(HTTPResponse.t()) :: UnexpectedResponseError.t()

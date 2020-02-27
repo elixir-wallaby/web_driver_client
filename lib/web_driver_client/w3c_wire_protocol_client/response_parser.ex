@@ -12,6 +12,7 @@ defmodule WebDriverClient.W3CWireProtocolClient.ResponseParser do
   alias WebDriverClient.W3CWireProtocolClient.LogEntry
   alias WebDriverClient.W3CWireProtocolClient.Rect
   alias WebDriverClient.W3CWireProtocolClient.Response
+  alias WebDriverClient.W3CWireProtocolClient.ServerStatus
   alias WebDriverClient.W3CWireProtocolClient.UnexpectedResponseError
   alias WebDriverClient.W3CWireProtocolClient.WebDriverError
 
@@ -180,6 +181,17 @@ defmodule WebDriverClient.W3CWireProtocolClient.ResponseParser do
       _ ->
         {:error, UnexpectedResponseError.exception(response_body: body)}
     end
+  end
+
+  @spec parse_server_status(Response.t()) ::
+          {:ok, ServerStatus.t()} | {:error, UnexpectedResponseError.t()}
+  def parse_server_status(%Response{body: %{"value" => value}}) when is_map(value) do
+    ready = Map.get(value, "ready", true)
+    {:ok, %ServerStatus{ready?: ready}}
+  end
+
+  def parse_server_status(%Response{body: body}) do
+    {:error, UnexpectedResponseError.exception(response_body: body)}
   end
 
   defp do_parse_elements(elements) do

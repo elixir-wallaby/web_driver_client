@@ -67,6 +67,7 @@ defmodule WebDriverClient.MixProject do
           WebDriverClient.Element,
           WebDriverClient.LogEntry,
           WebDriverClient.ProtocolMismatchError,
+          WebDriverClient.ServerStatus,
           WebDriverClient.Session,
           WebDriverClient.Size,
           WebDriverClient.UnexpectedResponseError,

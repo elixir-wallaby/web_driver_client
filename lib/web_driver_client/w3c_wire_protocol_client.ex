@@ -23,6 +23,7 @@ defmodule WebDriverClient.W3CWireProtocolClient do
   alias WebDriverClient.W3CWireProtocolClient.Cookie
   alias WebDriverClient.W3CWireProtocolClient.LogEntry
   alias WebDriverClient.W3CWireProtocolClient.Rect
+  alias WebDriverClient.W3CWireProtocolClient.ServerStatus
   alias WebDriverClient.W3CWireProtocolClient.UnexpectedResponseError
   alias WebDriverClient.W3CWireProtocolClient.WebDriverError
 
@@ -515,6 +516,19 @@ defmodule WebDriverClient.W3CWireProtocolClient do
     with {:ok, http_response} <- Commands.DeleteCookies.send_request(session),
          :ok <- Commands.DeleteCookies.parse_response(http_response) do
       :ok
+    end
+  end
+
+  @doc """
+  Fetches the server status
+
+  Specification: https://w3c.github.io/webdriver/#status
+  """
+  @spec fetch_server_status(Config.t()) :: {:ok, ServerStatus.t()} | {:error, basic_reason()}
+  def fetch_server_status(%Config{} = config) do
+    with {:ok, http_response} <- Commands.FetchServerStatus.send_request(config),
+         {:ok, server_status} <- Commands.FetchServerStatus.parse_response(http_response) do
+      {:ok, server_status}
     end
   end
 end
