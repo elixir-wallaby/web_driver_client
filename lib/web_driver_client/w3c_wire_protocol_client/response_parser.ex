@@ -131,8 +131,8 @@ defmodule WebDriverClient.W3CWireProtocolClient.ResponseParser do
   def parse_rect(%Response{
         body: %{"value" => %{"width" => width, "height" => height, "x" => x, "y" => y}}
       })
-      when is_integer(width) and is_integer(height) and is_integer(x) and is_integer(y) do
-    {:ok, %Rect{width: width, height: height, x: x, y: y}}
+      when is_number(width) and is_number(height) and is_number(x) and is_number(y) do
+    {:ok, %Rect{width: trunc(width), height: trunc(height), x: trunc(x), y: trunc(y)}}
   end
 
   def parse_rect(%Response{body: body}) do

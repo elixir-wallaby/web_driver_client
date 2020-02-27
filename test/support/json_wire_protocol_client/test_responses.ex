@@ -81,11 +81,7 @@ defmodule WebDriverClient.JSONWireProtocolClient.TestResponses do
   end
 
   def fetch_window_size_response do
-    %{
-      "width" => integer(0..1000),
-      "height" => integer(0..1000)
-    }
-    |> fixed_map()
+    size()
     |> jwp_response()
     |> map(&Jason.encode!/1)
   end
@@ -187,6 +183,12 @@ defmodule WebDriverClient.JSONWireProtocolClient.TestResponses do
   def fetch_element_text_response do
     :alphanumeric
     |> string(min_length: 0, max_length: 10)
+    |> jwp_response()
+    |> map(&Jason.encode!/1)
+  end
+
+  def fetch_element_size_response do
+    size()
     |> jwp_response()
     |> map(&Jason.encode!/1)
   end
@@ -297,6 +299,10 @@ defmodule WebDriverClient.JSONWireProtocolClient.TestResponses do
 
   def element do
     fixed_map(%{"ELEMENT" => string(:ascii, min_length: 1, max_length: 20)})
+  end
+
+  defp size do
+    fixed_map(%{"width" => integer(0..1000), "height" => integer(0..1000)})
   end
 
   def jwp_response(value, opts \\ []) do

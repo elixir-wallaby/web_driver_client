@@ -202,6 +202,10 @@ defmodule WebDriverClient.W3CWireProtocolClient.TestResponses do
     |> map(&Jason.encode!/1)
   end
 
+  def fetch_element_rect_response do
+    %{"value" => rect()} |> fixed_map() |> map(&Jason.encode!/1)
+  end
+
   def click_element_response do
     %{"value" => nil} |> constant() |> map(&Jason.encode!/1)
   end
@@ -282,13 +286,16 @@ defmodule WebDriverClient.W3CWireProtocolClient.TestResponses do
 
   defp window_rect_response do
     fixed_map(%{
-      "value" =>
-        fixed_map(%{
-          "x" => integer(),
-          "y" => integer(),
-          "width" => integer(0..1000),
-          "height" => integer(0..1000)
-        })
+      "value" => rect()
+    })
+  end
+
+  defp rect do
+    fixed_map(%{
+      "x" => integer(),
+      "y" => integer(),
+      "width" => integer(0..1000),
+      "height" => integer(0..1000)
     })
   end
 

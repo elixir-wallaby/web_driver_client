@@ -358,6 +358,21 @@ defmodule WebDriverClient.W3CWireProtocolClient do
   end
 
   @doc """
+  Fetches the element's rectangle
+
+  Specification: https://w3c.github.io/webdriver/#get-element-rect
+  """
+  doc_metadata subject: :elements
+
+  @spec fetch_element_rect(Session.t(), Element.t()) :: {:ok, Rect.t()} | {:error, basic_reason}
+  def fetch_element_rect(%Session{} = session, %Element{} = element) do
+    with {:ok, http_response} <- Commands.FetchElementRect.send_request(session, element),
+         {:ok, value} <- Commands.FetchElementRect.parse_response(http_response) do
+      {:ok, value}
+    end
+  end
+
+  @doc """
   Clicks an element
 
   Specification: https://w3c.github.io/webdriver/#element-click

@@ -518,6 +518,34 @@ defmodule WebDriverClient do
   end
 
   @doc """
+  Fetches the size of an element
+  """
+  @spec fetch_element_size(Session.t(), Element.t()) :: {:ok, Size.t()} | {:error, reason}
+  def fetch_element_size(
+        %Session{config: %Config{protocol: protocol}} = session,
+        %Element{} = element
+      ) do
+    with {:ok, http_response} <-
+           send_request_for_protocol(protocol,
+             jwp: fn -> JWPCommands.FetchElementSize.send_request(session, element) end,
+             w3c: fn -> W3CCommands.FetchElementRect.send_request(session, element) end
+           ) do
+      parse_with_fallbacks(
+        http_response,
+        protocol,
+        [
+          jwp: &JWPCommands.FetchElementSize.parse_response/1,
+          w3c: &W3CCommands.FetchElementRect.parse_response/1
+        ],
+        fn
+          {:ok, size} -> {:ok, to_size(size)}
+          {:error, error} -> {:error, to_error(error)}
+        end
+      )
+    end
+  end
+
+  @doc """
   Clicks an element
   """
   doc_metadata subject: :elements

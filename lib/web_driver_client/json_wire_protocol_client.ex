@@ -350,6 +350,23 @@ defmodule WebDriverClient.JSONWireProtocolClient do
   end
 
   @doc """
+  Fetches the size of an element
+
+  Specification: https://github.com/SeleniumHQ/selenium/wiki/JsonWireProtocol#get-sessionsessionidelementidsize
+  """
+  doc_metadata subject: :elements
+  @spec fetch_element_size(Session.t(), Element.t()) :: {:ok, Size.t()} | {:error, basic_reason}
+  def fetch_element_size(
+        %Session{} = session,
+        %Element{} = element
+      ) do
+    with {:ok, http_response} <- Commands.FetchElementSize.send_request(session, element),
+         {:ok, size} <- Commands.FetchElementSize.parse_response(http_response) do
+      {:ok, size}
+    end
+  end
+
+  @doc """
   Clicks an element
 
   Specification: https://github.com/SeleniumHQ/selenium/wiki/JsonWireProtocol#post-sessionsessionidelementidclick

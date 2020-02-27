@@ -5,7 +5,9 @@ defmodule WebDriverClient.Integration.ElementAttributesTest do
   alias WebDriverClient.IntegrationTesting.Scenarios.Scenario
   alias WebDriverClient.IntegrationTesting.TestGenerator
   alias WebDriverClient.IntegrationTesting.TestPages.ElementsPage
+  alias WebDriverClient.IntegrationTesting.TestPages.MousePage
   alias WebDriverClient.Session
+  alias WebDriverClient.Size
   alias WebDriverClient.WebDriverError
 
   require TestGenerator
@@ -134,6 +136,29 @@ defmodule WebDriverClient.Integration.ElementAttributesTest do
           assert {:error, %WebDriverError{reason: :unsupported_operation}} =
                    WebDriverClient.fetch_element_property(session, element, "tagName")
       end
+    end
+
+    test "returning element size", %{scenario: scenario} do
+      config = Scenarios.get_config(scenario)
+      payload = Scenarios.get_start_session_payload(scenario)
+
+      {:ok, session} = WebDriverClient.start_session(config, payload)
+
+      ensure_session_is_closed(session)
+
+      :ok = WebDriverClient.navigate_to(session, MousePage.url())
+
+      {:ok, element} =
+        WebDriverClient.find_element(
+          session,
+          :css_selector,
+          MousePage.css_selector_for_hoverable_element()
+        )
+
+      %MousePage.Rect{width: width, height: height} = MousePage.hoverable_element_rect()
+
+      assert {:ok, %Size{width: ^width, height: ^height}} =
+               WebDriverClient.fetch_element_size(session, element)
     end
   end
 

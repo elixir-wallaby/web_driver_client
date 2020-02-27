@@ -1042,6 +1042,95 @@ defmodule WebDriverClientTest do
   end
 
   @tag protocol: :jwp
+  test "fetch_element_size/1 with jwp session returns {:ok, %Size{}} on success", %{
+    config: config,
+    bypass: bypass
+  } do
+    session = TestData.session(config: constant(config)) |> pick()
+    element = TestData.element() |> pick()
+    resp = JWPTestResponses.fetch_element_size_response() |> pick()
+
+    stub_bypass_response(bypass, resp)
+
+    assert {:ok, %Size{}} = WebDriverClient.fetch_element_size(session, element)
+  end
+
+  @tag protocol: :jwp
+  test "fetch_element_size/1 with jwp session returns {:error, %ProtocolMismatchError{}} on jwp response",
+       %{
+         config: config,
+         bypass: bypass
+       } do
+    session = TestData.session(config: constant(config)) |> pick()
+    element = TestData.element() |> pick()
+    resp = W3CTestResponses.fetch_element_rect_response() |> pick()
+
+    stub_bypass_response(bypass, resp)
+
+    assert {:error,
+            %ProtocolMismatchError{
+              response: {:ok, %Size{}},
+              expected_protocol: :jwp,
+              actual_protocol: :w3c
+            }} = WebDriverClient.fetch_element_size(session, element)
+  end
+
+  @tag protocol: :w3c
+  test "fetch_element_size/1 with w3c session returns {:ok, %Size{}} on success", %{
+    config: config,
+    bypass: bypass
+  } do
+    session = TestData.session(config: constant(config)) |> pick()
+    element = TestData.element() |> pick()
+    resp = W3CTestResponses.fetch_element_rect_response() |> pick()
+
+    stub_bypass_response(bypass, resp)
+
+    assert {:ok, %Size{}} = WebDriverClient.fetch_element_size(session, element)
+  end
+
+  @tag protocol: :w3c
+  test "fetch_element_size/1 with w3c session returns {:error, %ProtocolMismatchError{}} on jwp response",
+       %{
+         config: config,
+         bypass: bypass
+       } do
+    session = TestData.session(config: constant(config)) |> pick()
+    element = TestData.element() |> pick()
+    resp = JWPTestResponses.fetch_element_size_response() |> pick()
+
+    stub_bypass_response(bypass, resp)
+
+    assert {:error,
+            %ProtocolMismatchError{
+              response: {:ok, %Size{}},
+              expected_protocol: :w3c,
+              actual_protocol: :jwp
+            }} = WebDriverClient.fetch_element_size(session, element)
+  end
+
+  for protocol <- @protocols do
+    @tag protocol: protocol
+    test "fetch_element_size/1 with #{protocol} session returns appropriate errors on various server responses",
+         %{config: config, bypass: bypass, protocol: protocol} do
+      scenario_server = set_up_error_scenario_tests(protocol, bypass)
+
+      for error_scenario <- basic_error_scenarios(protocol) do
+        session =
+          build_session_for_scenario(protocol, scenario_server, bypass, config, error_scenario)
+
+        element = TestData.element() |> pick()
+
+        assert_expected_response(
+          protocol,
+          WebDriverClient.fetch_element_size(session, element),
+          error_scenario
+        )
+      end
+    end
+  end
+
+  @tag protocol: :jwp
   test "click_element/2 with JWP session returns :ok on valid response",
        %{
          config: config,

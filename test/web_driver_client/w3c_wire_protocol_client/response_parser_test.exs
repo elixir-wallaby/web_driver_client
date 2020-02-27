@@ -111,14 +111,14 @@ defmodule WebDriverClient.W3CWireProtocolClient.ResponseParserTest do
   end
 
   property "parse_rect/1 returns {:ok, %Rect{}} on valid response" do
-    check all x <- integer(),
-              y <- integer(),
-              width <- integer(0..1000),
-              height <- integer(0..1000) do
+    check all x <- coordinate(),
+              y <- coordinate(),
+              width <- distance(),
+              height <- distance() do
       response = %{"value" => %{"x" => x, "y" => y, "width" => width, "height" => height}}
       w3c_response = build_w3c_response(response)
 
-      assert {:ok, %Rect{x: ^x, y: ^y, width: ^width, height: ^height}} =
+      assert {:ok, %Rect{x: trunc(x), y: trunc(y), width: trunc(width), height: trunc(height)}} ===
                ResponseParser.parse_rect(w3c_response)
     end
   end
@@ -361,6 +361,20 @@ defmodule WebDriverClient.W3CWireProtocolClient.ResponseParserTest do
 
   defp url do
     string(:alphanumeric)
+  end
+
+  defp coordinate do
+    one_of([
+      integer(),
+      integer() |> map(&Kernel./(&1, 1))
+    ])
+  end
+
+  defp distance do
+    one_of([
+      integer(0..1000),
+      integer(0..1000) |> map(&Kernel./(&1, 1))
+    ])
   end
 
   defp build_w3c_response(parsed_body) do
