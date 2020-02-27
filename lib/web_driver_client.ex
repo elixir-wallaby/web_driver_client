@@ -182,14 +182,8 @@ defmodule WebDriverClient do
           w3c: &W3CCommands.FetchWindowRect.parse_response/1
         ],
         fn
-          {:ok, %Size{} = size} ->
-            {:ok, size}
-
-          {:ok, %W3CWireProtocolClient.Rect{width: width, height: height}} ->
-            {:ok, %Size{width: width, height: height}}
-
-          {:error, error} ->
-            {:error, to_error(error)}
+          {:ok, size} -> {:ok, to_size(size)}
+          {:error, error} -> {:error, to_error(error)}
         end
       )
     end
@@ -851,6 +845,13 @@ defmodule WebDriverClient do
     |> Map.from_struct()
     |> (&struct!(ServerStatus, &1)).()
   end
+
+  @spec to_size(W3CWireProtocolClient.Rect.t() | JSONWireProtocolClient.Size.t()) :: Size.t()
+  defp to_size(%JSONWireProtocolClient.Size{width: width, height: height}),
+    do: %Size{width: width, height: height}
+
+  defp to_size(%W3CWireProtocolClient.Rect{width: width, height: height}),
+    do: %Size{width: width, height: height}
 
   defp to_error(%JSONWireProtocolClient.WebDriverError{reason: reason}) do
     reason =

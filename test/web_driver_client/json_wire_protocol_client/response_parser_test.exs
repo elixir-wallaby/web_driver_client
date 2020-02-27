@@ -8,11 +8,11 @@ defmodule WebDriverClient.JSONWireProtocolClient.ResponseParserTest do
   alias WebDriverClient.JSONWireProtocolClient.LogEntry
   alias WebDriverClient.JSONWireProtocolClient.Response
   alias WebDriverClient.JSONWireProtocolClient.ResponseParser
+  alias WebDriverClient.JSONWireProtocolClient.Size
   alias WebDriverClient.JSONWireProtocolClient.TestResponses
   alias WebDriverClient.JSONWireProtocolClient.UnexpectedResponseError
   alias WebDriverClient.JSONWireProtocolClient.WebDriverError
   alias WebDriverClient.Session
-  alias WebDriverClient.Size
   alias WebDriverClient.TestData
 
   property "parse_response/1 returns {:ok, %Response{}} on valid JWP response" do
