@@ -11,10 +11,10 @@ defmodule WebDriverClient.JSONWireProtocolClient.ResponseParser do
   alias WebDriverClient.JSONWireProtocolClient.LogEntry
   alias WebDriverClient.JSONWireProtocolClient.Response
   alias WebDriverClient.JSONWireProtocolClient.Response.Status
+  alias WebDriverClient.JSONWireProtocolClient.Size
   alias WebDriverClient.JSONWireProtocolClient.UnexpectedResponseError
   alias WebDriverClient.JSONWireProtocolClient.WebDriverError
   alias WebDriverClient.Session
-  alias WebDriverClient.Size
 
   defguardp is_status(term) when is_integer(term) and term >= 0
 

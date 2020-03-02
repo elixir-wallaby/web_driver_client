@@ -21,11 +21,11 @@ defmodule WebDriverClient.JSONWireProtocolClient do
   alias WebDriverClient.JSONWireProtocolClient.Cookie
   alias WebDriverClient.JSONWireProtocolClient.LogEntry
   alias WebDriverClient.JSONWireProtocolClient.ServerStatus
+  alias WebDriverClient.JSONWireProtocolClient.Size
   alias WebDriverClient.JSONWireProtocolClient.UnexpectedResponseError
   alias WebDriverClient.JSONWireProtocolClient.WebDriverError
   alias WebDriverClient.KeyCodes
   alias WebDriverClient.Session
-  alias WebDriverClient.Size
 
   @type url :: String.t()
   @type attribute_name :: String.t()
