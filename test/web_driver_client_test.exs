@@ -11,6 +11,7 @@ defmodule WebDriverClientTest do
   alias WebDriverClient.JSONWireProtocolClient.TestResponses, as: JWPTestResponses
   alias WebDriverClient.LogEntry
   alias WebDriverClient.ProtocolMismatchError
+  alias WebDriverClient.ServerStatus
   alias WebDriverClient.Session
   alias WebDriverClient.Size
   alias WebDriverClient.TestData
@@ -1587,6 +1588,48 @@ defmodule WebDriverClientTest do
         assert_expected_response(
           protocol,
           WebDriverClient.delete_cookies(session),
+          error_scenario
+        )
+      end
+    end
+  end
+
+  @tag protocol: :w3c
+  test "fetch_server_status/1 with w3c session returns {:ok, ServerStatus} on success", %{
+    config: config,
+    bypass: bypass
+  } do
+    resp = W3CTestResponses.fetch_server_status_response() |> pick()
+    stub_bypass_response(bypass, resp)
+
+    assert {:ok, %ServerStatus{ready?: ready?}} = WebDriverClient.fetch_server_status(config)
+    assert is_boolean(ready?)
+  end
+
+  @tag protocol: :jwp
+  test "fetch_server_status/1 with JWP session returns :ok on success", %{
+    config: config,
+    bypass: bypass
+  } do
+    resp = JWPTestResponses.fetch_server_status_response() |> pick()
+    stub_bypass_response(bypass, resp)
+
+    assert {:ok, %ServerStatus{ready?: true}} = WebDriverClient.fetch_server_status(config)
+  end
+
+  for protocol <- @protocols do
+    @tag protocol: protocol
+    test "fetch_server_status/1 with #{protocol} session returns appropriate errors on various server responses",
+         %{config: config, bypass: bypass, protocol: protocol} do
+      scenario_server = set_up_error_scenario_tests(protocol, bypass)
+
+      for error_scenario <- basic_error_scenarios(protocol) do
+        %Session{config: config} =
+          build_session_for_scenario(protocol, scenario_server, bypass, config, error_scenario)
+
+        assert_expected_response(
+          protocol,
+          WebDriverClient.fetch_server_status(config),
           error_scenario
         )
       end

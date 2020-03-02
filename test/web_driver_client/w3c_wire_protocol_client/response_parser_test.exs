@@ -11,6 +11,7 @@ defmodule WebDriverClient.W3CWireProtocolClient.ResponseParserTest do
   alias WebDriverClient.W3CWireProtocolClient.Rect
   alias WebDriverClient.W3CWireProtocolClient.Response
   alias WebDriverClient.W3CWireProtocolClient.ResponseParser
+  alias WebDriverClient.W3CWireProtocolClient.ServerStatus
   alias WebDriverClient.W3CWireProtocolClient.TestResponses
   alias WebDriverClient.W3CWireProtocolClient.UnexpectedResponseError
 
@@ -306,6 +307,29 @@ defmodule WebDriverClient.W3CWireProtocolClient.ResponseParserTest do
       assert {:error, %UnexpectedResponseError{response_body: ^response}} =
                ResponseParser.parse_cookies(w3c_response)
     end
+  end
+
+  property "parse_server_status/1 returns {:ok, %ServerStatus{}}" do
+    check all json_response <- TestResponses.fetch_server_status_response() do
+      response = Jason.decode!(json_response)
+      w3c_response = build_w3c_response(response)
+
+      ready? =
+        response
+        |> Map.fetch!("value")
+        |> Map.get("ready", true)
+
+      assert {:ok, %ServerStatus{ready?: ^ready?}} =
+               ResponseParser.parse_server_status(w3c_response)
+    end
+  end
+
+  test "parse_server_status/1 returns {:error, %UnexpectedResponseError{}} on an invalid response" do
+    response = %{}
+    w3c_response = build_w3c_response(response)
+
+    assert {:error, %UnexpectedResponseError{response_body: ^response}} =
+             ResponseParser.parse_cookies(w3c_response)
   end
 
   defp elements_with_invalid_responses do

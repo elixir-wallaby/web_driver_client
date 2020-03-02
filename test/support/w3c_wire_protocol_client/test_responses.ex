@@ -72,6 +72,12 @@ defmodule WebDriverClient.W3CWireProtocolClient.TestResponses do
     |> map(&Jason.encode!/1)
   end
 
+  def fetch_server_status_response do
+    %{"value" => fixed_map(%{"ready" => boolean()})}
+    |> fixed_map()
+    |> map(&Jason.encode!/1)
+  end
+
   def end_session_response do
     constant(%{"value" => nil}) |> map(&Jason.encode!/1)
   end

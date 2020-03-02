@@ -59,6 +59,15 @@ defmodule WebDriverClient.JSONWireProtocolClient.TestResponses do
     |> map(&Jason.encode!/1)
   end
 
+  def fetch_server_status_response do
+    one_of([
+      fixed_map(%{"ready" => boolean()}),
+      constant(%{})
+    ])
+    |> jwp_response()
+    |> map(&Jason.encode!/1)
+  end
+
   def end_session_response do
     nil
     |> jwp_response()
