@@ -35,8 +35,8 @@ defmodule WebDriverClient.MixProject do
     [
       {:tesla, "~> 1.3.0"},
       {:jason, "~> 1.0"},
+      {:hackney, "~> 1.6"},
       {:bypass, "~> 1.0", only: :test},
-      {:hackney, "~> 1.6", only: [:dev, :test]},
       {:stream_data, "~> 0.1", only: [:dev, :test]},
       {:excoveralls, "~> 0.10", only: :test},
       {:credo, "~> 1.2.0", only: [:dev, :test], runtime: false},
