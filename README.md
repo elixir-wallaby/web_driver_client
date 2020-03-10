@@ -1,12 +1,55 @@
 # WebDriverClient
 [![codecov](https://codecov.io/gh/aaronrenner/web_driver_client/branch/master/graph/badge.svg)](https://codecov.io/gh/aaronrenner/web_driver_client)
 
-WIP [WebDriver] client for Elixir.
+A low-level [WebDriver] client for Elixir. This library is still a work in progress.
+
+## Overview
+
+WebDriverClient is designed to be a low-level library that allows projects to call WebDriver
+Rest APIs while abstracting away the differences between the [JWP] and [W3C] protocols. This
+library is designed to be the API client for higher-level libraries, like [Wallaby].
+
+```elixir
+{:ok, session} =
+  "http://localhost:9515"
+  |> WebDriverClient.Config.build(protocol: :w3c)
+  |> WebDriverClient.start_session(%{"capabilities" => %{})
+
+
+:ok = WebDriverClient.navigate_to(session, "http://dockyard.com")
+
+{:ok, element} = WebDriverClient.find_element(session, :css_selector, ".site-nav__logo__link")
+
+WebDriverClient.fetch_element_text(session, element) # => {:ok, "DockYard Home"}
+
+:ok = WebDriverClient.end_session(session)
+```
+
+### Design considerations
+* Should be a thin, well-documented API client that calls the WebDriver rest APIs.
+* Should provide a main API that abstracts away the differences between the JWP and W3C
+  protocols.
+* (Future) Should provide protocol-specific APIs as an escape-hatch to access functionality
+  that is not common to both protocols.
+* Sometimes the user will request one protocol and the server returns the other protocol. This
+  happens if the user sends the incorrect payload on session start, or requests an
+  endpoint that is not tied to an individual session (like listing sessions).
+
+  This library should gracefully handle these situations, while still notifying the user
+  that the wrong protocol was returned.
+
+### What this library is not
+* This is not a high-level library to be used for day to day
+  testing. Features like retries, pipeline commands, etc
+  are outside the scope of this project. These features are better
+  delegated to a high-level library like [Wallaby].
+
+
 
 ## Testing
 
-One of the goals of this project is to have good test
-coverage. This comes through the following types of tests.
+In order to ensure the reliability of this library, test coverage is very
+important. This comes through the following types of tests.
 
 ### Unit test
 
@@ -185,3 +228,6 @@ It's important to note the pre-release APIs aren't public and
 may change at any time.
 
 [WebDriver]: https://w3c.github.io/webdriver/
+[JWP]: https://github.com/SeleniumHQ/selenium/wiki/JsonWireProtocol
+[W3C]: https://w3c.github.io/webdriver/
+[Wallaby]: https://github.com/elixir-wallaby/wallaby
