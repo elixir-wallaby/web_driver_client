@@ -72,7 +72,11 @@ defmodule WebDriverClient.IntegrationTesting.Scenarios do
   def get_config(%Scenario{driver: driver, protocol: protocol}) do
     driver
     |> get_base_url()
-    |> Config.build(protocol: protocol, debug: true)
+    |> Config.build(
+      protocol: protocol,
+      debug: true,
+      http_client_options: [recv_timeout: 30_000, pool: :web_driver_client_pool]
+    )
   end
 
   @spec get_start_session_payload(Scenario.t()) :: map()
