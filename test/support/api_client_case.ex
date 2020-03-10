@@ -24,7 +24,9 @@ defmodule WebDriverClient.APIClientCase do
   end
 
   defp config_from_bypass(%Bypass{} = bypass, context) do
-    Config.build(base_url: bypass_url(bypass))
+    bypass
+    |> bypass_url()
+    |> Config.build()
     |> maybe_update_protocol(context)
   end
 
