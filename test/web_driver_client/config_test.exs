@@ -11,9 +11,19 @@ defmodule WebDriverClient.ConfigTest do
     base_url = "http://www.foo.com:8000"
     protocol = :jwp
     debug = true
+    http_client_options = [pool: :foo]
 
-    assert %Config{base_url: ^base_url, protocol: ^protocol, debug?: ^debug} =
-             Config.build(base_url, protocol: protocol, debug: debug)
+    assert %Config{
+             base_url: ^base_url,
+             protocol: ^protocol,
+             debug?: ^debug,
+             http_client_options: ^http_client_options
+           } =
+             Config.build(base_url,
+               protocol: protocol,
+               debug: debug,
+               http_client_options: http_client_options
+             )
   end
 
   test "build/1 defaults protocol to w3c" do

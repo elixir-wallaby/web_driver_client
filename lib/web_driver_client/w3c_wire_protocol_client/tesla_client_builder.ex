@@ -4,8 +4,12 @@ defmodule WebDriverClient.W3CWireProtocolClient.TeslaClientBuilder do
   alias WebDriverClient.Config
 
   @spec build_simple(Config.t()) :: Client.t()
-  def build_simple(%Config{base_url: base_url, debug?: debug?}) do
-    adapter = {Tesla.Adapter.Hackney, [recv_timeout: 30_000]}
+  def build_simple(%Config{
+        base_url: base_url,
+        debug?: debug?,
+        http_client_options: http_client_options
+      }) do
+    adapter = {Tesla.Adapter.Hackney, http_client_options}
 
     middleware =
       [
