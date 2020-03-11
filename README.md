@@ -6,8 +6,8 @@ A low-level [WebDriver] client for Elixir. This library is still a work in progr
 ## Overview
 
 WebDriverClient is designed to be a low-level library that allows projects to call WebDriver
-Rest APIs while abstracting away the differences between the [JWP] and [W3C] protocols. This
-library is designed to be the API client for higher-level libraries, like [Wallaby].
+REST APIs while abstracting away the differences between the [JWP] and [W3C] protocols. This
+library is designed to be the API client for higher-level libraries, like [Wallaby] or [Hound].
 
 ```elixir
 {:ok, session} =
@@ -26,7 +26,7 @@ WebDriverClient.fetch_element_text(session, element) # => {:ok, "DockYard Home"}
 ```
 
 ### Design considerations
-* Should be a thin, well-documented API client that calls the WebDriver rest APIs.
+* Should be a thin, well-documented API client that calls the WebDriver REST APIs.
 * Should provide a main API that abstracts away the differences between the JWP and W3C
   protocols.
 * (Future) Should provide protocol-specific APIs as an escape-hatch to access functionality
@@ -42,7 +42,7 @@ WebDriverClient.fetch_element_text(session, element) # => {:ok, "DockYard Home"}
 * This is not a high-level library to be used for day to day
   testing. Features like retries, pipeline commands, etc
   are outside the scope of this project. These features are better
-  delegated to a high-level library like [Wallaby].
+  delegated to a high-level library like [Wallaby] or [Hound].
 
 
 
@@ -231,3 +231,4 @@ may change at any time.
 [JWP]: https://github.com/SeleniumHQ/selenium/wiki/JsonWireProtocol
 [W3C]: https://w3c.github.io/webdriver/
 [Wallaby]: https://github.com/elixir-wallaby/wallaby
+[Hound]: https://github.com/HashNuke/hound
