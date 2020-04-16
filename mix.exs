@@ -1,10 +1,12 @@
 defmodule WebDriverClient.MixProject do
   use Mix.Project
 
+  @version "0.1.0"
+
   def project do
     [
       app: :web_driver_client,
-      version: "0.1.0",
+      version: @version,
       elixir: "~> 1.6",
       elixirc_paths: elixirc_paths(Mix.env()),
       test_coverage: [tool: ExCoveralls],
@@ -19,7 +21,11 @@ defmodule WebDriverClient.MixProject do
       start_permanent: Mix.env() == :prod,
       docs: docs(),
       deps: deps(),
-      dialyzer: dialyzer()
+      dialyzer: dialyzer(),
+      package: package(),
+      description: """
+      Low-level WebDriver client for Elixir.
+      """
     ]
   end
 
@@ -93,7 +99,17 @@ defmodule WebDriverClient.MixProject do
         Elements: &(&1[:subject] == :elements),
         Alerts: &(&1[:subject] == :alerts),
         Logging: &(&1[:subject] == :logging)
-      ]
+      ],
+      source_ref: "v#{@version}",
+      source_url: "https://github.com/aaronrenner/web_driver_client"
+    ]
+  end
+
+  defp package do
+    [
+      maintainers: ["Aaron Renner", "Michał Łępicki"],
+      licenses: ["MIT"],
+      links: %{github: "https://github.com/aaronrenner/web_driver_client"}
     ]
   end
 end
