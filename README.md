@@ -13,7 +13,7 @@ library is designed to be the API client for higher-level libraries, like [Walla
 {:ok, session} =
   "http://localhost:9515"
   |> WebDriverClient.Config.build(protocol: :w3c)
-  |> WebDriverClient.start_session(%{"capabilities" => %{})
+  |> WebDriverClient.start_session(%{"capabilities" => %{}})
 
 
 :ok = WebDriverClient.navigate_to(session, "http://dockyard.com")
