@@ -1,235 +1,30 @@
-name: Continuous Integration
-
+name: CI
 on: [push, pull_request]
-
-env:
-  CACHE_VERSION: 1
-  CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
-
 jobs:
   test:
     runs-on: ubuntu-latest
     env:
-      MIX_ENV: "test"
-      ELIXIR_VERSION: ${{ matrix.elixir }}
-      OTP_VERSION: ${{ matrix.otp }}
+      FORCE_COLOR: 1
+
     strategy:
       fail-fast: false
-      matrix:
-        elixir: ["1.10.0", "1.9.4", "1.8.2", "1.7.4", "1.6.6"]
-        include:
-          - elixir: "1.10.0"
-            otp: "22.2.3"
-            check_formatting: true
-          - elixir: "1.9.4"
-            otp: "22.1.7"
-            check_formatting: true
-          - elixir: "1.8.2"
-            otp: "22.1.7"
-            check_formatting: false
-          - elixir: "1.7.4"
-            otp: "22.1.7"
-            check_formatting: false
-          - elixir: "1.6.6"
-            otp: "20.3.8.24"
-            check_formatting: false
     steps:
-      - uses: actions/checkout@v1
-      - uses: actions/setup-elixir@v1.0.0
-        with:
-          otp-version: ${{ matrix.otp }}
-          elixir-version: ${{ matrix.elixir }}
-      - name: Cache deps
-        uses: actions/cache@v1
-        with:
-          path: deps
-          key: ${{ env.CACHE_VERSION }}-deps-build-${{ env.MIX_ENV }}-${{ matrix.otp }}-${{ matrix.elixir }}-${{ hashFiles('mix.lock') }}
-      - name: Cache _build
-        uses: actions/cache@v1
-        with:
-          path: _build/${{ env.MIX_ENV }}
-          key: ${{ env.CACHE_VERSION }}-_build-${{ env.MIX_ENV }}-${{ matrix.otp }}-${{ matrix.elixir }}-
-      - name: Install Dependencies
-        run: mix deps.get
-      - name: Compile app
-        run: mix compile --force --warnings-as-errors
-      - run: mix coveralls.json
-      - name: Upload results to CodeCov
-        run: bash <(curl -s https://codecov.io/bash) -F UnitTest -e ELIXIR_VERSION,OTP_VERSION || echo "Codecov did not collect coverage reports"
-      - run: mix format --check-formatted
-        if: matrix.check_formatting
-      - run: mix credo --strict
-      - name: Check for unused dependencies
-        run: mix deps.unlock --unused && git diff --exit-code
+      - uses: actions/checkout@v2
+      - name: Download released earth
+        run: "sudo /bin/sh -c 'wget https://github.com/earthly/earthly/releases/download/v0.5.22/earthly-linux-amd64 -O /usr/local/bin/earthly && chmod +x /usr/local/bin/earthly'"
+      - name: Execute tests
+        run: earthly +test
 
-  dialyzer:
+  integration-test:
     runs-on: ubuntu-latest
     env:
-      MIX_ENV: "dev"
+      FORCE_COLOR: 1
+
     strategy:
       fail-fast: false
-      matrix:
-        elixir: ["1.10.0", "1.9.4", "1.8.2", "1.7.4", "1.6.6"]
-        include:
-          - elixir: "1.10.0"
-            otp: "22.2.3"
-          - elixir: "1.9.4"
-            otp: "22.1.7"
-          - elixir: "1.8.2"
-            otp: "22.1.7"
-          - elixir: "1.7.4"
-            otp: "22.1.7"
-          - elixir: "1.6.6"
-            otp: "20.3.8.24"
     steps:
-      - uses: actions/checkout@v1
-      - uses: actions/setup-elixir@v1.0.0
-        with:
-          otp-version: ${{ matrix.otp }}
-          elixir-version: ${{ matrix.elixir }}
-      - uses: actions/cache@v1
-        with:
-          path: deps
-          key: ${{ env.CACHE_VERSION }}-deps-build-${{ env.MIX_ENV }}-${{ matrix.otp }}-${{ matrix.elixir }}-${{ hashFiles('mix.lock') }}
-      - uses: actions/cache@v1
-        with:
-          path: _build/${{ env.MIX_ENV }}
-          key: ${{ env.CACHE_VERSION }}-_build-${{ env.MIX_ENV }}-${{ matrix.otp }}-${{ matrix.elixir }}-dialyzer
-          restore-keys: |
-            ${{ env.CACHE_VERSION }}-_build-${{ env.MIX_ENV }}-${{ matrix.otp }}-${{ matrix.elixir }}-
-      - name: Install Dependencies
-        run: mix deps.get
-      - name: Compile app
-        run: mix compile --force --warnings-as-errors
-      - name: Build PLT
-        run: mix dialyzer --plt
-      - name: Dialyzer
-        run: mix dialyzer --format short
-
-  integration_tests:
-    runs-on: ubuntu-latest
-    env:
-      MIX_ENV: "test"
-      ELIXIR_VERSION: ${{ matrix.elixir }}
-      OTP_VERSION: ${{ matrix.otp }}
-    strategy:
-      fail-fast: false
-      matrix:
-        elixir:
-          - "1.10.0"
-          - "1.9.4"
-          - "1.8.2"
-          - "1.7.4"
-          - "1.6.6"
-        include:
-          - elixir: "1.10.0"
-            otp: "22.2.3"
-          - elixir: "1.9.4"
-            otp: "22.1.7"
-          - elixir: "1.8.2"
-            otp: "22.1.7"
-          - elixir: "1.7.4"
-            otp: "22.1.7"
-          - elixir: "1.6.6"
-            otp: "20.3.8.24"
-    services:
-      # Allow accessing localhost ports from docker containers.
-      # See https://github.com/qoomon/docker-host
-      dockerhost:
-        image: qoomon/docker-host
-        options: >-
-          --cap-add=NET_ADMIN
-          --cap-add=NET_RAW
-          --restart on-failure
-      selenium-3-chrome:
-        image: selenium/standalone-chrome:3
-        ports:
-          - "4445:4444"
-        options: >-
-          --shm-size=2g
-      selenium-3-firefox:
-        image: selenium/standalone-firefox:3
-        ports:
-          - "4446:4444"
-        options: >-
-          --shm-size=2g
-      selenium-2-chrome:
-        image: selenium/standalone-chrome:2.53.1
-        ports:
-          - "4447:4444"
-        options: >-
-          --shm-size=2g
-      selenium-2-firefox:
-        image: selenium/standalone-firefox:2.53.1
-        ports:
-          - "4448:4444"
-        options: >-
-          --shm-size=2g
-
-    steps:
-      - uses: actions/checkout@v1
-      - uses: actions/setup-elixir@v1.0.0
-        with:
-          otp-version: ${{ matrix.otp }}
-          elixir-version: ${{ matrix.elixir }}
-      - run: mkdir -p logs
-      - name: Run PhantomJS
-        run: phantomjs --wd --webdriver-logfile=logs/phantomjs.log --webdriver-loglevel=DEBUG --debug=true &> logs/phantomjs-output.log &
-      - name: Run chromedriver
-        run: chromedriver --log-path=logs/chromedriver.log --log-level=DEBUG &
-      - uses: actions/cache@v1
-        with:
-          path: deps
-          key: ${{ env.CACHE_VERSION }}-deps-build-${{ env.MIX_ENV }}-${{ matrix.otp }}-${{ matrix.elixir }}-${{ hashFiles('mix.lock') }}
-      - uses: actions/cache@v1
-        with:
-          path: _build/${{ env.MIX_ENV }}
-          key: ${{ env.CACHE_VERSION }}-_build-${{ env.MIX_ENV }}-${{ matrix.otp }}-${{ matrix.elixir }}-integration-tests
-          restore-keys: |
-            ${{ env.CACHE_VERSION }}-_build-${{ env.MIX_ENV }}-${{ matrix.otp }}-${{ matrix.elixir }}-
-      - name: Install Dependencies
-        run: mix deps.get
-      - name: Compile app
-        run: mix compile --force --warnings-as-errors
-
-      - run: mix coveralls.json --only integration_test_driver:chromedriver
-      - name: Upload results to CodeCov
-        run: bash <(curl -s https://codecov.io/bash) -F IntegrationTest -F Chromedriver -e ELIXIR_VERSION,OTP_VERSION || echo "Codecov did not collect coverage reports"
-
-      - run: mix coveralls.json --only integration_test_driver:phantomjs
-      - name: Upload results to CodeCov
-        run: bash <(curl -s https://codecov.io/bash) -F IntegrationTest -F Phantomjs -e ELIXIR_VERSION,OTP_VERSION || echo "Codecov did not collect coverage reports"
-
-      - run: mix coveralls.json --only integration_test_driver_browser:selenium_3-chrome
-        env:
-          TEST_SERVER_HOSTNAME: dockerhost
-          WEBDRIVER_BASE_URL: http://localhost:4445/wd/hub
-      - name: Upload results to CodeCov
-        run: bash <(curl -s https://codecov.io/bash) -F IntegrationTest -F Selenium3Chrome -e ELIXIR_VERSION,OTP_VERSION || echo "Codecov did not collect coverage reports"
-
-      - run: mix coveralls.json --only integration_test_driver_browser:selenium_3-firefox
-        env:
-          TEST_SERVER_HOSTNAME: dockerhost
-          WEBDRIVER_BASE_URL: http://localhost:4446/wd/hub
-      - name: Upload results to CodeCov
-        run: bash <(curl -s https://codecov.io/bash) -F IntegrationTest -F Selenium3Firefox -e ELIXIR_VERSION,OTP_VERSION || echo "Codecov did not collect coverage reports"
-
-      - run: mix coveralls.json --only integration_test_driver_browser:selenium_2-chrome
-        env:
-          TEST_SERVER_HOSTNAME: dockerhost
-          WEBDRIVER_BASE_URL: http://localhost:4447/wd/hub
-      - name: Upload results to CodeCov
-        run: bash <(curl -s https://codecov.io/bash) -F IntegrationTest -F Selenium2Chrome -e ELIXIR_VERSION,OTP_VERSION || echo "Codecov did not collect coverage reports"
-
-      - run: mix coveralls.json --only integration_test_driver_browser:selenium_2-firefox
-        env:
-          TEST_SERVER_HOSTNAME: dockerhost
-          WEBDRIVER_BASE_URL: http://localhost:4448/wd/hub
-      - name: Upload results to CodeCov
-        run: bash <(curl -s https://codecov.io/bash) -F IntegrationTest -F Selenium2Firefox -e ELIXIR_VERSION,OTP_VERSION || echo "Codecov did not collect coverage reports"
-
-      - uses: actions/upload-artifact@v1
-        if: always()
-        with:
-          name: Integration test server logs (Elixir ${{matrix.elixir}})
-          path: logs/
+      - uses: actions/checkout@v2
+      - name: Download released earth
+        run: "sudo /bin/sh -c 'wget https://github.com/earthly/earthly/releases/download/v0.5.22/earthly-linux-amd64 -O /usr/local/bin/earthly && chmod +x /usr/local/bin/earthly'"
+      - name: Execute tests
+        run: earthly -P +integration-test

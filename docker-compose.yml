@@ -1,0 +1,31 @@
+version: '3'
+services:
+  dockerhost:
+    image: qoomon/docker-host
+    cap_add: ['NET_ADMIN', 'NET_RAW']
+    mem_limit: 8M
+    restart: on-failure
+  selenium-3-chrome:
+    depends_on: [dockerhost]
+    image: selenium/standalone-chrome:3
+    ports:
+      - "4445:4444"
+    shm_size: 2g
+  selenium-3-firefox:
+    depends_on: [dockerhost]
+    image: selenium/standalone-firefox:3
+    ports:
+      - "4446:4444"
+    shm_size: 2g
+  selenium-2-chrome:
+    depends_on: [dockerhost]
+    image: selenium/standalone-chrome:2.53.1
+    ports:
+      - "4447:4444"
+    shm_size: 2g
+  selenium-2-firefox:
+    depends_on: [dockerhost]
+    image: selenium/standalone-firefox:2.53.1
+    ports:
+      - "4448:4444"
+    shm_size: 2g
