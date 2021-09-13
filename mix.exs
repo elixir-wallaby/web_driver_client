@@ -7,7 +7,7 @@ defmodule WebDriverClient.MixProject do
     [
       app: :web_driver_client,
       version: @version,
-      elixir: "~> 1.6",
+      elixir: "~> 1.8",
       elixirc_paths: elixirc_paths(Mix.env()),
       test_coverage: [tool: ExCoveralls],
       preferred_cli_env: [

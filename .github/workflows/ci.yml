@@ -16,26 +16,26 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        elixir: ["1.10.0", "1.9.4", "1.8.2", "1.7.4", "1.6.6"]
+        elixir: ["1.12.3", "1.11.4", "1.10.4", "1.9.4", "1.8.2"]
         include:
-          - elixir: "1.10.0"
-            otp: "22.2.3"
+          - elixir: "1.12.3"
+            otp: "24.0.6"
             check_formatting: true
+          - elixir: "1.11.4"
+            otp: "24.0.6"
+            check_formatting: true
+          - elixir: "1.10.4"
+            otp: "23.3.4.7"
+            check_formatting: false
           - elixir: "1.9.4"
-            otp: "22.1.7"
-            check_formatting: true
+            otp: "22.3.4.21"
+            check_formatting: false
           - elixir: "1.8.2"
-            otp: "22.1.7"
-            check_formatting: false
-          - elixir: "1.7.4"
-            otp: "22.1.7"
-            check_formatting: false
-          - elixir: "1.6.6"
-            otp: "20.3.8.24"
+            otp: "22.3.4.21"
             check_formatting: false
     steps:
       - uses: actions/checkout@v1
-      - uses: actions/setup-elixir@v1.0.0
+      - uses: erlef/setup-beam@v1
         with:
           otp-version: ${{ matrix.otp }}
           elixir-version: ${{ matrix.elixir }}
@@ -69,21 +69,21 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        elixir: ["1.10.0", "1.9.4", "1.8.2", "1.7.4", "1.6.6"]
+        elixir: ["1.12.3", "1.11.4", "1.10.4", "1.9.4", "1.8.2"]
         include:
-          - elixir: "1.10.0"
-            otp: "22.2.3"
+          - elixir: "1.12.3"
+            otp: "24.0.6"
+          - elixir: "1.11.4"
+            otp: "24.0.6"
+          - elixir: "1.10.4"
+            otp: "23.3.4.7"
           - elixir: "1.9.4"
-            otp: "22.1.7"
+            otp: "22.3.4.21"
           - elixir: "1.8.2"
-            otp: "22.1.7"
-          - elixir: "1.7.4"
-            otp: "22.1.7"
-          - elixir: "1.6.6"
-            otp: "20.3.8.24"
+            otp: "22.3.4.21"
     steps:
       - uses: actions/checkout@v1
-      - uses: actions/setup-elixir@v1.0.0
+      - uses: erlef/setup-beam@v1
         with:
           otp-version: ${{ matrix.otp }}
           elixir-version: ${{ matrix.elixir }}
@@ -116,22 +116,22 @@ jobs:
       fail-fast: false
       matrix:
         elixir:
-          - "1.10.0"
+          - "1.12.3"
+          - "1.11.4"
+          - "1.10.4"
           - "1.9.4"
           - "1.8.2"
-          - "1.7.4"
-          - "1.6.6"
         include:
-          - elixir: "1.10.0"
-            otp: "22.2.3"
+          - elixir: "1.12.3"
+            otp: "24.0.6"
+          - elixir: "1.11.4"
+            otp: "24.0.6"
+          - elixir: "1.10.4"
+            otp: "23.3.4.7"
           - elixir: "1.9.4"
-            otp: "22.1.7"
+            otp: "22.3.4.21"
           - elixir: "1.8.2"
-            otp: "22.1.7"
-          - elixir: "1.7.4"
-            otp: "22.1.7"
-          - elixir: "1.6.6"
-            otp: "20.3.8.24"
+            otp: "22.3.4.21"
     services:
       # Allow accessing localhost ports from docker containers.
       # See https://github.com/qoomon/docker-host
@@ -168,7 +168,7 @@ jobs:
 
     steps:
       - uses: actions/checkout@v1
-      - uses: actions/setup-elixir@v1.0.0
+      - uses: erlef/setup-beam@v1
         with:
           otp-version: ${{ matrix.otp }}
           elixir-version: ${{ matrix.elixir }}
