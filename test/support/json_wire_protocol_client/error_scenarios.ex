@@ -126,7 +126,7 @@ defmodule WebDriverClient.JSONWireProtocolClient.ErrorScenarios do
     do_assert_expected_response(response, scenario)
   rescue
     exception ->
-      stacktrace = System.stacktrace()
+      stacktrace = __STACKTRACE__
       reraise enhance_exception(exception, scenario, stacktrace), stacktrace
   end
 
