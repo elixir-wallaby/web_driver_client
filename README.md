@@ -1,5 +1,14 @@
 # WebDriverClient
-[![codecov](https://codecov.io/gh/aaronrenner/web_driver_client/branch/master/graph/badge.svg)](https://codecov.io/gh/aaronrenner/web_driver_client)
+
+[![CI](https://github.com/elixir-wallaby/web_driver_client/actions/workflows/test.yml/badge.svg)](https://github.com/elixir-wallaby/web_driver_client/actions/workflows/test.yml)
+[![codecov](https://codecov.io/gh/elixir-wallaby/web_driver_client/branch/master/graph/badge.svg)](https://codecov.io/gh/elixir-wallaby/web_driver_client)
+[![Module Version](https://img.shields.io/hexpm/v/web_driver_client.svg)](https://hex.pm/packages/web_driver_client)
+[![Hex Docs](https://img.shields.io/badge/hex-docs-lightgreen.svg)](https://hexdocs.pm/web_driver_client/)
+[![Total Download](https://img.shields.io/hexpm/dt/web_driver_client.svg)](https://hex.pm/packages/web_driver_client)
+[![License](https://img.shields.io/hexpm/l/web_driver_client.svg)](https://github.com/elixir-wallaby/web_driver_client/blob/master/LICENSE.md)
+[![Last Updated](https://img.shields.io/github/last-commit/elixir-wallaby/web_driver_client.svg)](https://github.com/elixir-wallaby/web_driver_client/commits/master)
+
+
 
 A low-level [WebDriver] client for Elixir. This library is still a work in progress.
 
@@ -167,23 +176,24 @@ $ mix test --only integration_test_driver:selenium_2
 Sometimes it's nice to be able to run against a remote webdriver server.
 Here's an example that runs the tests against a docker container.
 
-1. Start the docker container for the webdriver server
+Start the docker container for the webdriver server:
 
-    ```
-    $ docker run -p 4446:4444 --shm-size=2g selenium/standalone-chrome:3
-    ```
+```
+$ docker run -p 4446:4444 --shm-size=2g selenium/standalone-chrome:3
+```
 
-2. Run the tests
+Run the tests:
 
-    ```
-    $ SELENIUM_3_BASE_URL="http://localhost:4446/wd/hub" TEST_SERVER_HOSTAME="host.docker.internal" mix test --only integration_test_driver_browser:selenium_3-chrome
-    ```
+```
+$ SELENIUM_3_BASE_URL="http://localhost:4446/wd/hub" \
+TEST_SERVER_HOSTAME="host.docker.internal" mix test --only integration_test_driver_browser:selenium_3-chrome
+```
 
-    The environment variables work like this:
+The environment variables work like this:
 
-    * `<DRIVER_NAME>_BASE_URL` - The base url for the webdriver server to run
+   * `<DRIVER_NAME>_BASE_URL` - The base url for the webdriver server to run
        against. Can also use `WEBDRIVER_BASE_URL` to set this across all scenarios.
-    * ` TEST_SERVER_HOSTNAME` - The hostname the webdriver server should use to access
+   * ` TEST_SERVER_HOSTNAME` - The hostname the webdriver server should use to access
       the machine that's running the test suite.
 
         The test suite starts up a test HTTP server, but when using a remote webdriver
@@ -194,8 +204,8 @@ Here's an example that runs the tests against a docker container.
 
 ## Installation
 
-If [available in Hex](https://hex.pm/docs/publish), the package can be installed
-by adding `web_driver_client` to your list of dependencies in `mix.exs`:
+The package can be installed by adding `:web_driver_client` to your list of
+dependencies in `mix.exs`:
 
 ```elixir
 def deps do
@@ -232,3 +242,10 @@ may change at any time.
 [W3C]: https://w3c.github.io/webdriver/
 [Wallaby]: https://github.com/elixir-wallaby/wallaby
 [Hound]: https://github.com/HashNuke/hound
+
+## Copyright and License
+
+Copyright (c) 2020 Aaron Renner
+
+This work is free. You can redistribute it and/or modify it under the
+terms of the MIT License. See the [LICENSE.md](./LICENSE.md) file for more details.

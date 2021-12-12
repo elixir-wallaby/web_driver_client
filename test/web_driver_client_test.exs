@@ -1699,7 +1699,7 @@ defmodule WebDriverClientTest do
   end
 
   defp build_start_session_payload do
-    %{"capablities" => %{"browserName" => "firefox"}}
+    %{"capabilities" => %{"browserName" => "firefox"}}
   end
 
   defp stub_bypass_response(bypass, response) do

@@ -2064,7 +2064,7 @@ defmodule WebDriverClient.W3CWireProtocolClientTest do
   end
 
   defp build_start_session_payload do
-    %{"capablities" => %{"browserName" => "firefox"}}
+    %{"capabilities" => %{"browserName" => "firefox"}}
   end
 
   defp string_to_type do

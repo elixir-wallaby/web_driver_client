@@ -1,6 +1,7 @@
 defmodule WebDriverClient.MixProject do
   use Mix.Project
 
+  @source_url "https://github.com/elixir-wallaby/web_driver_client"
   @version "0.2.0"
 
   def project do
@@ -47,7 +48,7 @@ defmodule WebDriverClient.MixProject do
       {:excoveralls, "~> 0.10", only: :test},
       {:credo, "~> 1.4.0", only: [:dev, :test], runtime: false},
       {:dialyxir, "~> 1.1.0", only: [:dev], runtime: false},
-      {:ex_doc, "~> 0.20", only: [:docs, :docs_prerelease]}
+      {:ex_doc, ">= 0.0.0", only: [:docs, :docs_prerelease]}
     ]
   end
 
@@ -63,7 +64,15 @@ defmodule WebDriverClient.MixProject do
 
   defp docs do
     [
-      main: "WebDriverClient",
+      extras: [
+        "CHANGELOG.md": [],
+        "LICENSE.md": [title: "License"],
+        "README.md": [title: "Overview"]
+      ],
+      main: "readme",
+      source_url: @source_url,
+      source_ref: "v#{@version}",
+      formatters: ["html"],
       groups_for_modules: [
         "Main API": [
           WebDriverClient,
@@ -99,9 +108,7 @@ defmodule WebDriverClient.MixProject do
         Elements: &(&1[:subject] == :elements),
         Alerts: &(&1[:subject] == :alerts),
         Logging: &(&1[:subject] == :logging)
-      ],
-      source_ref: "v#{@version}",
-      source_url: "https://github.com/aaronrenner/web_driver_client"
+      ]
     ]
   end
 
@@ -109,7 +116,10 @@ defmodule WebDriverClient.MixProject do
     [
       maintainers: ["Aaron Renner", "Michał Łępicki"],
       licenses: ["MIT"],
-      links: %{github: "https://github.com/aaronrenner/web_driver_client"}
+      links: %{
+        Changelog: "https://hexdocs.pm/web_driver_client/changelog.html",
+        GitHub: @source_url
+      }
     ]
   end
 end
