@@ -309,7 +309,7 @@ defmodule WebDriverClient.JSONWireProtocolClient do
   end
 
   @doc """
-  Fetchs the attribute value of an element
+  Fetches the attribute value of an element
 
   Specification: https://github.com/SeleniumHQ/selenium/wiki/JsonWireProtocol#get-sessionsessionidelementidattributename
   """
