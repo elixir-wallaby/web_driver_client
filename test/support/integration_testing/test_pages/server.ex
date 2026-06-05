@@ -24,8 +24,8 @@ defmodule WebDriverClient.IntegrationTesting.TestPages.Server do
       port: 0,
       server_root: String.to_charlist(Path.absname("./", __DIR__)),
       document_root: String.to_charlist(Path.absname("./server/pages", __DIR__)),
-      server_name: 'web_driver_client_test',
-      directory_index: ['index.html']
+      server_name: String.to_charlist("web_driver_client_test"),
+      directory_index: [String.to_charlist("index.html")]
     ]
 
     case :inets.start(:httpd, config) do
