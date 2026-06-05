@@ -183,7 +183,7 @@ defmodule WebDriverClient.W3CWireProtocolClient.ErrorScenarios do
   defp update_config_for_scenario(%Config{} = config, %ErrorScenario{
          communication_error: :nonexistent_domain
        }) do
-    %Config{config | base_url: "http://does.not.exist"}
+    %Config{config | base_url: "http://does.not.exist."}
   end
 
   defp update_config_for_scenario(%Config{} = config, %ErrorScenario{}) do
@@ -267,7 +267,10 @@ defmodule WebDriverClient.W3CWireProtocolClient.ErrorScenarios do
     response_body
   end
 
-  @known_status_codes Enum.flat_map(100..599, fn status_code ->
+  # 1xx codes are deliberately excluded: they are interim responses (RFC 9110 §15.2),
+  # so a bare 1xx is not a complete HTTP exchange. Spec-conforming clients
+  # (hackney >= 4, mint, curl) keep waiting for the final response.
+  @known_status_codes Enum.flat_map(200..599, fn status_code ->
                         try do
                           _ = Plug.Conn.Status.reason_atom(status_code)
                           [status_code]
