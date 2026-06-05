@@ -59,6 +59,13 @@ The unit test suite can be run with the following command.
 mix test
 ```
 
+By default this runs against the newest supported dependency set (including hackney 4.x). To run against an older supported set (hackney 1.x), select the legacy lockfile:
+
+```
+LOCKFILE=legacy mix deps.get
+LOCKFILE=legacy mix test
+```
+
 ### Integration tests
 
 Although each webdriver implementation should be the same in theory, it's good to double-check that this library actually works. The following webdriver implementations are supported via the test suite:
