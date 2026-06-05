@@ -3,52 +3,80 @@ name: Continuous Integration
 on: [push, pull_request]
 
 env:
-  CACHE_VERSION: 1
+  CACHE_VERSION: 2
   CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 
 jobs:
   test:
     runs-on: ubuntu-latest
+    container: ${{ matrix.container }}
     env:
       MIX_ENV: "test"
       ELIXIR_VERSION: ${{ matrix.elixir }}
       OTP_VERSION: ${{ matrix.otp }}
+      LOCKFILE: ${{ matrix.lockfile }}
     strategy:
       fail-fast: false
       matrix:
-        elixir: ["1.12.3", "1.11.4", "1.10.4", "1.9.4", "1.8.2"]
         include:
+          # Modern toolchain — default lockfile (hackney 4.x dependency set)
+          - elixir: "1.19.5"
+            otp: "28.5"
+            lockfile: ""
+            lockfile_path: "mix.lock"
+            check_formatting: true
+          # Legacy toolchains — test/lockfiles/legacy.lock (hackney 1.x set).
+          # erlef/setup-beam can no longer install OTP < 24.2 on current
+          # GitHub-hosted runners, so these run in hexpm/elixir containers.
           - elixir: "1.12.3"
-            otp: "24.0.6"
+            otp: "24.3.4.9"
+            container: "hexpm/elixir:1.12.3-erlang-24.3.4.9-ubuntu-noble-20260509.1"
+            lockfile: "legacy"
+            lockfile_path: "test/lockfiles/legacy.lock"
             check_formatting: true
           - elixir: "1.11.4"
-            otp: "24.0.6"
+            otp: "24.3.4.9"
+            container: "hexpm/elixir:1.11.4-erlang-24.3.4.9-ubuntu-noble-20260509.1"
+            lockfile: "legacy"
+            lockfile_path: "test/lockfiles/legacy.lock"
             check_formatting: true
           - elixir: "1.10.4"
-            otp: "23.3.4.7"
+            otp: "23.3.4"  # match discovered tag
+            container: "hexpm/elixir:1.10.4-erlang-23.3.4.16-debian-bullseye-20260518"
+            lockfile: "legacy"
+            lockfile_path: "test/lockfiles/legacy.lock"
             check_formatting: false
           - elixir: "1.9.4"
-            otp: "22.3.4.21"
+            otp: "22.3.4.9"
+            container: "hexpm/elixir:1.9.4-erlang-22.3.4.9-ubuntu-impish-20211102"
+            lockfile: "legacy"
+            lockfile_path: "test/lockfiles/legacy.lock"
             check_formatting: false
           - elixir: "1.8.2"
-            otp: "22.3.4.21"
+            otp: "22.3.4.9"
+            container: "hexpm/elixir:1.8.2-erlang-22.3.4.9-ubuntu-impish-20211102"
+            lockfile: "legacy"
+            lockfile_path: "test/lockfiles/legacy.lock"
             check_formatting: false
     steps:
-      - uses: actions/checkout@v1
+      - uses: actions/checkout@v4
       - uses: erlef/setup-beam@v1
+        if: ${{ !matrix.container }}
         with:
           otp-version: ${{ matrix.otp }}
           elixir-version: ${{ matrix.elixir }}
+      - name: Install hex and rebar
+        run: mix local.hex --force && mix local.rebar --force
       - name: Cache deps
-        uses: actions/cache@v1
+        uses: actions/cache@v4
         with:
           path: deps
-          key: ${{ env.CACHE_VERSION }}-deps-build-${{ env.MIX_ENV }}-${{ matrix.otp }}-${{ matrix.elixir }}-${{ hashFiles('mix.lock') }}
+          key: ${{ env.CACHE_VERSION }}-deps-build-${{ env.MIX_ENV }}-${{ matrix.otp }}-${{ matrix.elixir }}-${{ hashFiles(matrix.lockfile_path) }}
       - name: Cache _build
-        uses: actions/cache@v1
+        uses: actions/cache@v4
         with:
           path: _build/${{ env.MIX_ENV }}
-          key: ${{ env.CACHE_VERSION }}-_build-${{ env.MIX_ENV }}-${{ matrix.otp }}-${{ matrix.elixir }}-
+          key: ${{ env.CACHE_VERSION }}-_build-${{ env.MIX_ENV }}-${{ matrix.otp }}-${{ matrix.elixir }}-${{ hashFiles(matrix.lockfile_path) }}
       - name: Install Dependencies
         run: mix deps.get
       - name: Compile app
@@ -64,39 +92,62 @@ jobs:
 
   dialyzer:
     runs-on: ubuntu-latest
+    container: ${{ matrix.container }}
     env:
       MIX_ENV: "dev"
+      LOCKFILE: ${{ matrix.lockfile }}
     strategy:
       fail-fast: false
       matrix:
-        elixir: ["1.12.3", "1.11.4", "1.10.4", "1.9.4", "1.8.2"]
         include:
+          - elixir: "1.19.5"
+            otp: "28.5"
+            lockfile: ""
+            lockfile_path: "mix.lock"
           - elixir: "1.12.3"
-            otp: "24.0.6"
+            otp: "24.3.4.9"
+            container: "hexpm/elixir:1.12.3-erlang-24.3.4.9-ubuntu-noble-20260509.1"
+            lockfile: "legacy"
+            lockfile_path: "test/lockfiles/legacy.lock"
           - elixir: "1.11.4"
-            otp: "24.0.6"
+            otp: "24.3.4.9"
+            container: "hexpm/elixir:1.11.4-erlang-24.3.4.9-ubuntu-noble-20260509.1"
+            lockfile: "legacy"
+            lockfile_path: "test/lockfiles/legacy.lock"
           - elixir: "1.10.4"
-            otp: "23.3.4.7"
+            otp: "23.3.4"  # match discovered tag
+            container: "hexpm/elixir:1.10.4-erlang-23.3.4.16-debian-bullseye-20260518"
+            lockfile: "legacy"
+            lockfile_path: "test/lockfiles/legacy.lock"
           - elixir: "1.9.4"
-            otp: "22.3.4.21"
+            otp: "22.3.4.9"
+            container: "hexpm/elixir:1.9.4-erlang-22.3.4.9-ubuntu-impish-20211102"
+            lockfile: "legacy"
+            lockfile_path: "test/lockfiles/legacy.lock"
           - elixir: "1.8.2"
-            otp: "22.3.4.21"
+            otp: "22.3.4.9"
+            container: "hexpm/elixir:1.8.2-erlang-22.3.4.9-ubuntu-impish-20211102"
+            lockfile: "legacy"
+            lockfile_path: "test/lockfiles/legacy.lock"
     steps:
-      - uses: actions/checkout@v1
+      - uses: actions/checkout@v4
       - uses: erlef/setup-beam@v1
+        if: ${{ !matrix.container }}
         with:
           otp-version: ${{ matrix.otp }}
           elixir-version: ${{ matrix.elixir }}
-      - uses: actions/cache@v1
+      - name: Install hex and rebar
+        run: mix local.hex --force && mix local.rebar --force
+      - uses: actions/cache@v4
         with:
           path: deps
-          key: ${{ env.CACHE_VERSION }}-deps-build-${{ env.MIX_ENV }}-${{ matrix.otp }}-${{ matrix.elixir }}-${{ hashFiles('mix.lock') }}
-      - uses: actions/cache@v1
+          key: ${{ env.CACHE_VERSION }}-deps-build-${{ env.MIX_ENV }}-${{ matrix.otp }}-${{ matrix.elixir }}-${{ hashFiles(matrix.lockfile_path) }}
+      - uses: actions/cache@v4
         with:
           path: _build/${{ env.MIX_ENV }}
-          key: ${{ env.CACHE_VERSION }}-_build-${{ env.MIX_ENV }}-${{ matrix.otp }}-${{ matrix.elixir }}-dialyzer
+          key: ${{ env.CACHE_VERSION }}-_build-${{ env.MIX_ENV }}-${{ matrix.otp }}-${{ matrix.elixir }}-dialyzer-${{ hashFiles(matrix.lockfile_path) }}
           restore-keys: |
-            ${{ env.CACHE_VERSION }}-_build-${{ env.MIX_ENV }}-${{ matrix.otp }}-${{ matrix.elixir }}-
+            ${{ env.CACHE_VERSION }}-_build-${{ env.MIX_ENV }}-${{ matrix.otp }}-${{ matrix.elixir }}-dialyzer-
       - name: Install Dependencies
         run: mix deps.get
       - name: Compile app
