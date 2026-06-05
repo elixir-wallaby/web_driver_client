@@ -19,6 +19,7 @@ defmodule WebDriverClient.MixProject do
         docs: :docs
       ],
       start_permanent: Mix.env() == :prod,
+      lockfile: lockfile(System.get_env("LOCKFILE")),
       docs: docs(),
       deps: deps(),
       dialyzer: dialyzer(),
@@ -41,18 +42,24 @@ defmodule WebDriverClient.MixProject do
     [
       {:tesla, "~> 1.3"},
       {:jason, "~> 1.0"},
-      {:hackney, "~> 1.6"},
-      {:bypass, "~> 1.0", only: :test},
+      {:hackney, "~> 1.6 or ~> 4.0"},
+      {:bypass, "~> 1.0 or ~> 2.1", only: :test},
       {:stream_data, "~> 0.1", only: [:dev, :test]},
       {:excoveralls, "~> 0.10", only: :test},
-      {:credo, "~> 1.4.0", only: [:dev, :test], runtime: false},
-      {:dialyxir, "~> 1.1.0", only: [:dev], runtime: false},
+      {:credo, "~> 1.4", only: [:dev, :test], runtime: false},
+      {:dialyxir, "~> 1.1", only: [:dev], runtime: false},
       {:ex_doc, "~> 0.20", only: [:docs, :docs_prerelease]}
     ]
   end
 
   defp elixirc_paths(:test), do: ["lib", "test/support"]
   defp elixirc_paths(_), do: ["lib"]
+
+  # Allows testing against alternate dependency sets, e.g.
+  # `LOCKFILE=legacy mix deps.get` for hackney 1.x on older Elixir/OTP.
+  defp lockfile(nil), do: "mix.lock"
+  defp lockfile(""), do: "mix.lock"
+  defp lockfile(lockfile), do: "test/lockfiles/#{lockfile}.lock"
 
   defp dialyzer do
     [
