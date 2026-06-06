@@ -28,9 +28,8 @@ defmodule WebDriverClient.W3CWireProtocolClient.Commands.TakeScreenshot do
           {:ok, binary} | {:error, UnexpectedResponseError.t() | WebDriverError.t()}
   def parse_response(%HTTPResponse{} = http_response) do
     with {:ok, w3c_response} <- ResponseParser.parse_response(http_response),
-         :ok <- ResponseParser.ensure_successful_response(w3c_response),
-         {:ok, image_data} <- ResponseParser.parse_image_data(w3c_response) do
-      {:ok, image_data}
+         :ok <- ResponseParser.ensure_successful_response(w3c_response) do
+      ResponseParser.parse_image_data(w3c_response)
     end
   end
 end

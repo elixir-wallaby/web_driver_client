@@ -28,9 +28,8 @@ defmodule WebDriverClient.W3CWireProtocolClient.Commands.FetchServerStatus do
           {:ok, ServerStatus.t()} | {:error, UnexpectedResponseError.t() | WebDriverError.t()}
   def parse_response(%HTTPResponse{} = http_response) do
     with {:ok, w3c_response} <- ResponseParser.parse_response(http_response),
-         :ok <- ResponseParser.ensure_successful_response(w3c_response),
-         {:ok, server_status} <- ResponseParser.parse_server_status(w3c_response) do
-      {:ok, server_status}
+         :ok <- ResponseParser.ensure_successful_response(w3c_response) do
+      ResponseParser.parse_server_status(w3c_response)
     end
   end
 end
