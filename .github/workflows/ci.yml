@@ -53,7 +53,7 @@ jobs:
             lockfile: "legacy"
             lockfile_path: "test/lockfiles/legacy.lock"
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - uses: erlef/setup-beam@v1
         with:
           otp-version: ${{ matrix.otp }}
@@ -61,12 +61,12 @@ jobs:
       - name: Install hex and rebar
         run: mix local.hex --force && mix local.rebar --force
       - name: Cache deps
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: deps
           key: ${{ env.CACHE_VERSION }}-deps-build-${{ env.MIX_ENV }}-${{ matrix.otp }}-${{ matrix.elixir }}-${{ hashFiles(matrix.lockfile_path) }}
       - name: Cache _build
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: _build/${{ env.MIX_ENV }}
           key: ${{ env.CACHE_VERSION }}-_build-${{ env.MIX_ENV }}-${{ matrix.otp }}-${{ matrix.elixir }}-${{ hashFiles(matrix.lockfile_path) }}
@@ -124,18 +124,18 @@ jobs:
             lockfile: "legacy"
             lockfile_path: "test/lockfiles/legacy.lock"
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - uses: erlef/setup-beam@v1
         with:
           otp-version: ${{ matrix.otp }}
           elixir-version: ${{ matrix.elixir }}
       - name: Install hex and rebar
         run: mix local.hex --force && mix local.rebar --force
-      - uses: actions/cache@v4
+      - uses: actions/cache@v5
         with:
           path: deps
           key: ${{ env.CACHE_VERSION }}-deps-build-${{ env.MIX_ENV }}-${{ matrix.otp }}-${{ matrix.elixir }}-${{ hashFiles(matrix.lockfile_path) }}
-      - uses: actions/cache@v4
+      - uses: actions/cache@v5
         with:
           path: _build/${{ env.MIX_ENV }}
           key: ${{ env.CACHE_VERSION }}-_build-${{ env.MIX_ENV }}-${{ matrix.otp }}-${{ matrix.elixir }}-dialyzer-${{ hashFiles(matrix.lockfile_path) }}
@@ -156,18 +156,21 @@ jobs:
       MIX_ENV: "test"
       ELIXIR_VERSION: ${{ matrix.elixir }}
       OTP_VERSION: ${{ matrix.otp }}
+      LOCKFILE: ${{ matrix.lockfile }}
     strategy:
       fail-fast: false
       matrix:
         include:
-          - elixir: "1.20.0"
-            otp: "29.0"
+          # One run per supported hackney major. Toolchain coverage is
+          # handled by the test and dialyzer jobs.
           - elixir: "1.19.5"
             otp: "28.5"
-          - elixir: "1.18.4"
-            otp: "27.3"
-          - elixir: "1.17.3"
-            otp: "27.3"
+            lockfile: ""
+            lockfile_path: "mix.lock"
+          - elixir: "1.19.5"
+            otp: "28.5"
+            lockfile: "legacy"
+            lockfile_path: "test/lockfiles/legacy.lock"
     services:
       # Allow accessing localhost ports from docker containers.
       # See https://github.com/qoomon/docker-host
@@ -203,40 +206,55 @@ jobs:
           --shm-size=2g
 
     steps:
-      - uses: actions/checkout@v1
+      - uses: actions/checkout@v6
       - uses: erlef/setup-beam@v1
         with:
           otp-version: ${{ matrix.otp }}
           elixir-version: ${{ matrix.elixir }}
       - run: mkdir -p logs
       - name: Run PhantomJS
-        run: phantomjs --wd --webdriver-logfile=logs/phantomjs.log --webdriver-loglevel=DEBUG --debug=true &> logs/phantomjs-output.log &
+        # PhantomJS is no longer preinstalled on hosted runners (and the
+        # prebuilt docker images use the deprecated manifest schema 1, which
+        # Docker refuses to pull), so download the official binary.
+        # OPENSSL_CONF works around its incompatibility with modern OpenSSL
+        # config files.
+        run: |
+          curl -sSL -o /tmp/phantomjs.tar.bz2 https://github.com/Medium/phantomjs/releases/download/v2.1.1/phantomjs-2.1.1-linux-x86_64.tar.bz2
+          tar -xjf /tmp/phantomjs.tar.bz2 -C /tmp
+          OPENSSL_CONF=/dev/null /tmp/phantomjs-2.1.1-linux-x86_64/bin/phantomjs --wd --webdriver-logfile=logs/phantomjs.log --webdriver-loglevel=DEBUG --debug=true &> logs/phantomjs-output.log &
       - name: Run chromedriver
-        run: chromedriver --log-path=logs/chromedriver.log --log-level=DEBUG &
-      - uses: actions/cache@v4
+        # Modern chromedriver picks a random port unless --port is given
+        run: chromedriver --port=9515 --log-path=logs/chromedriver.log --log-level=DEBUG &
+      - uses: actions/cache@v5
         with:
           path: deps
-          key: ${{ env.CACHE_VERSION }}-deps-build-${{ env.MIX_ENV }}-${{ matrix.otp }}-${{ matrix.elixir }}-${{ hashFiles('mix.lock') }}
-      - uses: actions/cache@v4
+          key: ${{ env.CACHE_VERSION }}-deps-build-${{ env.MIX_ENV }}-${{ matrix.otp }}-${{ matrix.elixir }}-${{ hashFiles(matrix.lockfile_path) }}
+      - uses: actions/cache@v5
         with:
           path: _build/${{ env.MIX_ENV }}
-          key: ${{ env.CACHE_VERSION }}-_build-${{ env.MIX_ENV }}-${{ matrix.otp }}-${{ matrix.elixir }}-integration-tests
+          key: ${{ env.CACHE_VERSION }}-_build-${{ env.MIX_ENV }}-${{ matrix.otp }}-${{ matrix.elixir }}-integration-tests-${{ hashFiles(matrix.lockfile_path) }}
           restore-keys: |
-            ${{ env.CACHE_VERSION }}-_build-${{ env.MIX_ENV }}-${{ matrix.otp }}-${{ matrix.elixir }}-
+            ${{ env.CACHE_VERSION }}-_build-${{ env.MIX_ENV }}-${{ matrix.otp }}-${{ matrix.elixir }}-integration-tests-
       - name: Install Dependencies
         run: mix deps.get
       - name: Compile app
+        id: compile
         run: mix compile --force --warnings-as-errors
 
+      # Run every driver scenario even when an earlier one fails, so a single
+      # broken driver doesn't hide the others' results
       - run: mix coveralls.json --only integration_test_driver:chromedriver
+        if: ${{ !cancelled() && steps.compile.outcome == 'success' }}
       - name: Upload results to CodeCov
         run: bash <(curl -s https://codecov.io/bash) -F IntegrationTest -F Chromedriver -e ELIXIR_VERSION,OTP_VERSION || echo "Codecov did not collect coverage reports"
 
       - run: mix coveralls.json --only integration_test_driver:phantomjs
+        if: ${{ !cancelled() && steps.compile.outcome == 'success' }}
       - name: Upload results to CodeCov
         run: bash <(curl -s https://codecov.io/bash) -F IntegrationTest -F Phantomjs -e ELIXIR_VERSION,OTP_VERSION || echo "Codecov did not collect coverage reports"
 
       - run: mix coveralls.json --only integration_test_driver_browser:selenium_3-chrome
+        if: ${{ !cancelled() && steps.compile.outcome == 'success' }}
         env:
           TEST_SERVER_HOSTNAME: dockerhost
           WEBDRIVER_BASE_URL: http://localhost:4445/wd/hub
@@ -244,6 +262,7 @@ jobs:
         run: bash <(curl -s https://codecov.io/bash) -F IntegrationTest -F Selenium3Chrome -e ELIXIR_VERSION,OTP_VERSION || echo "Codecov did not collect coverage reports"
 
       - run: mix coveralls.json --only integration_test_driver_browser:selenium_3-firefox
+        if: ${{ !cancelled() && steps.compile.outcome == 'success' }}
         env:
           TEST_SERVER_HOSTNAME: dockerhost
           WEBDRIVER_BASE_URL: http://localhost:4446/wd/hub
@@ -251,6 +270,7 @@ jobs:
         run: bash <(curl -s https://codecov.io/bash) -F IntegrationTest -F Selenium3Firefox -e ELIXIR_VERSION,OTP_VERSION || echo "Codecov did not collect coverage reports"
 
       - run: mix coveralls.json --only integration_test_driver_browser:selenium_2-chrome
+        if: ${{ !cancelled() && steps.compile.outcome == 'success' }}
         env:
           TEST_SERVER_HOSTNAME: dockerhost
           WEBDRIVER_BASE_URL: http://localhost:4447/wd/hub
@@ -258,6 +278,7 @@ jobs:
         run: bash <(curl -s https://codecov.io/bash) -F IntegrationTest -F Selenium2Chrome -e ELIXIR_VERSION,OTP_VERSION || echo "Codecov did not collect coverage reports"
 
       - run: mix coveralls.json --only integration_test_driver_browser:selenium_2-firefox
+        if: ${{ !cancelled() && steps.compile.outcome == 'success' }}
         env:
           TEST_SERVER_HOSTNAME: dockerhost
           WEBDRIVER_BASE_URL: http://localhost:4448/wd/hub
@@ -267,5 +288,5 @@ jobs:
       - uses: actions/upload-artifact@v7
         if: always()
         with:
-          name: Integration test server logs (Elixir ${{matrix.elixir}})
+          name: Integration test server logs (Elixir ${{ matrix.elixir }}, ${{ matrix.lockfile || 'default' }} lockfile)
           path: logs/

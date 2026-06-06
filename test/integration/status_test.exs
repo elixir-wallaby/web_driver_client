@@ -23,7 +23,8 @@ defmodule WebDriverClient.Integration.StatusTest do
 
       assert {:error, %ConnectionError{}} =
                config
-               |> struct!(base_url: "http://does-not-exist-123")
+               # Trailing dot prevents DNS search domain resolution
+               |> struct!(base_url: "http://does-not-exist-123.")
                |> WebDriverClient.fetch_server_status()
     end
   end
