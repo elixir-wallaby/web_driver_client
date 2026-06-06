@@ -37,9 +37,8 @@ defmodule WebDriverClient.JSONWireProtocolClient.Commands.FetchLogs do
           {:ok, [LogEntry.t()]} | {:error, UnexpectedResponseError.t() | WebDriverError.t()}
   def parse_response(%HTTPResponse{} = http_response) do
     with {:ok, jwp_response} <- ResponseParser.parse_response(http_response),
-         :ok <- ResponseParser.ensure_successful_jwp_status(jwp_response),
-         {:ok, log_entries} <- ResponseParser.parse_log_entries(jwp_response) do
-      {:ok, log_entries}
+         :ok <- ResponseParser.ensure_successful_jwp_status(jwp_response) do
+      ResponseParser.parse_log_entries(jwp_response)
     end
   end
 end

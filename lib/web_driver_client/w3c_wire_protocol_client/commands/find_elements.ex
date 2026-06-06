@@ -48,9 +48,8 @@ defmodule WebDriverClient.W3CWireProtocolClient.Commands.FindElements do
           {:ok, [Element.t()]} | {:error, UnexpectedResponseError.t() | WebDriverError.t()}
   def parse_response(%HTTPResponse{} = http_response) do
     with {:ok, w3c_response} <- ResponseParser.parse_response(http_response),
-         :ok <- ResponseParser.ensure_successful_response(w3c_response),
-         {:ok, elements} <- ResponseParser.parse_elements(w3c_response) do
-      {:ok, elements}
+         :ok <- ResponseParser.ensure_successful_response(w3c_response) do
+      ResponseParser.parse_elements(w3c_response)
     end
   end
 

@@ -29,9 +29,8 @@ defmodule WebDriverClient.W3CWireProtocolClient.Commands.FetchActiveElement do
           {:ok, Element.t()} | {:error, UnexpectedResponseError.t() | WebDriverError.t()}
   def parse_response(%HTTPResponse{} = http_response) do
     with {:ok, w3c_response} <- ResponseParser.parse_response(http_response),
-         :ok <- ResponseParser.ensure_successful_response(w3c_response),
-         {:ok, element} <- ResponseParser.parse_element(w3c_response) do
-      {:ok, element}
+         :ok <- ResponseParser.ensure_successful_response(w3c_response) do
+      ResponseParser.parse_element(w3c_response)
     end
   end
 end

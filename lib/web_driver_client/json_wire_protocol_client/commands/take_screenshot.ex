@@ -29,9 +29,8 @@ defmodule WebDriverClient.JSONWireProtocolClient.Commands.TakeScreenshot do
           {:ok, binary} | {:error, UnexpectedResponseError.t() | WebDriverError.t()}
   def parse_response(%HTTPResponse{} = http_response) do
     with {:ok, jwp_response} <- ResponseParser.parse_response(http_response),
-         :ok <- ResponseParser.ensure_successful_jwp_status(jwp_response),
-         {:ok, image_data} <- ResponseParser.parse_image_data(jwp_response) do
-      {:ok, image_data}
+         :ok <- ResponseParser.ensure_successful_jwp_status(jwp_response) do
+      ResponseParser.parse_image_data(jwp_response)
     end
   end
 end

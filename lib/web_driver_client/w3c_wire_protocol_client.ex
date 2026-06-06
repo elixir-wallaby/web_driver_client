@@ -44,9 +44,8 @@ defmodule WebDriverClient.W3CWireProtocolClient do
   doc_metadata subject: :sessions
   @spec start_session(map, Config.t()) :: {:ok, Session.t()} | {:error, basic_reason}
   def start_session(payload, %Config{} = config) when is_map(payload) do
-    with {:ok, http_response} <- Commands.StartSession.send_request(config, payload),
-         {:ok, session} <- Commands.StartSession.parse_response(http_response, config) do
-      {:ok, session}
+    with {:ok, http_response} <- Commands.StartSession.send_request(config, payload) do
+      Commands.StartSession.parse_response(http_response, config)
     end
   end
 
@@ -58,9 +57,8 @@ defmodule WebDriverClient.W3CWireProtocolClient do
   doc_metadata subject: :sessions
   @spec fetch_sessions(Config.t()) :: {:ok, [Session.t()]} | {:error, basic_reason}
   def fetch_sessions(%Config{} = config) do
-    with {:ok, http_response} <- Commands.FetchSessions.send_request(config),
-         {:ok, sessions} <- Commands.FetchSessions.parse_response(http_response, config) do
-      {:ok, sessions}
+    with {:ok, http_response} <- Commands.FetchSessions.send_request(config) do
+      Commands.FetchSessions.parse_response(http_response, config)
     end
   end
 
@@ -72,9 +70,8 @@ defmodule WebDriverClient.W3CWireProtocolClient do
   doc_metadata subject: :sessions
   @spec end_session(Session.t()) :: :ok | {:error, basic_reason}
   def end_session(%Session{id: id} = session) when is_session_id(id) do
-    with {:ok, http_response} <- Commands.EndSession.send_request(session),
-         :ok <- Commands.EndSession.parse_response(http_response) do
-      :ok
+    with {:ok, http_response} <- Commands.EndSession.send_request(session) do
+      Commands.EndSession.parse_response(http_response)
     end
   end
 
@@ -86,9 +83,8 @@ defmodule WebDriverClient.W3CWireProtocolClient do
   doc_metadata subject: :navigation
   @spec navigate_to(Session.t(), url) :: :ok | {:error, basic_reason}
   def navigate_to(%Session{} = session, url) when is_url(url) do
-    with {:ok, http_response} <- Commands.NavigateTo.send_request(session, url),
-         :ok <- Commands.NavigateTo.parse_response(http_response) do
-      :ok
+    with {:ok, http_response} <- Commands.NavigateTo.send_request(session, url) do
+      Commands.NavigateTo.parse_response(http_response)
     end
   end
 
@@ -100,9 +96,8 @@ defmodule WebDriverClient.W3CWireProtocolClient do
   doc_metadata subject: :navigation
   @spec fetch_current_url(Session.t()) :: {:ok, url} | {:error, basic_reason}
   def fetch_current_url(%Session{id: id} = session) when is_session_id(id) do
-    with {:ok, http_response} <- Commands.FetchCurrentURL.send_request(session),
-         {:ok, url} <- Commands.FetchCurrentURL.parse_response(http_response) do
-      {:ok, url}
+    with {:ok, http_response} <- Commands.FetchCurrentURL.send_request(session) do
+      Commands.FetchCurrentURL.parse_response(http_response)
     end
   end
 
@@ -114,9 +109,8 @@ defmodule WebDriverClient.W3CWireProtocolClient do
   doc_metadata subject: :navigation
   @spec fetch_title(Session.t()) :: {:ok, String.t()} | {:error, basic_reason}
   def fetch_title(%Session{id: id} = session) when is_session_id(id) do
-    with {:ok, http_response} <- Commands.FetchTitle.send_request(session),
-         {:ok, title} <- Commands.FetchTitle.parse_response(http_response) do
-      {:ok, title}
+    with {:ok, http_response} <- Commands.FetchTitle.send_request(session) do
+      Commands.FetchTitle.parse_response(http_response)
     end
   end
 
@@ -128,17 +122,15 @@ defmodule WebDriverClient.W3CWireProtocolClient do
   doc_metadata subject: :navigation
   @spec fetch_page_source(Session.t()) :: {:ok, String.t()} | {:error, basic_reason}
   def fetch_page_source(%Session{id: id} = session) when is_session_id(id) do
-    with {:ok, http_response} <- Commands.FetchPageSource.send_request(session),
-         {:ok, page_source} <- Commands.FetchPageSource.parse_response(http_response) do
-      {:ok, page_source}
+    with {:ok, http_response} <- Commands.FetchPageSource.send_request(session) do
+      Commands.FetchPageSource.parse_response(http_response)
     end
   end
 
   @spec fetch_window_rect(Session.t()) :: {:ok, Rect.t()} | {:error, basic_reason}
   def fetch_window_rect(%Session{id: id} = session) when is_session_id(id) do
-    with {:ok, http_response} <- Commands.FetchWindowRect.send_request(session),
-         {:ok, url} <- Commands.FetchWindowRect.parse_response(http_response) do
-      {:ok, url}
+    with {:ok, http_response} <- Commands.FetchWindowRect.send_request(session) do
+      Commands.FetchWindowRect.parse_response(http_response)
     end
   end
 
@@ -147,9 +139,8 @@ defmodule WebDriverClient.W3CWireProtocolClient do
   @spec set_window_rect(Session.t(), [rect_opt]) :: :ok | {:error, basic_reason}
   def set_window_rect(%Session{} = session, opts \\ [])
       when is_list(opts) do
-    with {:ok, http_response} <- Commands.SetWindowRect.send_request(session, opts),
-         :ok <- Commands.SetWindowRect.parse_response(http_response) do
-      :ok
+    with {:ok, http_response} <- Commands.SetWindowRect.send_request(session, opts) do
+      Commands.SetWindowRect.parse_response(http_response)
     end
   end
 
@@ -158,9 +149,8 @@ defmodule WebDriverClient.W3CWireProtocolClient do
   doc_metadata subject: :logging
   @spec fetch_log_types(Session.t()) :: {:ok, [log_type]} | {:error, basic_reason()}
   def fetch_log_types(%Session{} = session) do
-    with {:ok, http_response} <- Commands.FetchLogTypes.send_request(session),
-         {:ok, log_types} <- Commands.FetchLogTypes.parse_response(http_response) do
-      {:ok, log_types}
+    with {:ok, http_response} <- Commands.FetchLogTypes.send_request(session) do
+      Commands.FetchLogTypes.parse_response(http_response)
     end
   end
 
@@ -173,9 +163,8 @@ defmodule WebDriverClient.W3CWireProtocolClient do
   doc_metadata subject: :logging
   @spec fetch_logs(Session.t(), log_type) :: {:ok, [LogEntry.t()]} | {:error, basic_reason()}
   def fetch_logs(%Session{} = session, log_type) do
-    with {:ok, http_response} <- Commands.FetchLogs.send_request(session, log_type),
-         {:ok, log_entries} <- Commands.FetchLogs.parse_response(http_response) do
-      {:ok, log_entries}
+    with {:ok, http_response} <- Commands.FetchLogs.send_request(session, log_type) do
+      Commands.FetchLogs.parse_response(http_response)
     end
   end
 
@@ -205,9 +194,8 @@ defmodule WebDriverClient.W3CWireProtocolClient do
              session,
              element_location_strategy,
              element_selector
-           ),
-         {:ok, element} <- Commands.FindElement.parse_response(http_response) do
-      {:ok, element}
+           ) do
+      Commands.FindElement.parse_response(http_response)
     end
   end
 
@@ -232,9 +220,8 @@ defmodule WebDriverClient.W3CWireProtocolClient do
              session,
              element_location_strategy,
              element_selector
-           ),
-         {:ok, elements} <- Commands.FindElements.parse_response(http_response) do
-      {:ok, elements}
+           ) do
+      Commands.FindElements.parse_response(http_response)
     end
   end
 
@@ -265,9 +252,8 @@ defmodule WebDriverClient.W3CWireProtocolClient do
              element,
              element_location_strategy,
              element_selector
-           ),
-         {:ok, elements} <- Commands.FindElementsFromElement.parse_response(http_response) do
-      {:ok, elements}
+           ) do
+      Commands.FindElementsFromElement.parse_response(http_response)
     end
   end
 
@@ -280,9 +266,8 @@ defmodule WebDriverClient.W3CWireProtocolClient do
 
   @spec fetch_active_element(Session.t()) :: {:ok, Element.t()} | {:error, basic_reason}
   def fetch_active_element(%Session{} = session) do
-    with {:ok, http_response} <- Commands.FetchActiveElement.send_request(session),
-         {:ok, element} <- Commands.FetchActiveElement.parse_response(http_response) do
-      {:ok, element}
+    with {:ok, http_response} <- Commands.FetchActiveElement.send_request(session) do
+      Commands.FetchActiveElement.parse_response(http_response)
     end
   end
 
@@ -298,9 +283,8 @@ defmodule WebDriverClient.W3CWireProtocolClient do
           {:ok, boolean} | {:error, basic_reason}
 
   def fetch_element_displayed(%Session{} = session, %Element{} = element) do
-    with {:ok, http_response} <- Commands.FetchElementDisplayed.send_request(session, element),
-         {:ok, boolean} <- Commands.FetchElementDisplayed.parse_response(http_response) do
-      {:ok, boolean}
+    with {:ok, http_response} <- Commands.FetchElementDisplayed.send_request(session, element) do
+      Commands.FetchElementDisplayed.parse_response(http_response)
     end
   end
 
@@ -317,9 +301,8 @@ defmodule WebDriverClient.W3CWireProtocolClient do
   def fetch_element_attribute(%Session{} = session, %Element{} = element, attribute_name)
       when is_attribute_name(attribute_name) do
     with {:ok, http_response} <-
-           Commands.FetchElementAttribute.send_request(session, element, attribute_name),
-         {:ok, value} <- Commands.FetchElementAttribute.parse_response(http_response) do
-      {:ok, value}
+           Commands.FetchElementAttribute.send_request(session, element, attribute_name) do
+      Commands.FetchElementAttribute.parse_response(http_response)
     end
   end
 
@@ -336,9 +319,8 @@ defmodule WebDriverClient.W3CWireProtocolClient do
   def fetch_element_property(%Session{} = session, %Element{} = element, property_name)
       when is_property_name(property_name) do
     with {:ok, http_response} <-
-           Commands.FetchElementProperty.send_request(session, element, property_name),
-         {:ok, value} <- Commands.FetchElementProperty.parse_response(http_response) do
-      {:ok, value}
+           Commands.FetchElementProperty.send_request(session, element, property_name) do
+      Commands.FetchElementProperty.parse_response(http_response)
     end
   end
 
@@ -351,9 +333,8 @@ defmodule WebDriverClient.W3CWireProtocolClient do
 
   @spec fetch_element_text(Session.t(), Element.t()) :: {:ok, String.t()} | {:error, basic_reason}
   def fetch_element_text(%Session{} = session, %Element{} = element) do
-    with {:ok, http_response} <- Commands.FetchElementText.send_request(session, element),
-         {:ok, value} <- Commands.FetchElementText.parse_response(http_response) do
-      {:ok, value}
+    with {:ok, http_response} <- Commands.FetchElementText.send_request(session, element) do
+      Commands.FetchElementText.parse_response(http_response)
     end
   end
 
@@ -366,9 +347,8 @@ defmodule WebDriverClient.W3CWireProtocolClient do
 
   @spec click_element(Session.t(), Element.t()) :: :ok | {:error, basic_reason}
   def click_element(%Session{} = session, %Element{} = element) do
-    with {:ok, http_response} <- Commands.ClickElement.send_request(session, element),
-         :ok <- Commands.ClickElement.parse_response(http_response) do
-      :ok
+    with {:ok, http_response} <- Commands.ClickElement.send_request(session, element) do
+      Commands.ClickElement.parse_response(http_response)
     end
   end
 
@@ -381,9 +361,8 @@ defmodule WebDriverClient.W3CWireProtocolClient do
 
   @spec clear_element(Session.t(), Element.t()) :: :ok | {:error, basic_reason}
   def clear_element(%Session{} = session, %Element{} = element) do
-    with {:ok, http_response} <- Commands.ClearElement.send_request(session, element),
-         :ok <- Commands.ClearElement.parse_response(http_response) do
-      :ok
+    with {:ok, http_response} <- Commands.ClearElement.send_request(session, element) do
+      Commands.ClearElement.parse_response(http_response)
     end
   end
 
@@ -400,9 +379,8 @@ defmodule WebDriverClient.W3CWireProtocolClient do
 
   @spec send_keys_to_element(Session.t(), Element.t(), keys) :: :ok | {:error, basic_reason}
   def send_keys_to_element(%Session{} = session, %Element{} = element, keys) do
-    with {:ok, http_response} <- Commands.SendKeysToElement.send_request(session, element, keys),
-         :ok <- Commands.SendKeysToElement.parse_response(http_response) do
-      :ok
+    with {:ok, http_response} <- Commands.SendKeysToElement.send_request(session, element, keys) do
+      Commands.SendKeysToElement.parse_response(http_response)
     end
   end
 
@@ -414,9 +392,8 @@ defmodule WebDriverClient.W3CWireProtocolClient do
   doc_metadata subject: :alerts
   @spec fetch_alert_text(Session.t()) :: {:ok, String.t()} | {:error, basic_reason}
   def fetch_alert_text(%Session{id: id} = session) when is_session_id(id) do
-    with {:ok, http_response} <- Commands.FetchAlertText.send_request(session),
-         {:ok, alert_text} <- Commands.FetchAlertText.parse_response(http_response) do
-      {:ok, alert_text}
+    with {:ok, http_response} <- Commands.FetchAlertText.send_request(session) do
+      Commands.FetchAlertText.parse_response(http_response)
     end
   end
 
@@ -429,9 +406,8 @@ defmodule WebDriverClient.W3CWireProtocolClient do
   @spec send_alert_text(Session.t(), String.t()) :: {:ok, String.t()} | {:error, basic_reason}
   def send_alert_text(%Session{id: id} = session, text)
       when is_session_id(id) and is_binary(text) do
-    with {:ok, http_response} <- Commands.SendAlertText.send_request(session, text),
-         :ok <- Commands.SendAlertText.parse_response(http_response) do
-      :ok
+    with {:ok, http_response} <- Commands.SendAlertText.send_request(session, text) do
+      Commands.SendAlertText.parse_response(http_response)
     end
   end
 
@@ -443,9 +419,8 @@ defmodule WebDriverClient.W3CWireProtocolClient do
   doc_metadata subject: :alerts
   @spec accept_alert(Session.t()) :: :ok | {:error, basic_reason}
   def accept_alert(%Session{id: id} = session) when is_session_id(id) do
-    with {:ok, http_response} <- Commands.AcceptAlert.send_request(session),
-         :ok <- Commands.AcceptAlert.parse_response(http_response) do
-      :ok
+    with {:ok, http_response} <- Commands.AcceptAlert.send_request(session) do
+      Commands.AcceptAlert.parse_response(http_response)
     end
   end
 
@@ -457,9 +432,8 @@ defmodule WebDriverClient.W3CWireProtocolClient do
   doc_metadata subject: :alerts
   @spec dismiss_alert(Session.t()) :: :ok | {:error, basic_reason}
   def dismiss_alert(%Session{id: id} = session) when is_session_id(id) do
-    with {:ok, http_response} <- Commands.DismissAlert.send_request(session),
-         :ok <- Commands.DismissAlert.parse_response(http_response) do
-      :ok
+    with {:ok, http_response} <- Commands.DismissAlert.send_request(session) do
+      Commands.DismissAlert.parse_response(http_response)
     end
   end
 
@@ -470,9 +444,8 @@ defmodule WebDriverClient.W3CWireProtocolClient do
   """
   @spec take_screenshot(Session.t()) :: {:ok, binary} | {:error, basic_reason}
   def take_screenshot(%Session{id: id} = session) when is_session_id(id) do
-    with {:ok, http_response} <- Commands.TakeScreenshot.send_request(session),
-         {:ok, image_data} <- Commands.TakeScreenshot.parse_response(http_response) do
-      {:ok, image_data}
+    with {:ok, http_response} <- Commands.TakeScreenshot.send_request(session) do
+      Commands.TakeScreenshot.parse_response(http_response)
     end
   end
 
@@ -483,9 +456,8 @@ defmodule WebDriverClient.W3CWireProtocolClient do
   """
   @spec fetch_cookies(Session.t()) :: {:ok, [Cookie.t()]} | {:error, basic_reason()}
   def fetch_cookies(%Session{} = session) do
-    with {:ok, http_response} <- Commands.FetchCookies.send_request(session),
-         {:ok, cookies} <- Commands.FetchCookies.parse_response(http_response) do
-      {:ok, cookies}
+    with {:ok, http_response} <- Commands.FetchCookies.send_request(session) do
+      Commands.FetchCookies.parse_response(http_response)
     end
   end
 
@@ -500,9 +472,8 @@ defmodule WebDriverClient.W3CWireProtocolClient do
           :ok | {:error, basic_reason}
   def set_cookie(%Session{id: id} = session, name, value, opts \\ [])
       when is_session_id(id) and is_cookie_name(name) and is_cookie_value(value) and is_list(opts) do
-    with {:ok, http_response} <- Commands.SetCookie.send_request(session, name, value, opts),
-         :ok <- Commands.SetCookie.parse_response(http_response) do
-      :ok
+    with {:ok, http_response} <- Commands.SetCookie.send_request(session, name, value, opts) do
+      Commands.SetCookie.parse_response(http_response)
     end
   end
 
@@ -513,9 +484,8 @@ defmodule WebDriverClient.W3CWireProtocolClient do
   """
   @spec delete_cookies(Session.t()) :: :ok | {:error, basic_reason}
   def delete_cookies(%Session{id: id} = session) when is_session_id(id) do
-    with {:ok, http_response} <- Commands.DeleteCookies.send_request(session),
-         :ok <- Commands.DeleteCookies.parse_response(http_response) do
-      :ok
+    with {:ok, http_response} <- Commands.DeleteCookies.send_request(session) do
+      Commands.DeleteCookies.parse_response(http_response)
     end
   end
 
@@ -526,9 +496,8 @@ defmodule WebDriverClient.W3CWireProtocolClient do
   """
   @spec fetch_server_status(Config.t()) :: {:ok, ServerStatus.t()} | {:error, basic_reason()}
   def fetch_server_status(%Config{} = config) do
-    with {:ok, http_response} <- Commands.FetchServerStatus.send_request(config),
-         {:ok, server_status} <- Commands.FetchServerStatus.parse_response(http_response) do
-      {:ok, server_status}
+    with {:ok, http_response} <- Commands.FetchServerStatus.send_request(config) do
+      Commands.FetchServerStatus.parse_response(http_response)
     end
   end
 end

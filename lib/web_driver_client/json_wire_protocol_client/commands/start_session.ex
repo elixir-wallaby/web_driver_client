@@ -27,9 +27,8 @@ defmodule WebDriverClient.JSONWireProtocolClient.Commands.StartSession do
           {:ok, Session.t()} | {:error, UnexpectedResponseError.t() | WebDriverError.t()}
   def parse_response(%HTTPResponse{} = http_response, %Config{} = config) do
     with {:ok, jwp_response} <- ResponseParser.parse_response(http_response),
-         :ok <- ResponseParser.ensure_successful_jwp_status(jwp_response),
-         {:ok, session} <- ResponseParser.parse_start_session_response(jwp_response, config) do
-      {:ok, session}
+         :ok <- ResponseParser.ensure_successful_jwp_status(jwp_response) do
+      ResponseParser.parse_start_session_response(jwp_response, config)
     end
   end
 end

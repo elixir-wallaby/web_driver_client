@@ -33,9 +33,8 @@ defmodule WebDriverClient.JSONWireProtocolClient.Commands.SetWindowSize do
   @spec parse_response(HTTPResponse.t()) ::
           :ok | {:error, UnexpectedResponseError.t() | WebDriverError.t()}
   def parse_response(%HTTPResponse{} = http_response) do
-    with {:ok, jwp_response} <- ResponseParser.parse_response(http_response),
-         :ok <- ResponseParser.ensure_successful_jwp_status(jwp_response) do
-      :ok
+    with {:ok, jwp_response} <- ResponseParser.parse_response(http_response) do
+      ResponseParser.ensure_successful_jwp_status(jwp_response)
     end
   end
 end

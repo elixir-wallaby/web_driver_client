@@ -31,9 +31,8 @@ defmodule WebDriverClient.W3CWireProtocolClient.Commands.FetchLogTypes do
           {:ok, [log_type]} | {:error, UnexpectedResponseError.t() | WebDriverError.t()}
   def parse_response(%HTTPResponse{} = http_response) do
     with {:ok, w3c_response} <- ResponseParser.parse_response(http_response),
-         :ok <- ResponseParser.ensure_successful_response(w3c_response),
-         {:ok, log_types} <- ResponseParser.parse_value(w3c_response) do
-      {:ok, log_types}
+         :ok <- ResponseParser.ensure_successful_response(w3c_response) do
+      ResponseParser.parse_value(w3c_response)
     end
   end
 end

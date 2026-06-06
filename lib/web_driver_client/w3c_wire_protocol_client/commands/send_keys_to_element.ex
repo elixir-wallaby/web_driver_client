@@ -38,9 +38,8 @@ defmodule WebDriverClient.W3CWireProtocolClient.Commands.SendKeysToElement do
   @spec parse_response(HTTPResponse.t()) ::
           :ok | {:error, UnexpectedResponseError.t() | WebDriverError.t()}
   def parse_response(%HTTPResponse{} = http_response) do
-    with {:ok, w3c_response} <- ResponseParser.parse_response(http_response),
-         :ok <- ResponseParser.ensure_successful_response(w3c_response) do
-      :ok
+    with {:ok, w3c_response} <- ResponseParser.parse_response(http_response) do
+      ResponseParser.ensure_successful_response(w3c_response)
     end
   end
 

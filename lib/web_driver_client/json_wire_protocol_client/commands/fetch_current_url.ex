@@ -32,9 +32,8 @@ defmodule WebDriverClient.JSONWireProtocolClient.Commands.FetchCurrentURL do
           {:ok, url} | {:error, UnexpectedResponseError.t() | WebDriverError.t()}
   def parse_response(%HTTPResponse{} = http_response) do
     with {:ok, jwp_response} <- ResponseParser.parse_response(http_response),
-         :ok <- ResponseParser.ensure_successful_jwp_status(jwp_response),
-         {:ok, url} <- ResponseParser.parse_url(jwp_response) do
-      {:ok, url}
+         :ok <- ResponseParser.ensure_successful_jwp_status(jwp_response) do
+      ResponseParser.parse_url(jwp_response)
     end
   end
 end

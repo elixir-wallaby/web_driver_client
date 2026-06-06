@@ -28,9 +28,8 @@ defmodule WebDriverClient.W3CWireProtocolClient.Commands.FetchSessions do
           {:ok, [Session.t()]} | {:error, UnexpectedResponseError.t() | WebDriverError.t()}
   def parse_response(%HTTPResponse{} = http_response, %Config{} = config) do
     with {:ok, w3c_response} <- ResponseParser.parse_response(http_response),
-         :ok <- ResponseParser.ensure_successful_response(w3c_response),
-         {:ok, session} <- ResponseParser.parse_fetch_sessions_response(w3c_response, config) do
-      {:ok, session}
+         :ok <- ResponseParser.ensure_successful_response(w3c_response) do
+      ResponseParser.parse_fetch_sessions_response(w3c_response, config)
     end
   end
 end
