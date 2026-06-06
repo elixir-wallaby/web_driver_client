@@ -893,7 +893,7 @@ defmodule WebDriverClient do
   end
 
   @spec send_request_for_protocol(protocol, [
-          {protocol, (() -> {:ok, HTTPResponse.t()} | {:error, ConnectionError.t()})}
+          {protocol, (-> {:ok, HTTPResponse.t()} | {:error, ConnectionError.t()})}
         ]) :: {:ok, HTTPResponse.t()} | {:error, ConnectionError.t()}
   defp send_request_for_protocol(protocol, send_request_fns)
        when is_list(send_request_fns) and is_atom(protocol) do
