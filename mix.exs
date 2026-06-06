@@ -7,7 +7,7 @@ defmodule WebDriverClient.MixProject do
     [
       app: :web_driver_client,
       version: @version,
-      elixir: "~> 1.8",
+      elixir: "~> 1.17",
       elixirc_paths: elixirc_paths(Mix.env()),
       test_coverage: [tool: ExCoveralls],
       preferred_cli_env: [
@@ -56,7 +56,9 @@ defmodule WebDriverClient.MixProject do
   defp elixirc_paths(_), do: ["lib"]
 
   # Allows testing against alternate dependency sets, e.g.
-  # `LOCKFILE=legacy mix deps.get` for hackney 1.x on older Elixir/OTP.
+  # `LOCKFILE=legacy mix deps.get` for the hackney 1.x dependency set.
+  # legacy.lock pins hackney 1.23.0: hackney 1.24+ discards redirect
+  # response bodies read via `:hackney.body/1`, which Tesla relies on.
   defp lockfile(nil), do: "mix.lock"
   defp lockfile(""), do: "mix.lock"
   defp lockfile(lockfile), do: "test/lockfiles/#{lockfile}.lock"

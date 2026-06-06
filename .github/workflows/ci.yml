@@ -9,7 +9,6 @@ env:
 jobs:
   test:
     runs-on: ubuntu-latest
-    container: ${{ matrix.container }}
     env:
       MIX_ENV: "test"
       ELIXIR_VERSION: ${{ matrix.elixir }}
@@ -19,43 +18,43 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          # Modern toolchain — default lockfile (hackney 4.x dependency set)
+          # Default lockfile (hackney 4.x dependency set), covering each
+          # supported Elixir (1.17+) and OTP (27+) version at least once
+          - elixir: "1.20.0"
+            otp: "29.0"
+            lockfile: ""
+            lockfile_path: "mix.lock"
           - elixir: "1.19.5"
             otp: "28.5"
             lockfile: ""
             lockfile_path: "mix.lock"
-          # Legacy toolchains — test/lockfiles/legacy.lock (hackney 1.x set).
-          # erlef/setup-beam can no longer install OTP < 24.2 on current
-          # GitHub-hosted runners, so these run in hexpm/elixir containers.
-          - elixir: "1.12.3"
-            otp: "24.3.4.9"
-            container: "hexpm/elixir:1.12.3-erlang-24.3.4.9-ubuntu-noble-20260509.1"
+            # Style checks (format/credo/unused deps) run on the toolchain
+            # pinned in .tool-versions, so CI matches local development
+            lint: true
+          - elixir: "1.18.4"
+            otp: "27.3"
+            lockfile: ""
+            lockfile_path: "mix.lock"
+          - elixir: "1.17.3"
+            otp: "27.3"
+            lockfile: ""
+            lockfile_path: "mix.lock"
+          # Legacy lockfile — test/lockfiles/legacy.lock (hackney 1.x set)
+          - elixir: "1.19.5"
+            otp: "28.5"
             lockfile: "legacy"
             lockfile_path: "test/lockfiles/legacy.lock"
-          - elixir: "1.11.4"
-            otp: "24.3.4.9"
-            container: "hexpm/elixir:1.11.4-erlang-24.3.4.9-ubuntu-noble-20260509.1"
+          - elixir: "1.18.4"
+            otp: "27.3"
             lockfile: "legacy"
             lockfile_path: "test/lockfiles/legacy.lock"
-          - elixir: "1.10.4"
-            otp: "23.3.4"  # match discovered tag
-            container: "hexpm/elixir:1.10.4-erlang-23.3.4.16-debian-bullseye-20260518"
-            lockfile: "legacy"
-            lockfile_path: "test/lockfiles/legacy.lock"
-          - elixir: "1.9.4"
-            otp: "22.3.4.9"
-            container: "hexpm/elixir:1.9.4-erlang-22.3.4.9-ubuntu-impish-20211102"
-            lockfile: "legacy"
-            lockfile_path: "test/lockfiles/legacy.lock"
-          - elixir: "1.8.2"
-            otp: "22.3.4.9"
-            container: "hexpm/elixir:1.8.2-erlang-22.3.4.9-ubuntu-impish-20211102"
+          - elixir: "1.17.3"
+            otp: "27.3"
             lockfile: "legacy"
             lockfile_path: "test/lockfiles/legacy.lock"
     steps:
       - uses: actions/checkout@v4
       - uses: erlef/setup-beam@v1
-        if: ${{ !matrix.container }}
         with:
           otp-version: ${{ matrix.otp }}
           elixir-version: ${{ matrix.elixir }}
@@ -80,15 +79,15 @@ jobs:
         shell: bash
         run: bash <(curl -s https://codecov.io/bash) -F UnitTest -e ELIXIR_VERSION,OTP_VERSION || echo "Codecov did not collect coverage reports"
       - run: mix format --check-formatted
-        if: matrix.lockfile != 'legacy'
+        if: matrix.lint
       - run: mix credo --strict
+        if: matrix.lint
       - name: Check for unused dependencies
-        if: matrix.lockfile != 'legacy'
+        if: matrix.lint
         run: mix deps.unlock --check-unused
 
   dialyzer:
     runs-on: ubuntu-latest
-    container: ${{ matrix.container }}
     env:
       MIX_ENV: "dev"
       LOCKFILE: ${{ matrix.lockfile }}
@@ -96,39 +95,37 @@ jobs:
       fail-fast: false
       matrix:
         include:
+          - elixir: "1.20.0"
+            otp: "29.0"
+            lockfile: ""
+            lockfile_path: "mix.lock"
           - elixir: "1.19.5"
             otp: "28.5"
             lockfile: ""
             lockfile_path: "mix.lock"
-          - elixir: "1.12.3"
-            otp: "24.3.4.9"
-            container: "hexpm/elixir:1.12.3-erlang-24.3.4.9-ubuntu-noble-20260509.1"
+          - elixir: "1.18.4"
+            otp: "27.3"
+            lockfile: ""
+            lockfile_path: "mix.lock"
+          - elixir: "1.17.3"
+            otp: "27.3"
+            lockfile: ""
+            lockfile_path: "mix.lock"
+          - elixir: "1.19.5"
+            otp: "28.5"
             lockfile: "legacy"
             lockfile_path: "test/lockfiles/legacy.lock"
-          - elixir: "1.11.4"
-            otp: "24.3.4.9"
-            container: "hexpm/elixir:1.11.4-erlang-24.3.4.9-ubuntu-noble-20260509.1"
+          - elixir: "1.18.4"
+            otp: "27.3"
             lockfile: "legacy"
             lockfile_path: "test/lockfiles/legacy.lock"
-          - elixir: "1.10.4"
-            otp: "23.3.4"  # match discovered tag
-            container: "hexpm/elixir:1.10.4-erlang-23.3.4.16-debian-bullseye-20260518"
-            lockfile: "legacy"
-            lockfile_path: "test/lockfiles/legacy.lock"
-          - elixir: "1.9.4"
-            otp: "22.3.4.9"
-            container: "hexpm/elixir:1.9.4-erlang-22.3.4.9-ubuntu-impish-20211102"
-            lockfile: "legacy"
-            lockfile_path: "test/lockfiles/legacy.lock"
-          - elixir: "1.8.2"
-            otp: "22.3.4.9"
-            container: "hexpm/elixir:1.8.2-erlang-22.3.4.9-ubuntu-impish-20211102"
+          - elixir: "1.17.3"
+            otp: "27.3"
             lockfile: "legacy"
             lockfile_path: "test/lockfiles/legacy.lock"
     steps:
       - uses: actions/checkout@v4
       - uses: erlef/setup-beam@v1
-        if: ${{ !matrix.container }}
         with:
           otp-version: ${{ matrix.otp }}
           elixir-version: ${{ matrix.elixir }}
@@ -162,23 +159,15 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        elixir:
-          - "1.12.3"
-          - "1.11.4"
-          - "1.10.4"
-          - "1.9.4"
-          - "1.8.2"
         include:
-          - elixir: "1.12.3"
-            otp: "24.0.6"
-          - elixir: "1.11.4"
-            otp: "24.0.6"
-          - elixir: "1.10.4"
-            otp: "23.3.4.7"
-          - elixir: "1.9.4"
-            otp: "22.3.4.21"
-          - elixir: "1.8.2"
-            otp: "22.3.4.21"
+          - elixir: "1.20.0"
+            otp: "29.0"
+          - elixir: "1.19.5"
+            otp: "28.5"
+          - elixir: "1.18.4"
+            otp: "27.3"
+          - elixir: "1.17.3"
+            otp: "27.3"
     services:
       # Allow accessing localhost ports from docker containers.
       # See https://github.com/qoomon/docker-host
