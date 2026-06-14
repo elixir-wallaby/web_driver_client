@@ -207,7 +207,7 @@ by adding `web_driver_client` to your list of dependencies in `mix.exs`:
 ```elixir
 def deps do
   [
-    {:web_driver_client, "~> 0.2.0"}
+    {:web_driver_client, "~> 0.3.0"}
   ]
 end
 ```
