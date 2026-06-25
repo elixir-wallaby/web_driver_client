@@ -92,7 +92,7 @@ defmodule WebDriverClient.MixProject do
           WebDriverClient.W3CWireProtocolClient.WebDriverError
         ]
       ],
-      groups_for_functions: [
+      groups_for_docs: [
         Sessions: &(&1[:subject] == :sessions),
         Navigation: &(&1[:subject] == :navigation),
         Elements: &(&1[:subject] == :elements),
