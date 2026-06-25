@@ -109,7 +109,7 @@ defmodule WebDriverClient.MixProject do
         Logging: &(&1[:subject] == :logging)
       ],
       source_ref: "v#{@version}",
-      source_url: "https://github.com/aaronrenner/web_driver_client"
+      source_url: "https://github.com/elixir-wallaby/web_driver_client"
     ]
   end
 
@@ -117,7 +117,7 @@ defmodule WebDriverClient.MixProject do
     [
       maintainers: ["Aaron Renner", "Michał Łępicki"],
       licenses: ["MIT"],
-      links: %{github: "https://github.com/aaronrenner/web_driver_client"}
+      links: %{github: "https://github.com/elixir-wallaby/web_driver_client"}
     ]
   end
 end

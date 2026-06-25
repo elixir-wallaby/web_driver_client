@@ -1,5 +1,5 @@
 # WebDriverClient
-[![codecov](https://codecov.io/gh/aaronrenner/web_driver_client/branch/master/graph/badge.svg)](https://codecov.io/gh/aaronrenner/web_driver_client)
+[![codecov](https://codecov.io/gh/elixir-wallaby/web_driver_client/branch/master/graph/badge.svg)](https://codecov.io/gh/elixir-wallaby/web_driver_client)
 
 A low-level [WebDriver] client for Elixir. This library is still a work in progress.
 
