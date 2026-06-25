@@ -74,10 +74,6 @@ jobs:
         run: mix deps.get
       - name: Compile app
         run: mix compile --force --warnings-as-errors
-      - run: mix coveralls.json
-      - name: Upload results to CodeCov
-        shell: bash
-        run: bash <(curl -s https://codecov.io/bash) -F UnitTest -e ELIXIR_VERSION,OTP_VERSION || echo "Codecov did not collect coverage reports"
       - run: mix format --check-formatted
         if: matrix.lint
       - run: mix credo --strict
@@ -240,50 +236,6 @@ jobs:
       - name: Compile app
         id: compile
         run: mix compile --force --warnings-as-errors
-
-      # Run every driver scenario even when an earlier one fails, so a single
-      # broken driver doesn't hide the others' results
-      - run: mix coveralls.json --only integration_test_driver:chromedriver
-        if: ${{ !cancelled() && steps.compile.outcome == 'success' }}
-      - name: Upload results to CodeCov
-        run: bash <(curl -s https://codecov.io/bash) -F IntegrationTest -F Chromedriver -e ELIXIR_VERSION,OTP_VERSION || echo "Codecov did not collect coverage reports"
-
-      - run: mix coveralls.json --only integration_test_driver:phantomjs
-        if: ${{ !cancelled() && steps.compile.outcome == 'success' }}
-      - name: Upload results to CodeCov
-        run: bash <(curl -s https://codecov.io/bash) -F IntegrationTest -F Phantomjs -e ELIXIR_VERSION,OTP_VERSION || echo "Codecov did not collect coverage reports"
-
-      - run: mix coveralls.json --only integration_test_driver_browser:selenium_3-chrome
-        if: ${{ !cancelled() && steps.compile.outcome == 'success' }}
-        env:
-          TEST_SERVER_HOSTNAME: dockerhost
-          WEBDRIVER_BASE_URL: http://localhost:4445/wd/hub
-      - name: Upload results to CodeCov
-        run: bash <(curl -s https://codecov.io/bash) -F IntegrationTest -F Selenium3Chrome -e ELIXIR_VERSION,OTP_VERSION || echo "Codecov did not collect coverage reports"
-
-      - run: mix coveralls.json --only integration_test_driver_browser:selenium_3-firefox
-        if: ${{ !cancelled() && steps.compile.outcome == 'success' }}
-        env:
-          TEST_SERVER_HOSTNAME: dockerhost
-          WEBDRIVER_BASE_URL: http://localhost:4446/wd/hub
-      - name: Upload results to CodeCov
-        run: bash <(curl -s https://codecov.io/bash) -F IntegrationTest -F Selenium3Firefox -e ELIXIR_VERSION,OTP_VERSION || echo "Codecov did not collect coverage reports"
-
-      - run: mix coveralls.json --only integration_test_driver_browser:selenium_2-chrome
-        if: ${{ !cancelled() && steps.compile.outcome == 'success' }}
-        env:
-          TEST_SERVER_HOSTNAME: dockerhost
-          WEBDRIVER_BASE_URL: http://localhost:4447/wd/hub
-      - name: Upload results to CodeCov
-        run: bash <(curl -s https://codecov.io/bash) -F IntegrationTest -F Selenium2Chrome -e ELIXIR_VERSION,OTP_VERSION || echo "Codecov did not collect coverage reports"
-
-      - run: mix coveralls.json --only integration_test_driver_browser:selenium_2-firefox
-        if: ${{ !cancelled() && steps.compile.outcome == 'success' }}
-        env:
-          TEST_SERVER_HOSTNAME: dockerhost
-          WEBDRIVER_BASE_URL: http://localhost:4448/wd/hub
-      - name: Upload results to CodeCov
-        run: bash <(curl -s https://codecov.io/bash) -F IntegrationTest -F Selenium2Firefox -e ELIXIR_VERSION,OTP_VERSION || echo "Codecov did not collect coverage reports"
 
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         if: always()

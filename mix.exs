@@ -9,14 +9,6 @@ defmodule WebDriverClient.MixProject do
       version: @version,
       elixir: "~> 1.17",
       elixirc_paths: elixirc_paths(Mix.env()),
-      test_coverage: [tool: ExCoveralls],
-      preferred_cli_env: [
-        coveralls: :test,
-        "coveralls.detail": :test,
-        "coveralls.travis": :test,
-        "coveralls.html": :test,
-        "coveralls.json": :test
-      ],
       start_permanent: Mix.env() == :prod,
       lockfile: lockfile(System.get_env("LOCKFILE")),
       docs: docs(),
@@ -44,7 +36,6 @@ defmodule WebDriverClient.MixProject do
       {:hackney, "~> 1.6 or ~> 4.0"},
       {:bypass, "~> 1.0 or ~> 2.1", only: :test},
       {:stream_data, "~> 0.1", only: [:dev, :test]},
-      {:excoveralls, "~> 0.10", only: :test},
       {:credo, "~> 1.4", only: [:dev, :test], runtime: false},
       {:dialyxir, "~> 1.1", only: [:dev], runtime: false},
       {:ex_doc, "~> 0.20", only: [:dev, :test]}
