@@ -35,7 +35,7 @@ defmodule WebDriverClient.MixProject do
       {:jason, "~> 1.0"},
       {:hackney, "~> 1.6 or ~> 4.0"},
       {:bypass, "~> 1.0 or ~> 2.1", only: :test},
-      {:stream_data, "~> 0.1", only: [:dev, :test]},
+      {:stream_data, "~> 1.0", only: [:dev, :test]},
       {:credo, "~> 1.4", only: [:dev, :test], runtime: false},
       {:dialyxir, "~> 1.1", only: [:dev], runtime: false},
       {:ex_doc, "~> 0.20", only: [:dev, :test]}
