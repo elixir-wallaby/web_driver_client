@@ -15,8 +15,7 @@ defmodule WebDriverClient.MixProject do
         "coveralls.detail": :test,
         "coveralls.travis": :test,
         "coveralls.html": :test,
-        "coveralls.json": :test,
-        docs: :docs
+        "coveralls.json": :test
       ],
       start_permanent: Mix.env() == :prod,
       lockfile: lockfile(System.get_env("LOCKFILE")),
@@ -48,7 +47,7 @@ defmodule WebDriverClient.MixProject do
       {:excoveralls, "~> 0.10", only: :test},
       {:credo, "~> 1.4", only: [:dev, :test], runtime: false},
       {:dialyxir, "~> 1.1", only: [:dev], runtime: false},
-      {:ex_doc, "~> 0.20", only: [:docs, :docs_prerelease]}
+      {:ex_doc, "~> 0.20", only: [:dev, :test]}
     ]
   end
 
